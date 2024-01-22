@@ -1,0 +1,7 @@
+opendatasets
+matplotlib
+pandas
+numpy
+tqdm
+dvc
+dvc[gdrive]
