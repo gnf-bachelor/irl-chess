@@ -5,3 +5,4 @@ numpy
 tqdm
 dvc
 dvc[gdrive]
+chess
