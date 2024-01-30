@@ -1,2 +1,3 @@
-from project.models.model import MyNeuralNet
-from project.predict_model import predict
+from project.models import *
+from project.chess_utils import *
+from project.data import *

@@ -1,26 +1,35 @@
+import pytorch_lightning as pl
 import torch
+import torch.nn as nn
+from torchmetrics import MeanSquaredError
 
-class MyNeuralNet(torch.nn.Module):
-    """ Basic neural network class. 
-    
-    Args:
-        in_features: number of input features
-        out_features: number of output features
-    
-    """
-    def __init__(self, in_features: int, out_features: int) -> None:
-        self.l1 = torch.nn.Linear(in_features, 500)
-        self.l2 = torch.nn.Linear(500, out_features)
-        self.r = torch.nn.ReLU()
-    
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward pass of the model.
-        
-        Args:
-            x: input tensor expected to be of shape [N,in_features]
+class SimpleRegressionModel(pl.LightningModule):
+    def __init__(self, input_size, hidden_size, output_size):
+        super(SimpleRegressionModel, self).__init__()
+        self.model = nn.Sequential(
+            nn.Linear(input_size, output_size)
+        )
+        self.loss_function = nn.MSELoss()
+        self.mse = MeanSquaredError()
 
-        Returns:
-            Output tensor with shape [N,out_features]
+    def forward(self, x):
+        return self.model(x)
 
-        """
-        return self.l2(self.r(self.l1(x)))
+    def training_step(self, batch, batch_idx):
+        x, y = batch
+        predictions = self(x)
+        loss = self.loss_function(predictions.squeeze(), y.squeeze())
+        self.log('train_loss', loss.item(), on_epoch=True)
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        x, y = batch
+        y = y.squeeze()
+        predictions = self(x).squeeze()
+        loss = self.loss_function(predictions, y)
+        self.log('val_loss', loss.item(), on_epoch=True)
+        return loss
+
+    def configure_optimizers(self):
+        optimizer = torch.optim.Adam(self.parameters(), lr=0.001)
+        return optimizer
