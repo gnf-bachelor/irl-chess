@@ -8,3 +8,5 @@ dvc[gdrive]
 chess
 torch
 requests
+zipfile-zstd
+jupyter
