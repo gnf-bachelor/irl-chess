@@ -1,0 +1,33 @@
+---- Current tasks ----
+    Get sunfish up and running.
+        Write trainable alpha-beta search function weighted with BIRL heuristics.
+        Combine the two. 
+            Evaluate performance
+                Evaluate heuristics qualitatively for different trained chess engines. 
+
+    Segmant Lichess dataset and make it amenable to Bayesian IRL algorithm. 
+        Begin with a small sample.
+    Go through Berkely Deep RL course
+    Read and understand reading list
+
+
+
+
+---- Tentative timeline ----
+
+1st March:
+    Finish projektplan
+    Complete Berkely Deep RL course
+    Complete reading list and have strong overview of modern IRL methods
+
+    Ideally having minimum working prototype 
+
+1st April:
+
+1st May:
+
+
+6th June:
+    Submission deadline    
+
+---- Relevant IRL papers reading list ----
