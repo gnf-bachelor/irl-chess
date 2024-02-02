@@ -181,3 +181,4 @@ kaggle.json
 wandb
 lightning_logs
 *.ckpt
+lichess-token
