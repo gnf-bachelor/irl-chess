@@ -1,14 +1,14 @@
 ---- Current tasks ----
-    Get sunfish up and running.
-        Write trainable alpha-beta search function weighted with BIRL heuristics.
-        Combine the two. 
-            Evaluate performance
-                Evaluate heuristics qualitatively for different trained chess engines. 
+[x]    Get sunfish up and running.
+[ ]        Write trainable alpha-beta search function weighted with BIRL heuristics.
+[ ]        Combine the two.
+[ ]            Evaluate performance
+[ ]                Evaluate heuristics qualitatively for different trained chess engines.
 
-    Segment Lichess dataset and make it amenable to Bayesian IRL algorithm.
-        Begin with a small sample.
-    Go through Berkely Deep RL course
-    Read and understand reading list
+[ ]    Segment Lichess dataset and make it amenable to Bayesian IRL algorithm.
+[ ]        Begin with a small sample.
+[ ]    Go through Berkely Deep RL course
+[ ]    Read and understand reading list
 
 
 
