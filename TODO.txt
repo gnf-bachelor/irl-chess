@@ -5,7 +5,7 @@
             Evaluate performance
                 Evaluate heuristics qualitatively for different trained chess engines. 
 
-    Segmant Lichess dataset and make it amenable to Bayesian IRL algorithm. 
+    Segment Lichess dataset and make it amenable to Bayesian IRL algorithm.
         Begin with a small sample.
     Go through Berkely Deep RL course
     Read and understand reading list
