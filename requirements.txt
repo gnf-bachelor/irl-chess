@@ -6,3 +6,5 @@ tqdm
 dvc
 dvc[gdrive]
 chess
+torch
+requests
