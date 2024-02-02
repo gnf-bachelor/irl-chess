@@ -10,3 +10,4 @@ torch
 requests
 jupyter
 pyzstd
+pytorch-lightning
