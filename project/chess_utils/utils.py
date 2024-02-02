@@ -4,6 +4,8 @@ import torch
 import chess
 import numpy as np
 from tqdm import tqdm
+from time import time
+
 
 material_dict = {
     chess.PAWN: 1,
@@ -73,7 +75,7 @@ def get_best_move(board, R, depth=3, timer=False):
     moves = tqdm([move for move in board.legal_moves]) if timer else board.legal_moves
     for move in moves:
         board.push(move)
-        Q = alpha_beta_search(board, alpha=alpha, depth=depth, maximize=True, R=R)
+        Q = alpha_beta_search(board, alpha=alpha, depth=depth-1, maximize=True, R=R)
         board.pop()
         if Q > alpha:
             alpha = Q

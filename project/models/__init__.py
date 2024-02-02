@@ -1,1 +1,1 @@
-from project.models.model import SimpleRegressionModel
+# from project.models.model import SimpleRegressionModel
