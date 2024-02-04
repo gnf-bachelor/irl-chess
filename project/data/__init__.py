@@ -1,1 +1,2 @@
-from project.data.make_dataset import load_games
+from project.data.make_dataset import download_lichess_pgn
+
