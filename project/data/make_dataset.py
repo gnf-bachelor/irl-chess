@@ -74,7 +74,7 @@ def parse_moves(moves):
 def txt_to_csv(filename, overwrite=True):
     """
     Given a .pgn file from the lichess database, convert it to a .csv file
-    and return the DataFrame. There is something funky going on with pandas
+    and return the path. There is something funky going on with pandas
     where it creates an extra column full of None values.
     :param filename:
     :param overwrite:
@@ -86,11 +86,12 @@ def txt_to_csv(filename, overwrite=True):
         try:
             df = pd.read_csv(filename_out, index_col=0)
             print(f'{filename_out} already exists and was not changed')
-            return df
+            return filename_out
         except FileNotFoundError:
             pass
-    columns = ['Event', 'White', 'Site', 'Black', 'Result', 'UTCDate', 'UTCTime', 'WhiteElo', 'BlackElo',
-               'WhiteRatingDiff', 'BlackRatingDiff', 'ECO', 'Opening', 'TimeControl', 'Termination', 'Moves']
+
+    columns = ['Event', 'Site', 'White', 'Black', 'Result', 'UTCDate', 'UTCTime', 'WhiteElo', 'BlackElo',
+               'WhiteRatingDiff', 'BlackRatingDiff', 'ECO', 'Opening', 'TimeStart', 'TimeIncrement', 'Termination', 'Moves']
     data_raw = []
     with open(filename, 'r') as f:
         game = []
@@ -100,29 +101,33 @@ def txt_to_csv(filename, overwrite=True):
                 data_raw.append(game)
                 game = []
             elif line.strip():
-                game.append(line.split('"')[-2])
+                for el in line.split('"')[-2].split('+'):
+                    if el.strip():
+                        game.append(el)
     # For some reason pandas seems to add a column of None values...
     df = pd.DataFrame(data_raw, columns=columns + ['None'])
     df = df.iloc[:, :-1]
     df.to_csv(filename_out, index=False)
     print(f'Converted .txt to .csv!')
-    return df
+    return filename_out
 
 
-def download_lichess_pgn(websites_list, file_path_data, n_files=np.inf, overwrite=True):
+def download_lichess_pgn(websites_filepath, file_path_data, n_files=np.inf, overwrite=True):
     """
     Given a list of websites and the path to the data folders
     download the data from the websites using the helpers defined
-    above. This function is always verbose
-    :param websites_list:
+    above. This function is always verbose and returns a list of
+    the paths to the .csv files in question.
+    :param websites_filepath:
     :param file_path_data:
     :param n_files:
     :param overwrite:
     :return:
     """
     start = time.time()
+    filepaths_csv = []
     try:
-        with open(websites_list, 'r') as filename:
+        with open(websites_filepath, 'r') as filename:
             urls = filename.readlines()
             urls = [url.strip() for url in urls]
 
@@ -134,8 +139,8 @@ def download_lichess_pgn(websites_list, file_path_data, n_files=np.inf, overwrit
             if overwrite or not os.path.exists(filepath_out):
                 if download_file(url, destination):
                     decompress_zstd(destination, extract_path=filepath_out)
-            txt_to_csv(filepath_out, overwrite=overwrite)
-
+            filepath_csv = txt_to_csv(filepath_out, overwrite=overwrite)
+            filepaths_csv.append(filepath_csv)
             print(f'Time taken: {time.time() - start_file:.2f} seconds for file')
             print(f'Time taken: {time.time() - start:.2f} seconds in total')
 
@@ -143,9 +148,10 @@ def download_lichess_pgn(websites_list, file_path_data, n_files=np.inf, overwrit
                 break
 
     except FileNotFoundError:
-        print(f"File not found: {websites_list}")
+        print(f"File not found: {websites_filepath}")
     except Exception as e:
         print(f"An error occurred: {e}")
+    return filepaths_csv
 
 
 def load_lichess_csv(year, month):
@@ -160,12 +166,12 @@ def load_lichess_csv(year, month):
     """
     file_path_data = join(os.getcwd(), 'data', 'processed')
     file = join(file_path_data, f'lichess_db_standard_rated_{year}-{month}.csv')
-    return pd.read_csv(file, index_col=0)
+    return pd.read_csv(file, index_col=None)
 
 
 if __name__ == "__main__":
     n_files = np.inf
-    websites_list = join(os.getcwd(), 'downloads', 'lichess_websites.txt')
+    websites_filepath = join(os.getcwd(), 'downloads', 'lichess_websites.txt')
     file_path_data = join(os.getcwd(), 'data', 'raw')
 
-    download_lichess_pgn(websites_list, file_path_data, n_files=n_files, overwrite=False)
+    download_lichess_pgn(websites_filepath, file_path_data, n_files=n_files, overwrite=False)
