@@ -149,6 +149,8 @@ class Position(namedtuple("Position", "board score wc bc ep kp")):
     ep - the en passant square
     kp - the king passant square
     """
+    def generate_legal_moves(self):
+        return self.gen_moves()
 
     def gen_moves(self):
         # For each of our pieces, iterate through each possible 'ray' of moves,
@@ -197,6 +199,9 @@ class Position(namedtuple("Position", "board score wc bc ep kp")):
             119 - self.ep if self.ep and not nullmove else 0,
             119 - self.kp if self.kp and not nullmove else 0,
         )
+
+    def push(self, move):
+        return self.move(move)
 
     def move(self, move):
         i, j, prom = move

@@ -47,10 +47,10 @@ def alpha_beta_search(board, depth, alpha=-np.inf, beta=np.inf, maximize=True, R
 
     if maximize:
         max_eval = -np.inf
-        for move in board.legal_moves:
-            board.push(move)
-            eval = alpha_beta_search(board, depth - 1, alpha, beta, False, R=R)
-            board.pop()
+        for move in board.generate_legal_moves():
+            board_ = deepcopy(board)
+            board_.push(move)
+            eval = alpha_beta_search(board_, depth - 1, alpha, beta, False, R=R)
             max_eval = max(max_eval, eval)
             alpha = max(alpha, eval)
             if beta <= alpha:
@@ -58,10 +58,10 @@ def alpha_beta_search(board, depth, alpha=-np.inf, beta=np.inf, maximize=True, R
         return max_eval
     else:
         min_eval = np.inf
-        for move in board.legal_moves:
-            board.push(move)
-            eval = alpha_beta_search(board, depth - 1, alpha, beta, True, R=-R)
-            board.pop()
+        for move in board.generate_legal_moves():
+            board_ = deepcopy(board)
+            board_.push(move)
+            eval = alpha_beta_search(board_, depth - 1, alpha, beta, True, R=-R)
             min_eval = min(min_eval, eval)
             beta = min(beta, eval)
             if beta <= alpha:
@@ -74,9 +74,9 @@ def get_best_move(board, R, depth=3, timer=False):
     alpha = -np.inf
     moves = tqdm([move for move in board.legal_moves]) if timer else board.legal_moves
     for move in moves:
-        board.push(move)
-        Q = alpha_beta_search(board, alpha=alpha, depth=depth-1, maximize=True, R=R)
-        board.pop()
+        board_ = deepcopy(board)
+        board_.push(move)
+        Q = alpha_beta_search(board_, alpha=alpha, depth=depth-1, maximize=True, R=R)
         if Q > alpha:
             alpha = Q
             best_move = move
