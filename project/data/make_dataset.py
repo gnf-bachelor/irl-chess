@@ -1,3 +1,4 @@
+import re
 import os
 import time
 import requests
@@ -68,46 +69,69 @@ def parse_moves(moves):
     for el in moves.split(' '):
         if '.' not in el:
             out += el + ','
-    return out
+    return [out]
+
+
+def parse_game(input_string, included_keys):
+    pattern = r'\[([^\]]+)\]'
+
+    # Use regular expression to find all matches within square brackets
+    matches = re.findall(pattern, input_string)
+
+    # Specify the keys you want to include
+    # included_keys = ['Event', 'Site', 'Date', 'White', 'Black', 'Result', 'UTCDate',
+    #                  'UTCTime', 'WhiteElo', 'BlackElo', 'WhiteRatingDiff', 'BlackRatingDiff',
+    #                  'WhiteTitle', 'ECO', 'Opening', 'TimeControl', 'Termination']
+
+    # Create a list to store the extracted values
+    data_list = []
+    for match in matches:
+        key, value = map(str.strip, match.split(' ', 1))
+
+        # Include only the specified keys
+        if key.lower() == 'timecontrol':
+            data_list += value.split('+')
+        elif key in included_keys:
+            # Remove double quotes from the value
+            value = value.replace('"', '')
+            data_list.append(value)
+
+    return data_list
 
 
 def txt_to_csv(filename, overwrite=True):
     """
     Given a .pgn file from the lichess database, convert it to a .csv file
     and return the path. There is something funky going on with pandas
-    where it creates an extra column full of None values.
+    where it creates an extra column full of None values. If a row has an
+    invalid length it is ignored.
     :param filename:
     :param overwrite:
     :return:
     """
     filename_out = filename[:-4].replace('raw', 'processed') + '.csv'
 
-    if not overwrite:
-        try:
-            df = pd.read_csv(filename_out, index_col=0)
-            print(f'{filename_out} already exists and was not changed')
-            return filename_out
-        except FileNotFoundError:
-            pass
+    if not overwrite and os.path.exists(filename_out):
+        print(f'{filename_out} already exists and was not changed')
+        return filename_out
 
     columns = ['Event', 'Site', 'White', 'Black', 'Result', 'UTCDate', 'UTCTime', 'WhiteElo', 'BlackElo',
-               'WhiteRatingDiff', 'BlackRatingDiff', 'ECO', 'Opening', 'TimeStart', 'TimeIncrement', 'Termination', 'Moves']
+               'WhiteRatingDiff', 'BlackRatingDiff', 'ECO', 'Opening', 'TimeStart', 'TimeIncrement',
+               'Termination', 'Moves']
     data_raw = []
     with open(filename, 'r') as f:
-        game = []
+        game = ''
         for line in tqdm(f.readlines(), 'Converting to csv'):
-            if line[0] == '1':
-                game.append(parse_moves(line.strip()))
-                data_raw.append(game)
-                game = []
+            if line[0] == '1' or line == ' 0-1\n':
+                row = parse_game(game, included_keys=columns[:-1] + ['TimeControl']) + parse_moves(line)
+                if len(row) == len(columns):    # Only pass valid rows... sadly necessary
+                    data_raw.append(row)
+                game = ''
             elif line.strip():
-                for el in line.split('"')[-2].split('+'):
-                    if el.strip():
-                        game.append(el)
-    # For some reason pandas seems to add a column of None values...
-    df = pd.DataFrame(data_raw, columns=columns + ['None'])
-    df = df.iloc[:, :-1]
-    df.to_csv(filename_out, index=False)
+                game += line
+
+        df = pd.DataFrame(data_raw, columns=columns)
+        df.to_csv(filename_out, index=False, mode='w')
     print(f'Converted .txt to .csv!')
     return filename_out
 

@@ -29,21 +29,27 @@ def calculate_heuristics(board: chess.Board, tensor=False):
 
     # material_white = np.sum(board_arr[board_arr > 0])
     # material_black = np.abs(np.sum(board_arr[board_arr < 0]))
-    pieces_white = [np.sum(board_arr == i) if not tensor else torch.sum(board_arr == i) for i in range(1, 6)]
-    pieces_black = [np.sum(board_arr == i) if not tensor else torch.sum(board_arr == i) for i in range(-5, 0)]
-    check = board.is_check()
-    checkmate = board.is_checkmate()
-    out = (*pieces_white, *pieces_black, check, checkmate)
+    pieces_white = [np.sum(board_arr == i) if not tensor else torch.sum(board_arr == i) for i in range(1, 7)]
+    pieces_black = [- np.sum(board_arr == i) if not tensor else torch.sum(board_arr == i) for i in range(-6, 0)]
+    # check = board.is_check()
+    # checkmate = board.is_checkmate()
+    out = (*pieces_white, *pieces_black, ) # check, checkmate)
     return torch.tensor(out, dtype=torch.float) if tensor else np.array(out, dtype=float)
 
 
 def evaluate(board: chess.Board, R):
-    return calculate_heuristics(board, tensor=True) @ R
+    return calculate_heuristics(board, tensor=False) @ R
 
 
-def alpha_beta_search(board, depth, alpha=-np.inf, beta=np.inf, maximize=True, R: np.array = np.zeros(1)):
+def alpha_beta_search(board,
+                      depth,
+                      alpha=-np.inf,
+                      beta=np.inf,
+                      maximize=True,
+                      R: np.array = np.zeros(1),
+                      evaluation_function=evaluate):
     if depth == 0 or board.is_game_over():
-        return evaluate(board, R)
+        return evaluation_function(board, R)
 
     if maximize:
         max_eval = -np.inf
@@ -69,14 +75,19 @@ def alpha_beta_search(board, depth, alpha=-np.inf, beta=np.inf, maximize=True, R
         return min_eval
 
 
-def get_best_move(board, R, depth=3, timer=False):
+def get_best_move(board, R, depth=3, timer=False, evaluation_function=evaluate):
     best_move, Q = None, None
     alpha = -np.inf
     moves = tqdm([move for move in board.legal_moves]) if timer else board.legal_moves
     for move in moves:
         board_ = deepcopy(board)
         board_.push(move)
-        Q = alpha_beta_search(board_, alpha=alpha, depth=depth-1, maximize=True, R=R)
+        Q = alpha_beta_search(board_,
+                              alpha=alpha,
+                              depth=depth-1,
+                              maximize=True,
+                              R=R,
+                              evaluation_function=evaluation_function)
         if Q > alpha:
             alpha = Q
             best_move = move
