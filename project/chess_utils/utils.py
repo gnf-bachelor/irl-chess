@@ -8,6 +8,7 @@ from time import time
 from copy import copy
 from project.chess_utils.sunfish_utils import board2sunfish
 from project.chess_utils.sunfish import piece
+from scipy.special import softmax
 
 material_dict = {
     chess.PAWN: 1,
@@ -209,6 +210,16 @@ def depth_first_search(starting_board: chess.Board,
                 board.pop()
 
     return boards_not_seen, boards_seen
+
+def softmax_choice(x):
+    """
+    Returns an index based on the softmax of x and add 1 to ensure 
+    the depth is never 0
+    :param x: 
+    :return: 
+    """
+    choice = np.random.choice(np.arange(len(x)), p=softmax(x))
+    return choice + 1
 
 def log_prob_dist(R, energy, alpha, prior=lambda R: 1):
     log_prob = alpha * energy + np.log(prior(R))
