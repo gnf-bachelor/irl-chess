@@ -38,7 +38,7 @@ def calculate_heuristics(board: chess.Board, tensor=False):
     return torch.tensor(out, dtype=torch.float) if tensor else np.array(out, dtype=float)
 
 
-def evaluate(board: chess.Board, R):
+def evaluate(board: chess.Board, R, turn=False):
     return calculate_heuristics(board, tensor=False) @ R
 
 
@@ -49,8 +49,21 @@ def alpha_beta_search(board,
                       maximize=True,
                       R: np.array = np.zeros(1),
                       evaluation_function=evaluate):
+    """
+    When maximize is True the board must be evaluated from the White
+    player's perspective.
+
+    :param board:
+    :param depth:
+    :param alpha:
+    :param beta:
+    :param maximize:
+    :param R:
+    :param evaluation_function:
+    :return:
+    """
     if depth == 0 or board.is_game_over():
-        return evaluation_function(board, R)
+        return evaluation_function(board, R, turn=maximize)
 
     if maximize:
         max_eval = -np.inf
@@ -76,13 +89,23 @@ def alpha_beta_search(board,
         return min_eval
 
 
-def get_best_move(board, R, depth=3, timer=False, evaluation_function=evaluate):
+def get_best_move(board, R, depth=3, timer=False, evaluation_function=evaluate, white=True):
+    """
+
+    :param board:
+    :param R:
+    :param depth:
+    :param timer:
+    :param evaluation_function:
+    :param white:               Is it white's turn to make a move
+    :return:
+    """
     best_move, Q = None, None
     alpha = -np.inf
     moves = tqdm([move for move in board.legal_moves]) if timer else board.legal_moves
     for move in moves:
         board.push(move)
-        Q = alpha_beta_search(board, alpha=alpha, depth=depth - 1, maximize=True, R=R, evaluation_function=evaluation_function)
+        Q = alpha_beta_search(board, alpha=alpha, depth=depth - 1, maximize=not white, R=R, evaluation_function=evaluation_function)
         board.pop()
         if Q > alpha:
             alpha = Q
@@ -198,8 +221,8 @@ def policy_walk(R, states, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2):
         energy_new, energy_old = 0, 0
         for state, move in tqdm(zip(states, moves), total=len(states)):
             state.push_san(move)
-            _, Q_old = get_best_move(board=state, R=R, depth=depth - 1)
-            _, Q_new = get_best_move(board=state, R=R_, depth=depth - 1)
+            _, Q_old = get_best_move(board=state, R=R, depth=depth - 1, white=state.turn)
+            _, Q_new = get_best_move(board=state, R=R_, depth=depth - 1, white=state.turn)
             state.pop()
             # _, Q_old_energy = get_best_move(board=state, R=R, depth=depth)
 
