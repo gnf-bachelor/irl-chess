@@ -63,13 +63,13 @@ def alpha_beta_search(board,
     :return:
     """
     if depth == 0 or board.is_game_over():
-        return evaluation_function(board, R, turn=maximize)
+        return evaluation_function(board, R, maximize)
 
     if maximize:
         max_eval = -np.inf
         for move in board.generate_legal_moves():
             board.push(move)
-            eval = alpha_beta_search(board, depth - 1, alpha, beta, False, R=-R)
+            eval = alpha_beta_search(board, depth - 1, alpha, beta, False, R=R, evaluation_function=evaluation_function)
             board.pop()
             max_eval = max(max_eval, eval)
             alpha = max(alpha, eval)
@@ -80,7 +80,7 @@ def alpha_beta_search(board,
         min_eval = np.inf
         for move in board.generate_legal_moves():
             board.push(move)
-            eval = alpha_beta_search(board, alpha=alpha, depth=depth - 1, maximize=True, R=R)
+            eval = alpha_beta_search(board, alpha=alpha, depth=depth - 1, maximize=True, R=R, evaluation_function=evaluation_function)
             board.pop()
             min_eval = min(min_eval, eval)
             beta = min(beta, eval)
