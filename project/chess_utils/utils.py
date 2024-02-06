@@ -6,6 +6,7 @@ import numpy as np
 from tqdm import tqdm
 from time import time
 from copy import copy
+from project.chess_utils.sunfish_utils import board2sunfish
 
 material_dict = {
     chess.PAWN: 1,
@@ -117,7 +118,7 @@ def get_midgame_boards(df,
                        min_elo,
                        max_elo,
                        n_steps=12,
-                       ):
+                       sunfish=False):
     """
     Using chess.Board() as the moves are currently in that format.
     Needs a DataFrame with 'Moves', 'WhiteElo' and 'BlackElo'
@@ -142,7 +143,10 @@ def get_midgame_boards(df,
                 board.push_san(moveset_split[-1])
                 board.pop()
                 moves.append(moveset_split[-1])
-                boards.append(copy(board))
+                if sunfish:
+                    boards.append(board2sunfish(board))
+                else:
+                    boards.append(copy(board))
             except chess.InvalidMoveError:
                 pass
         if len(boards) == n_boards:
