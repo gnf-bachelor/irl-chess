@@ -112,6 +112,39 @@ def board_to_array(board, material_dict=None, tensor=False, dtype=np.int8):
     return arr if not tensor else torch.tensor(arr)
 
 
+def prob_dist(R, energy, alpha, prior=lambda R: 1):
+    prob = np.exp(alpha * energy) * prior(R)
+    return prob
+
+
+def policy_walk(R, states, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2):
+    for epoch in tqdm(range(epochs)):
+        add = np.random.rand(R.shape[0]).astype(R.dtype) * (delta / 2)
+        R_ = R + add
+        Q_moves = np.zeros(len(states))
+        Q_policy = np.zeros(len(states))
+        i = 0
+        energy_new, energy_old = 0, 0
+        for state, move in tqdm(zip(states, moves), total=len(states)):
+            state.push_san(move)
+            _, Q_old = get_best_move(board=state, R=R, depth=depth - 1)
+            _, Q_new = get_best_move(board=state, R=R_, depth=depth - 1)
+            state.pop()
+            # _, Q_old_energy = get_best_move(board=state, R=R, depth=depth)
+
+            Q_moves[i] = Q_old
+            Q_policy[i] = Q_new
+
+            energy_old += Q_old
+            energy_new += Q_new
+
+            i += 1
+            prob = min(1, prob_dist(R_, energy_new, alpha=alpha) / prob_dist(R_, energy_old, alpha=alpha))
+            if np.sum(Q_policy < Q_moves):
+                if np.random.rand(1).item() < prob:
+                    R = R_
+    return R
+
 def depth_first_search(starting_board: chess.Board,
                        true_move: str,
                        weights: np.array = np.ones(1),
