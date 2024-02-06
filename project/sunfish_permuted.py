@@ -62,6 +62,10 @@ if __name__ == '__main__':
 
     datapaths = download_lichess_pgn(websites_filepath, file_path_data, n_files=n_files, overwrite=False)
     df = pd.read_csv(datapaths[0], index_col=None)
+    for path in tqdm(datapaths[1:]):
+        df_ = pd.read_csv(path, index_col=None)
+        df = pd.concat((df, df_), axis=0)
+
     R_sunfish = np.array([val for val in piece.values()])
     path_result = join(os.getcwd(), 'models', 'sunfish_permuted')
 
