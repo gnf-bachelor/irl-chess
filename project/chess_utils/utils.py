@@ -7,6 +7,7 @@ from tqdm import tqdm
 from time import time
 from copy import copy
 from project.chess_utils.sunfish_utils import board2sunfish
+from project.chess_utils.sunfish import piece
 
 material_dict = {
     chess.PAWN: 1,
@@ -93,7 +94,7 @@ def alpha_beta_search(board,
         return min_eval
 
 
-def get_best_move(board, R, depth=3, timer=False, evaluation_function=evaluate, white=True):
+def get_best_move(board, R, depth=3, timer=False, evaluation_function=evaluate_board, white=True):
     """
 
     :param board:
