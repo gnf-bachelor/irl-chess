@@ -161,7 +161,7 @@ def get_midgame_boards(df,
     """
     boards, moves = [], []
 
-    for moveset, elo_w, elo_b in tqdm(df[['Moves', 'WhiteElo', 'BlackElo']].values):
+    for moveset, elo_w, elo_b in tqdm(df[['Moves', 'WhiteElo', 'BlackElo']].values, desc='Searching for boards'):
         board = chess.Board()
         moveset_split = moveset.split(',')[:-2]
         if len(moveset_split) > n_steps and (min_elo <= int(elo_w) <= max_elo) and (min_elo <= int(elo_b) <= max_elo):
