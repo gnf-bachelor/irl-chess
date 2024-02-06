@@ -25,21 +25,25 @@ def set_board(moves: list[str]):
     return board
 
 
-def calculate_heuristics(board: chess.Board, tensor=False):
-    board_arr = board_to_array(board, material_dict=material_dict, tensor=tensor)
+def evaluate_board(board, R, white=False):
+    """
+    positive if (w + not lower), (not w + lower)
+    negative if (w + lower), (not w + not lower)
 
-    # material_white = np.sum(board_arr[board_arr > 0])
-    # material_black = np.abs(np.sum(board_arr[board_arr < 0]))
-    pieces_white = [np.sum(board_arr == i) if not tensor else torch.sum(board_arr == i) for i in range(1, 7)]
-    pieces_black = [- np.sum(board_arr == i) if not tensor else torch.sum(board_arr == i) for i in range(-6, 0)]
-    # check = board.is_check()
-    # checkmate = board.is_checkmate()
-    out = (*pieces_white, *pieces_black, ) # check, checkmate)
-    return torch.tensor(out, dtype=torch.float) if tensor else np.array(out, dtype=float)
-
-
-def evaluate(board: chess.Board, R, turn=False):
-    return calculate_heuristics(board, tensor=False) @ R
+    :param board:
+    :param R:
+    :param white:
+    :return:
+    """
+    eval = 0
+    for lower in (False, True):
+        keys = {val.lower() if lower else val: 0 for val in piece.keys()}
+        for char in board.fen():
+            if char in keys:
+                keys[char] += 1
+        pos = np.array([val for val in keys.values()])
+        eval += (pos @ R) * (-1 if white == lower else 1)
+    return eval
 
 
 def alpha_beta_search(board,
@@ -48,7 +52,7 @@ def alpha_beta_search(board,
                       beta=np.inf,
                       maximize=True,
                       R: np.array = np.zeros(1),
-                      evaluation_function=evaluate):
+                      evaluation_function=evaluate_board):
     """
     When maximize is True the board must be evaluated from the White
     player's perspective.
