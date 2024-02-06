@@ -50,12 +50,12 @@ if __name__ == '__main__':
         os.chdir('../')
     from project import policy_walk, get_midgame_boards, get_best_move, piece, download_lichess_pgn
 
-    n_files = 1
+    n_files = 2
     elo = 1100
     incr = 100
     n_boards = 200
-    search_depth = 2
-    save_every = 1
+    search_depth = 3
+    save_every = 1000
 
     websites_filepath = join(os.getcwd(), 'downloads', 'lichess_websites.txt')
     file_path_data = join(os.getcwd(), 'data', 'raw')
