@@ -5,7 +5,7 @@ import chess
 import numpy as np
 from tqdm import tqdm
 from time import time
-
+from copy import copy
 
 material_dict = {
     chess.PAWN: 1,
@@ -144,6 +144,43 @@ def policy_walk(R, states, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2):
                 if np.random.rand(1).item() < prob:
                     R = R_
     return R
+
+def get_midgame_boards(df,
+                       n_boards,
+                       min_elo,
+                       max_elo,
+                       n_steps=12,
+                       ):
+    """
+    Using chess.Board() as the moves are currently in that format.
+    Needs a DataFrame with 'Moves', 'WhiteElo' and 'BlackElo'
+    columns. The midgame is defined by the n_steps.
+    The timer is inaccurate and shows an upper bound
+    :param df:
+    :param n_boards:
+    :param min_elo:
+    :param max_elo:
+    :param n_steps:
+    :return:
+    """
+    boards, moves = [], []
+
+    for moveset, elo_w, elo_b in tqdm(df[['Moves', 'WhiteElo', 'BlackElo']].values):
+        board = chess.Board()
+        moveset_split = moveset.split(',')[:-2]
+        if len(moveset_split) > n_steps and (min_elo <= int(elo_w) <= max_elo) and (min_elo <= int(elo_b) <= max_elo):
+            try:
+                for move in moveset_split[:-1]:
+                    board.push_san(move)
+                board.push_san(moveset_split[-1])
+                board.pop()
+                moves.append(moveset_split[-1])
+                boards.append(copy(board))
+            except chess.InvalidMoveError:
+                pass
+        if len(boards) == n_boards * n_steps:
+            return boards, moves
+
 
 def depth_first_search(starting_board: chess.Board,
                        true_move: str,
