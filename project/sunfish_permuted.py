@@ -29,7 +29,7 @@ def run_sun(df,
     moves_sunfish = []
     boards, moves = get_midgame_boards(df, n_boards, min_elo=elo - incr, max_elo=elo + incr, sunfish=False)
 
-    for board in tqdm(boards):
+    for board in tqdm(boards, desc='Getting Sunfish moves'):
         move, Q = get_best_move(board, R_sunfish, depth=max_search_depth)
         moves_sunfish.append(move)
 

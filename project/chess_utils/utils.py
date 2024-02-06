@@ -175,16 +175,15 @@ def get_midgame_boards(df,
             try:
                 for move in moveset_split[:-1]:
                     board.push_san(move)
-                    if board.is_checkmate():
-                        continue
                 board.push_san(moveset_split[-1])
-                board.pop()
-                moves.append(move_translation(moveset_split[-1]))
+                if len([el for el in board.generate_legal_moves()]):
+                    board.pop()
+                    moves.append(move_translation(moveset_split[-1]))
 
-                if sunfish:
-                    boards.append(board2sunfish(board))
-                else:
-                    boards.append(copy(board))
+                    if sunfish:
+                        boards.append(board2sunfish(board))
+                    else:
+                        boards.append(copy(board))
             except chess.InvalidMoveError:
                 pass
         if len(boards) == n_boards:
@@ -265,24 +264,25 @@ def policy_walk(R, states, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, sa
             state.push(move)
             _, Q_old = get_best_move(board=state, R=R, depth=depth - 1)
             _, Q_new = get_best_move(board=state, R=R_, depth=depth - 1)
-            state.pop()
-            # _, Q_old_energy = get_best_move(board=state, R=R, depth=depth)
+            if Q_old is not None and Q_new is not None:
+                state.pop()
+                # _, Q_old_energy = get_best_move(board=state, R=R, depth=depth)
 
-            Q_moves[i] = Q_old
-            Q_policy[i] = Q_new
+                Q_moves[i] = Q_old
+                Q_policy[i] = Q_new
 
-            energy_old += Q_old
-            energy_new += Q_new
+                energy_old += Q_old
+                energy_new += Q_new
 
-            log_prob = min(0, log_prob_dist(R_, energy_new, alpha=alpha) - log_prob_dist(R, energy_old, alpha=alpha))
+                log_prob = min(0, log_prob_dist(R_, energy_new, alpha=alpha) - log_prob_dist(R, energy_old, alpha=alpha))
 
-            if np.sum(Q_policy < Q_moves):
-                if log_prob > -1e7 and np.random.rand(1).item() < np.exp(log_prob):
-                    R = R_
-            if save_every is not None and i % save_every == 0:
-                pd.DataFrame(R_.reshape((-1, 1)), columns=['Result']).to_csv(join(save_path, f'{i}.csv'), index=False)
+                if np.sum(Q_policy < Q_moves):
+                    if log_prob > -1e7 and np.random.rand(1).item() < np.exp(log_prob):
+                        R = R_
+                if save_every is not None and i % save_every == 0:
+                    pd.DataFrame(R_.reshape((-1, 1)), columns=['Result']).to_csv(join(save_path, f'{i}.csv'), index=False)
 
-            i += 1
+                i += 1
 
     return R
 
