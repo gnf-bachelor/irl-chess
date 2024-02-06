@@ -26,7 +26,7 @@ def decompress_zstd(zstd_path, extract_path):
             decompressed_data = pyzstd.decompress(compressed_data)
 
         destination_path = extract_path
-
+        os.makedirs(destination_path.replace(destination_path.split('\\')[-1], ''), exist_ok=True)
         with open(destination_path, 'wb') as decompressed_file:
             decompressed_file.write(decompressed_data)
 
@@ -110,7 +110,7 @@ def txt_to_csv(filename, overwrite=True):
     :return:
     """
     filename_out = filename[:-4].replace('raw', 'processed') + '.csv'
-
+    os.makedirs(filename_out.replace(filename_out.split('\\')[-1], ''), exist_ok=True)
     if not overwrite and os.path.exists(filename_out):
         print(f'{filename_out} already exists and was not changed')
         return filename_out
@@ -199,4 +199,4 @@ if __name__ == "__main__":
     websites_filepath = join(os.getcwd(), 'downloads', 'lichess_websites.txt')
     file_path_data = join(os.getcwd(), 'data', 'raw')
 
-    download_lichess_pgn(websites_filepath, file_path_data, n_files=n_files, overwrite=False)
+    download_lichess_pgn(websites_filepath, file_path_data, n_files=n_files, overwrite=True)
