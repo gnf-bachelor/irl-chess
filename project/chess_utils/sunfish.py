@@ -72,7 +72,7 @@ pst = {
             17,  30,  -3, -14,   6,  -1,  40,  18),
 }
 # Set the positional matrices to 1 and the bounds to 0
-pst = {key: (1,) * len(val) for key, val in pst.items()}
+# pst = {key: (1,) * len(val) for key, val in pst.items()}
 # Pad tables and join piece and pst dictionaries
 for k, table in pst.items():
     padrow = lambda row: (0,) + tuple(x + piece[k] for x in row) + (0,)
