@@ -131,6 +131,7 @@ def txt_to_csv(filename, overwrite=True):
                 game += line
 
         df = pd.DataFrame(data_raw, columns=columns)
+        df.dropna(inplace=True)
         df.to_csv(filename_out, index=False, mode='w')
     print(f'Converted .txt to .csv!')
     return filename_out
