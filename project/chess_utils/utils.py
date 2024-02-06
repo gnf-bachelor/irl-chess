@@ -1,5 +1,7 @@
 from copy import deepcopy
+from os.path import join
 
+import pandas as pd
 import torch
 import chess
 import numpy as np
@@ -149,7 +151,8 @@ def get_midgame_boards(df,
                        min_elo,
                        max_elo,
                        n_steps=12,
-                       sunfish=False):
+                       sunfish=False,
+                       move_translation=lambda move: move):
     """
     Using chess.Board() as the moves are currently in that format.
     Needs a DataFrame with 'Moves', 'WhiteElo' and 'BlackElo'
@@ -160,6 +163,7 @@ def get_midgame_boards(df,
     :param min_elo:
     :param max_elo:
     :param n_steps:
+    :param move_translation: can be a function that ensures moves are of the desired format
     :return:
     """
     boards, moves = [], []
@@ -171,9 +175,12 @@ def get_midgame_boards(df,
             try:
                 for move in moveset_split[:-1]:
                     board.push_san(move)
+                    if board.is_checkmate():
+                        continue
                 board.push_san(moveset_split[-1])
                 board.pop()
-                moves.append(moveset_split[-1])
+                moves.append(move_translation(moveset_split[-1]))
+
                 if sunfish:
                     boards.append(board2sunfish(board))
                 else:
@@ -230,7 +237,7 @@ def log_prob_dist(R, energy, alpha, prior=lambda R: 1):
     return log_prob
 
 
-def policy_walk(R, states, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2):
+def policy_walk(R, states, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, save_every=None, save_path=None):
     """ Policy walk algorithm over given class of reward functions.
     Iterates over the initial reward function by perterbing each dimension uniformly and then
     accepting the new reward function with probability proportional to how much better they explain the given trajectories. 
@@ -247,7 +254,7 @@ def policy_walk(R, states, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2):
     Returns:
         _type_: _description_
     """
-    for epoch in tqdm(range(epochs)):
+    for epoch in tqdm(range(epochs), desc='Iterating over epochs'):
         add = np.random.rand(R.shape[0]).astype(R.dtype) * (delta / 2)
         R_ = R + add
         Q_moves = np.zeros(len(states))
@@ -267,13 +274,16 @@ def policy_walk(R, states, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2):
             energy_old += Q_old
             energy_new += Q_new
 
-            i += 1
-
             log_prob = min(0, log_prob_dist(R_, energy_new, alpha=alpha) - log_prob_dist(R, energy_old, alpha=alpha))
 
             if np.sum(Q_policy < Q_moves):
                 if log_prob > -1e7 and np.random.rand(1).item() < np.exp(log_prob):
                     R = R_
+            if save_every is not None and i % save_every == 0:
+                pd.DataFrame(R_.reshape((-1, 1)), columns=['Result']).to_csv(join(save_path, f'{i}.csv'), index=False)
+
+            i += 1
+
     return R
 
 
@@ -308,7 +318,7 @@ def policy_walk_depth(R, boards, moves, delta=1e-3, epochs=10, depth_max=3, alph
         i = 0
         energy_new, energy_old = 0, 0
         for board, move in tqdm(zip(boards, moves), total=len(boards)):
-            board.push_san(move)
+            board.push(move)
             depth1 = softmax_choice(depth_dist)
             depth2 = softmax_choice(depth_dist_)
             _, Q_old = get_best_move(board=board, R=R, depth=depth1, timer=timer_moves, white=board.turn)
