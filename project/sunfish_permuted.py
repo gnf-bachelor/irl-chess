@@ -46,8 +46,8 @@ def run_sun(df,
 
 
 if __name__ == '__main__':
-    if os.getcwd().split('\\')[-1] != 'irl-chess':
-        os.chdir('../')
+    # if os.getcwd().split('\\')[-1] != 'irl-chess':
+    #     os.chdir('../')
     from project import policy_walk, get_midgame_boards, get_best_move, piece, download_lichess_pgn
 
     n_files = 2
