@@ -46,6 +46,8 @@ def square2sunfish(square):
 # Normal moves assumed to be in format 'e4e5', promotions
 # assumed to be eg. 'e7e8=Q'
 def str_to_sunfish_move(move):
+    if not isinstance(move, str):
+        move = move.uci()
     # Assert either normal move or promotion
     assert (len(move) == 4 or len(move) == 6), 'Move must be 4 or 6 chars long'
     i = square2sunfish(move[:2])
