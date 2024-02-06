@@ -8,7 +8,7 @@
 [X]    Segment Lichess dataset and make it amenable to Bayesian IRL algorithm.
 [ ]        Begin with a small sample.
 [ ]    Go through Berkely Deep RL course
-[ ]    Read and understand reading list
+[ ]    Read and understand reading list (see reading list section)
 
 
 
@@ -31,3 +31,15 @@
     Submission deadline    
 
 ---- Relevant IRL papers reading list ----
+
+    - Bayesian Inverse Reinforcement Learning (The crutch of our project so far)
+
+Important/potentially project changing:
+    - Deep Bayesian Reward Learning
+    - Scalable Bayesian Inverse Reinforcement Learning
+    - Survey of Inverse Reinforcement Learning
+
+Less vital/useful background:
+    - Algorithms for Inverse Reinforcement Learning (original Andrew Yang paper)
+
+
