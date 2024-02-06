@@ -86,7 +86,8 @@ def alpha_beta_search(board,
         min_eval = np.inf
         for move in board.generate_legal_moves():
             board.push(move)
-            eval = alpha_beta_search(board, alpha=alpha, depth=depth - 1, maximize=True, R=R, evaluation_function=evaluation_function)
+            eval = alpha_beta_search(board, alpha=alpha, depth=depth - 1, maximize=True, R=R,
+                                     evaluation_function=evaluation_function)
             board.pop()
             min_eval = min(min_eval, eval)
             beta = min(beta, eval)
@@ -111,7 +112,8 @@ def get_best_move(board, R, depth=3, timer=False, evaluation_function=evaluate_b
     moves = tqdm([move for move in board.legal_moves]) if timer else board.legal_moves
     for move in moves:
         board.push(move)
-        Q = alpha_beta_search(board, alpha=alpha, depth=depth - 1, maximize=not white, R=R, evaluation_function=evaluation_function)
+        Q = alpha_beta_search(board, alpha=alpha, depth=depth - 1, maximize=not white, R=R,
+                              evaluation_function=evaluation_function)
         board.pop()
         if Q > alpha:
             alpha = Q
@@ -135,9 +137,9 @@ def board_to_array(board, material_dict=None, tensor=False, dtype=np.int8):
         material_dict = {i: i for i in range(1, 7)}
     arr = np.zeros(64, dtype=dtype)
     for square in chess.SQUARES:
-            piece = board.piece_at(square)
-            if piece is not None:
-                arr[square] = material_dict[piece.piece_type] * (1 if piece.color else -1)
+        piece = board.piece_at(square)
+        if piece is not None:
+            arr[square] = material_dict[piece.piece_type] * (1 if piece.color else -1)
     # arr = arr.reshape((8, 8))     # Need a reason to reshape
     return arr if not tensor else torch.tensor(arr)
 
@@ -211,6 +213,7 @@ def depth_first_search(starting_board: chess.Board,
 
     return boards_not_seen, boards_seen
 
+
 def softmax_choice(x):
     """
     Returns an index based on the softmax of x and add 1 to ensure 
@@ -221,9 +224,11 @@ def softmax_choice(x):
     choice = np.random.choice(np.arange(len(x)), p=softmax(x))
     return choice + 1
 
+
 def log_prob_dist(R, energy, alpha, prior=lambda R: 1):
     log_prob = alpha * energy + np.log(prior(R))
     return log_prob
+
 
 def policy_walk(R, states, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2):
     """ Policy walk algorithm over given class of reward functions.
@@ -232,7 +237,7 @@ def policy_walk(R, states, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2):
 
     Args:
         R (_type_): The reward function (heuristic for statically evaluation a board).
-        states (_type_): _description_
+        states (_type_): list of chess.Move() objects
         moves (_type_): _description_
         delta (_type_, optional): _description_. Defaults to 1e-3.
         epochs (int, optional): _description_. Defaults to 10.
@@ -249,16 +254,16 @@ def policy_walk(R, states, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2):
         Q_policy = np.zeros(len(states))
         i = 0
         energy_new, energy_old = 0, 0
-        for state, move in tqdm(zip(states, moves), total=len(states), desc = 'Policy walking over reward functions'):
-            state.push_san(move)
-            _, Q_old = get_best_move(board=state, R=R, depth=depth-1)
-            _, Q_new = get_best_move(board=state, R=R_, depth=depth-1)
+        for state, move in tqdm(zip(states, moves), total=len(states), desc='Policy walking over reward functions'):
+            state.push(move)
+            _, Q_old = get_best_move(board=state, R=R, depth=depth - 1)
+            _, Q_new = get_best_move(board=state, R=R_, depth=depth - 1)
             state.pop()
             # _, Q_old_energy = get_best_move(board=state, R=R, depth=depth)
-            
+
             Q_moves[i] = Q_old
             Q_policy[i] = Q_new
-            
+
             energy_old += Q_old
             energy_new += Q_new
 
@@ -272,7 +277,8 @@ def policy_walk(R, states, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2):
     return R
 
 
-def policy_walk_depth(R, boards, moves, delta=1e-3, epochs=10, depth_max=3, alpha=2e-2, time_max=np.inf, timer_moves=False):
+def policy_walk_depth(R, boards, moves, delta=1e-3, epochs=10, depth_max=3, alpha=2e-2, time_max=np.inf,
+                      timer_moves=False):
     """ Policy walk algorithm over the depth of the search.
     Begins with a uniform distribution over search depths and iterates by perterbing each dimension uniformly and then
     accepting the new softmax distribution of search depths with probability proportional to how much better they explain the given trajectories. 
@@ -294,7 +300,8 @@ def policy_walk_depth(R, boards, moves, delta=1e-3, epochs=10, depth_max=3, alph
     depth_dist = np.ones(depth_max)
     start = time()
     for epoch in tqdm(range(epochs)):
-        add = np.random.uniform(low=-delta, high=delta, size=depth_dist.shape[0]).astype(depth_dist.dtype) # * (delta / 2)
+        add = np.random.uniform(low=-delta, high=delta, size=depth_dist.shape[0]).astype(
+            depth_dist.dtype)  # * (delta / 2)
         depth_dist_ = depth_dist + add
         Q_moves = np.zeros(len(boards))
         Q_policy = np.zeros(len(boards))
@@ -309,20 +316,22 @@ def policy_walk_depth(R, boards, moves, delta=1e-3, epochs=10, depth_max=3, alph
             if Q_new is None or Q_old is None:
                 continue
             board.pop()
-            
+
             Q_moves[i] = Q_old
             Q_policy[i] = Q_new
-            
+
             energy_old += Q_old
             energy_new += Q_new
 
             i += 1
             # prob = min(1, prob_dist(depth_dist_, energy_new, alpha=alpha)/prob_dist(depth_dist, energy_old, alpha=alpha))
 
-            log_prob = min(0, log_prob_dist(depth_dist_, energy_new, alpha=alpha) - log_prob_dist(depth_dist, energy_old, alpha=alpha))
-            
+            log_prob = min(0,
+                           log_prob_dist(depth_dist_, energy_new, alpha=alpha) - log_prob_dist(depth_dist, energy_old,
+                                                                                               alpha=alpha))
+
             if np.sum(Q_policy < Q_moves):
-                if log_prob > -1e7 and np.random.rand(1).item() < np.exp(log_prob): 
+                if log_prob > -1e7 and np.random.rand(1).item() < np.exp(log_prob):
                     depth_dist = copy(depth_dist_)
             if start - time() > time_max:
                 return depth_dist
