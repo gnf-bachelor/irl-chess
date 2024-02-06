@@ -43,6 +43,18 @@ def square2sunfish(square):
     sf_square = 90 - row * 10 + col
     return sf_square
 
+# Normal moves assumed to be in format 'e4e5', promotions
+# assumed to be eg. 'e7e8=Q'
+def str_to_sunfish_move(move):
+    if not isinstance(move, str):
+        move = move.uci()
+    # Assert either normal move or promotion
+    assert (len(move) == 4 or len(move) == 6), 'Move must be 4 or 6 chars long'
+    i = square2sunfish(move[:2])
+    j = square2sunfish(move[2:4])
+    prom = move[5] if len(move) > 4 else ''
+    return Move(i, j, prom)
+
 # Takes a board object and returns the position
 # in the format sunfish uses. Mangler score.
 def board2sunfish(board):
