@@ -49,3 +49,48 @@ def get_best_move_sunfish(board, R, depth=3, timer=False):
             alpha = Q
             best_move = move
     return best_move, Q
+
+# takes squares in the form 'a2', 'g3' etc. and returns
+# the number used to represent it in sunfish.
+def square2sunfish(square):
+    assert len(square) == 2
+    col, row = list(square)
+    row = int(row) - 1
+    col = 'abcdefgh'.find(col.lower()) + 1
+    sf_square = 90 - row * 10 + col
+    return sf_square
+
+# Takes a board object and returns the position
+# in the format sunfish uses. Mangler score.
+def board2sunfish(board):
+    fen = board.fen()
+
+    board_string, to_move, castling, ep, half_move, full_move = fen.split()
+
+    start = '         \n         \n '
+    end = '         \n         \n'
+    board_string = board_string.replace('/', '\n ')
+    board_string = start + board_string + end
+    for char in board_string:
+        if char in '123456789':
+            board_string = board_string.replace(char, int(char) * '.')
+
+    score = 0
+
+    wc = ('Q' in castling, 'K' in castling)
+    bc = ('q' in castling, 'k' in castling)
+
+    if ep == '-':
+        ep = 0
+    else:
+        ep = square2sunfish(ep)
+
+    kp = 0
+
+    # Reverse if black to move
+    if to_move == 'b':
+        return Position(board_string[::-1].swapcase(), -score, bc, wc,
+                        119 - ep if ep else 0,
+                        119 - kp if kp else 0)
+
+    return Position(board_string, score, wc, bc, ep, kp)
