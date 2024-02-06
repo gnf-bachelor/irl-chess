@@ -11,3 +11,4 @@ requests
 jupyter
 pyzstd
 pytorch-lightning
+scipy

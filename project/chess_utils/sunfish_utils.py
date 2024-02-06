@@ -1,3 +1,6 @@
+import numpy as np
+from tqdm import tqdm
+
 from project.chess_utils.sunfish import Position, Move, Searcher, render
 from time import time
 
@@ -32,6 +35,20 @@ def sunfish_move_to_str(move: Move, is_black:bool=False):
         i, j = 119 - i, 119 - j
     move_str = render(i) + render(j) + move.prom.lower()
     return move_str
+
+
+def get_best_move_sunfish(board, R, depth=3, timer=False):
+    best_move, Q = None, None
+    alpha = -np.inf
+    moves = tqdm([move for move in board.legal_moves]) if timer else board.legal_moves
+    for move in moves:
+        board.push(move)
+        Q = alpha_beta_search(board, alpha=alpha, depth=depth-1, maximize=True, R=R)
+        board.pop()
+        if Q > alpha:
+            alpha = Q
+            best_move = move
+    return best_move, Q
 
 # takes squares in the form 'a2', 'g3' etc. and returns
 # the number used to represent it in sunfish.
