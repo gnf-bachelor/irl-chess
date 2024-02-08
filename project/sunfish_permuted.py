@@ -75,9 +75,9 @@ def get_sunfish_moves(boards, depth, out_path):
     return boards, moves_sunfish
 
 
-def plot_weights(n_boards, save_every, out_path, start_idx=0):
+def plot_weights(n_boards, save_every, out_path, start_idx=0, ignore_king=True):
     weights = []
-    X = np.repeat(np.arange(start_idx, n_boards+1, save_every), 6).reshape((-1, 6))
+    X = np.repeat(np.arange(start_idx, n_boards+1, save_every), 6-ignore_king).reshape((-1, 6-ignore_king))
     for i in range(start_idx, n_boards+1, save_every):
         path = os.path.join(out_path, f'{i}.csv')
         if os.path.exists(path):
@@ -87,7 +87,7 @@ def plot_weights(n_boards, save_every, out_path, start_idx=0):
         weights.append(df.values.flatten())
     weights = np.array(weights)
 
-    plt.plot(X, np.array(weights))
+    plt.plot(X, np.array(weights)[:, :6-ignore_king])
     plt.title('Sunfish weights over time')
     plt.xlabel('Number of boards seen')
     plt.ylabel('Weight values')

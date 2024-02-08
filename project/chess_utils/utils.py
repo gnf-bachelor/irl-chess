@@ -173,7 +173,7 @@ def get_midgame_boards(df,
         moveset_split = moveset.split(',')[:-2]
         if len(moveset_split) > n_steps and (min_elo <= int(elo_w) <= max_elo) and (min_elo <= int(elo_b) <= max_elo):
             try:
-                for move in moveset_split[:-1]:
+                for i, move in enumerate(moveset_split[:-1]):
                     board.push_san(move)
                 board.push_san(moveset_split[-1])
                 if len([el for el in board.generate_legal_moves()]):
@@ -261,7 +261,7 @@ def policy_walk(R, states, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, pe
         for state, move in tqdm(zip(states, moves), total=len(states), desc='Policy walking over reward functions'):
             R_ = R
             if permute_all:
-                add = np.random.rand(R.shape[0] - 1).astype(R.dtype) * (delta / 2)
+                add = np.random.uniform(low=-delta, high=delta, size=R.shape[0] - 1).astype(R.dtype)
                 R_[1:] += add
             else:
                 choice = np.random.choice(np.arange(len(R_)))
