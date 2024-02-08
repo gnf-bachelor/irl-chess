@@ -1,2 +1,2 @@
-Directories in this folder are named min elo-max elo-search dept-number of boards
+Directories in this folder are named permute all - min elo - max elo - search dept - number of boards
     - Files are named after the order in which they are created

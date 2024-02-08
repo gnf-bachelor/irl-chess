@@ -267,8 +267,8 @@ def policy_walk(R, states, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, pe
                 choice = np.random.choice(np.arange(len(R_)))
                 R_[choice] += np.random.rand(1).item() * (delta / 2)
             state.push_san(move) if san else state.push(move)
-            _, Q_old = get_best_move(board=state, R=R, depth=depth - 1)
-            _, Q_new = get_best_move(board=state, R=R_, depth=depth - 1)
+            _, Q_old = get_best_move(board=state, R=R, depth=depth)
+            _, Q_new = get_best_move(board=state, R=R_, depth=depth)
             if Q_old is not None and Q_new is not None:
                 state.pop()
                 # _, Q_old_energy = get_best_move(board=state, R=R, depth=depth)
@@ -285,7 +285,7 @@ def policy_walk(R, states, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, pe
                     p = np.random.rand(1).item()
                     if log_prob > -1e7 and p < np.exp(log_prob):
                         R = R_
-                if save_every is not None and i + 1 % save_every == 0:
+                if save_every is not None and i % save_every == 0:
                     pd.DataFrame(R_.reshape((-1, 1)), columns=['Result']).to_csv(join(save_path, f'{i}.csv'), index=False)
 
                 i += 1
