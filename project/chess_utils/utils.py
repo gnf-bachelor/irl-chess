@@ -98,7 +98,7 @@ def alpha_beta_search(board,
         return min_eval
 
 
-def get_best_move(board, R, depth=3, timer=False, evaluation_function=evaluate_board, white=True):
+def get_best_move(board, R, depth=3, timer=False, evaluation_function=evaluate_board, white=True, san=False):
     """
 
     :param board:
@@ -119,7 +119,7 @@ def get_best_move(board, R, depth=3, timer=False, evaluation_function=evaluate_b
         board.pop()
         if Q > alpha:
             alpha = Q
-            best_move = move
+            best_move = board.san(move) if san else move
     return best_move, Q
 
 
@@ -236,7 +236,7 @@ def log_prob_dist(R, energy, alpha, prior=lambda R: 1):
     return log_prob
 
 
-def policy_walk(R, states, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, save_every=None, save_path=None):
+def policy_walk(R, states, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, permute_all=True, save_every=None, save_path=None, san=True):
     """ Policy walk algorithm over given class of reward functions.
     Iterates over the initial reward function by perterbing each dimension uniformly and then
     accepting the new reward function with probability proportional to how much better they explain the given trajectories. 
@@ -254,14 +254,19 @@ def policy_walk(R, states, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, sa
         _type_: _description_
     """
     for epoch in tqdm(range(epochs), desc='Iterating over epochs'):
-        add = np.random.rand(R.shape[0]).astype(R.dtype) * (delta / 2)
-        R_ = R + add
+        i = 0
         Q_moves = np.zeros(len(states))
         Q_policy = np.zeros(len(states))
-        i = 0
         energy_new, energy_old = 0, 0
         for state, move in tqdm(zip(states, moves), total=len(states), desc='Policy walking over reward functions'):
-            state.push(move)
+            R_ = R
+            if permute_all:
+                add = np.random.rand(R.shape[0] - 1).astype(R.dtype) * (delta / 2)
+                R_[1:] += add
+            else:
+                choice = np.random.choice(np.arange(len(R_)))
+                R_[choice] += np.random.rand(1).item() * (delta / 2)
+            state.push_san(move) if san else state.push(move)
             _, Q_old = get_best_move(board=state, R=R, depth=depth - 1)
             _, Q_new = get_best_move(board=state, R=R_, depth=depth - 1)
             if Q_old is not None and Q_new is not None:
@@ -277,9 +282,10 @@ def policy_walk(R, states, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, sa
                 log_prob = min(0, log_prob_dist(R_, energy_new, alpha=alpha) - log_prob_dist(R, energy_old, alpha=alpha))
 
                 if np.sum(Q_policy < Q_moves):
-                    if log_prob > -1e7 and np.random.rand(1).item() < np.exp(log_prob):
+                    p = np.random.rand(1).item()
+                    if log_prob > -1e7 and p < np.exp(log_prob):
                         R = R_
-                if save_every is not None and i % save_every == 0:
+                if save_every is not None and i + 1 % save_every == 0:
                     pd.DataFrame(R_.reshape((-1, 1)), columns=['Result']).to_csv(join(save_path, f'{i}.csv'), index=False)
 
                 i += 1
@@ -310,14 +316,15 @@ def policy_walk_depth(R, boards, moves, delta=1e-3, epochs=10, depth_max=3, alph
     depth_dist = np.ones(depth_max)
     start = time()
     for epoch in tqdm(range(epochs)):
-        add = np.random.uniform(low=-delta, high=delta, size=depth_dist.shape[0]).astype(
-            depth_dist.dtype)  # * (delta / 2)
-        depth_dist_ = depth_dist + add
         Q_moves = np.zeros(len(boards))
         Q_policy = np.zeros(len(boards))
         i = 0
         energy_new, energy_old = 0, 0
         for board, move in tqdm(zip(boards, moves), total=len(boards)):
+            add = np.random.uniform(low=-delta, high=delta, size=depth_dist.shape[0]).astype(
+                depth_dist.dtype)  # * (delta / 2)
+            depth_dist_ = depth_dist + add
+
             board.push(move)
             depth1 = softmax_choice(depth_dist)
             depth2 = softmax_choice(depth_dist_)
