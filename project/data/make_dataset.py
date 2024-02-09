@@ -152,33 +152,28 @@ def download_lichess_pgn(websites_filepath, file_path_data, n_files=np.inf, over
     os.makedirs(file_path_data, exist_ok=True)
     start = time.time()
     filepaths_csv = []
-    try:
-        with open(websites_filepath, 'r') as filename:
-            urls = filename.readlines()
-            urls = [url.strip() for url in urls]
+    with open(websites_filepath, 'r') as filename:
+        urls = filename.readlines()
+        urls = [url.strip() for url in urls]
 
-        for i, url in enumerate(urls, start=1):
-            start_file = time.time()
-            destination = join(file_path_data, url.split("/")[-1])
-            print(f'\n\n-------------------  {i}/{len(urls)}  -------------------\n\n')
-            filepath_out = destination[:-4]
-            if overwrite or not os.path.exists(filepath_out):
-                os.makedirs(filepath_out, exist_ok=True)
-                print('Filepath_out:', filepath_out)
-                if download_file(url, destination):
-                    decompress_zstd(destination, extract_path=filepath_out)
-            filepath_csv = txt_to_csv(filepath_out, overwrite=overwrite)
-            filepaths_csv.append(filepath_csv)
-            print(f'Time taken: {time.time() - start_file:.2f} seconds for file')
-            print(f'Time taken: {time.time() - start:.2f} seconds in total')
+    for i, url in enumerate(urls, start=1):
+        start_file = time.time()
+        destination = join(file_path_data, url.split("/")[-1])
+        print(f'\n\n-------------------  {i}/{len(urls)}  -------------------\n\n')
+        filepath_out = destination[:-4]
+        if overwrite or not os.path.exists(filepath_out):
+            os.makedirs(filepath_out, exist_ok=True)
+            print('Filepath_out:', filepath_out)
+            if download_file(url, destination):
+                decompress_zstd(destination, extract_path=filepath_out)
+        filepath_csv = txt_to_csv(filepath_out, overwrite=overwrite)
+        filepaths_csv.append(filepath_csv)
+        print(f'Time taken: {time.time() - start_file:.2f} seconds for file')
+        print(f'Time taken: {time.time() - start:.2f} seconds in total')
 
-            if i == n_files:
-                break
+        if i == n_files:
+            break
 
-    except FileNotFoundError:
-        print(f"File not found: {websites_filepath}")
-    except Exception as e:
-        print(f"An error occurred: {e}")
     return filepaths_csv
 
 
