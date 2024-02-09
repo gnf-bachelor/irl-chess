@@ -71,13 +71,13 @@ def alpha_beta_search(board,
     :return:
     """
     if depth == 0 or board.is_game_over():
-        return evaluation_function(board, R, maximize)
+        return evaluation_function(board, R, maximize), board
 
     if maximize:
         max_eval = -np.inf
         for move in board.generate_legal_moves():
             board.push(move)
-            eval = alpha_beta_search(board, depth - 1, alpha, beta, False, R=R, evaluation_function=evaluation_function)
+            eval, _ = alpha_beta_search(board, depth - 1, alpha, beta, False, R=R, evaluation_function=evaluation_function)
             board.pop()
             max_eval = max(max_eval, eval)
             alpha = max(alpha, eval)
@@ -88,7 +88,7 @@ def alpha_beta_search(board,
         min_eval = np.inf
         for move in board.generate_legal_moves():
             board.push(move)
-            eval = alpha_beta_search(board, alpha=alpha, depth=depth - 1, maximize=True, R=R,
+            eval, _ = alpha_beta_search(board, alpha=alpha, depth=depth - 1, maximize=True, R=R,
                                      evaluation_function=evaluation_function)
             board.pop()
             min_eval = min(min_eval, eval)
@@ -106,7 +106,7 @@ def get_best_move(board, R, depth=3, timer=False, evaluation_function=evaluate_b
     :param depth:
     :param timer:
     :param evaluation_function:
-    :param white:               Is it white's turn to make a move
+    :param white:               Is it white's turn to make a move?
     :return:
     """
     best_move, Q = None, None
@@ -236,14 +236,14 @@ def log_prob_dist(R, energy, alpha, prior=lambda R: 1):
     return log_prob
 
 
-def policy_walk(R, states, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, permute_all=True, save_every=None, save_path=None, san=True):
+def policy_walk(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, permute_all=True, save_every=None, save_path=None, san=True):
     """ Policy walk algorithm over given class of reward functions.
     Iterates over the initial reward function by perterbing each dimension uniformly and then
     accepting the new reward function with probability proportional to how much better they explain the given trajectories. 
 
     Args:
         R (_type_): The reward function (heuristic for statically evaluation a board).
-        states (_type_): list of chess.Move() objects
+        boards (_type_): list of chess.Move() objects
         moves (_type_): _description_
         delta (_type_, optional): _description_. Defaults to 1e-3.
         epochs (int, optional): _description_. Defaults to 10.
@@ -255,10 +255,10 @@ def policy_walk(R, states, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, pe
     """
     for epoch in tqdm(range(epochs), desc='Iterating over epochs'):
         i = 0
-        Q_moves = np.zeros(len(states))
-        Q_policy = np.zeros(len(states))
+        Q_moves = np.zeros(len(boards))
+        Q_policy = np.zeros(len(boards))
         energy_new, energy_old = 0, 0
-        for state, move in tqdm(zip(states, moves), total=len(states), desc='Policy walking over reward functions'):
+        for board, move in tqdm(zip(boards, moves), total=len(boards), desc='Policy walking over reward functions'):
             R_ = R
             if permute_all:
                 add = np.random.uniform(low=-delta, high=delta, size=R.shape[0] - 1).astype(R.dtype)
@@ -266,11 +266,17 @@ def policy_walk(R, states, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, pe
             else:
                 choice = np.random.choice(np.arange(len(R_)))
                 R_[choice] += np.random.rand(1).item() * (delta / 2)
-            state.push_san(move) if san else state.push(move)
-            _, Q_old = get_best_move(board=state, R=R, depth=depth)
-            _, Q_new = get_best_move(board=state, R=R_, depth=depth)
+            board.push_san(move) if san else board.push(move)
+            # First we get the board from the state/action pair seen in the data using the old weights
+            _, board_old, = alpha_beta_search(board=board, R=R, depth=depth-1, maximize=board.turn)
+            # Then we evaluate the found board using the new weights
+            Q_new = evaluate_board(board=board_old, R=R_, white=board_old.turn)     # Q^pi(s,a,R_)
+            board.pop()
+            # Finally we calculate the Q-value of the old policy on the state without the original move
+            _, board_old_, = alpha_beta_search(board=board, R=R, depth=depth, maximize=board.turn)
+            Q_old = evaluate_board(board=board, R=R_, white=board_old_.turn)    # Q^pi(s,pi(s),R_)
+
             if Q_old is not None and Q_new is not None:
-                state.pop()
                 # _, Q_old_energy = get_best_move(board=state, R=R, depth=depth)
 
                 Q_moves[i] = Q_old
