@@ -1,2 +1,3 @@
-Directories in this folder are named permute all - min elo - max elo - search dept - number of boards
+Directories in this folder are named
+    permute all - min elo - max elo - search dept - number of boards - delta - R_noisy_vals (if int)
     - Files are named after the order in which they are created

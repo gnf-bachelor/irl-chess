@@ -107,10 +107,10 @@ if __name__ == '__main__':
 
     just_plot = False
     n_files = 6
-    min_elo = 1000
+    min_elo = 1100  # 1100 rn for 100 not permute_all
     max_elo = 1200
     delta = 20.
-    n_boards = 20
+    n_boards = 200
     search_depth = 3
     epochs = 100
     save_every = 1
@@ -119,7 +119,8 @@ if __name__ == '__main__':
 
     if just_plot:
         path_result = join(os.getcwd(), 'models', 'sunfish_permuted')
-        out_path = join(path_result, f'{permute_all}-{min_elo}-{max_elo}-{search_depth}-{n_boards}-{delta}-{R_noisy_vals}')
+        out_path = join(path_result, f'{permute_all}-{min_elo}-{max_elo}-{search_depth}-{n_boards}-{delta}'
+                        + (f'-{R_noisy_vals}' if type(R_noisy_vals) is int else ''))
         plot_weights(epochs=epochs, save_every=save_every, out_path=out_path)
     else:
         websites_filepath = join(os.getcwd(), 'downloads', 'lichess_websites.txt')
