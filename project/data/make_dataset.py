@@ -110,7 +110,7 @@ def txt_to_csv(filename, overwrite=True):
     :return:
     """
     filename_out = filename[:-4].replace('raw', 'processed') + '.csv'
-    os.makedirs(filename_out.replace(filename_out.split('\\')[-1], ''), exist_ok=True)
+    os.makedirs(os.path.dirname(filename_out), exist_ok=True)
     if not overwrite and os.path.exists(filename_out):
         print(f'{filename_out} already exists and was not changed')
         return filename_out
