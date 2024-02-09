@@ -1,9 +1,8 @@
 import numpy as np
 from tqdm import tqdm
 
-from project.chess_utils.sunfish import Position, Move, Searcher, render
+from project.chess_utils.sunfish import Position, Move, Searcher, render, pst
 from time import time
-
 
 def sunfish_move(searcher: Searcher, hist: list[Position], time_limit:float=1., ) -> tuple[Move, dict]:
     """
