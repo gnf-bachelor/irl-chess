@@ -120,7 +120,7 @@ def get_best_move(board, R, depth=3, timer=False, evaluation_function=evaluate_b
         if Q > alpha:
             alpha = Q
             best_move = board.san(move) if san else move
-    return best_move, Q
+    return best_move, alpha
 
 
 def get_board_arrays(game_moves):
