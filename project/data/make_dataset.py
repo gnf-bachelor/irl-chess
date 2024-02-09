@@ -149,6 +149,7 @@ def download_lichess_pgn(websites_filepath, file_path_data, n_files=np.inf, over
     :param overwrite:
     :return:
     """
+    os.makedirs(file_path_data, exist_ok=True)
     start = time.time()
     filepaths_csv = []
     try:
