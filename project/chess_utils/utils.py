@@ -9,7 +9,7 @@ from tqdm import tqdm
 from time import time
 from copy import copy
 from project.chess_utils.sunfish_utils import board2sunfish
-from project.chess_utils.sunfish import piece, pst
+from project.chess_utils.sunfish import piece, pst, pst_only
 from scipy.special import softmax
 
 material_dict = {
@@ -20,12 +20,6 @@ material_dict = {
     chess.QUEEN: 9,
     chess.KING: 0  # The value for the king is typically set to 0 in material evaluation
 }
-
-# pst eval added for black
-pst_only = pst
-for piece in pst.keys():
-    piece_array = -np.array(pst[piece]).reshape((8, 8))[np.arange(7, -1, -1)]
-    pst_only[piece.lower()] = tuple(piece_array.reshape((-1)))
 
 def set_board(moves: list[str]):
     board = chess.Board()
@@ -41,7 +35,7 @@ def eval_pst_only(board):
         if char == '.':
             continue
         else:
-            eval += pst[char][i]
+            eval += pst_only[char][i]
     return eval
 
 def evaluate_board(board, R, white=False):
