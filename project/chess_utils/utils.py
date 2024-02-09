@@ -86,25 +86,25 @@ def alpha_beta_search(board,
         max_eval = -np.inf
         for move in board.generate_legal_moves():
             board.push(move)
-            eval, _ = alpha_beta_search(board, depth - 1, alpha, beta, False, R=R, evaluation_function=evaluation_function)
+            eval, board_last = alpha_beta_search(board, depth - 1, alpha, beta, False, R=R, evaluation_function=evaluation_function)
             board.pop()
             max_eval = max(max_eval, eval)
             alpha = max(alpha, eval)
             if beta <= alpha:
                 break  # Beta cut-off
-        return max_eval
+        return max_eval, board_last
     else:
         min_eval = np.inf
         for move in board.generate_legal_moves():
             board.push(move)
-            eval, _ = alpha_beta_search(board, alpha=alpha, depth=depth - 1, maximize=True, R=R,
+            eval, board_last = alpha_beta_search(board, alpha=alpha, depth=depth - 1, maximize=True, R=R,
                                      evaluation_function=evaluation_function)
             board.pop()
             min_eval = min(min_eval, eval)
             beta = min(beta, eval)
             if beta <= alpha:
                 break  # Alpha cut-off
-        return min_eval
+        return min_eval, board_last
 
 
 def get_best_move(board, R, depth=3, timer=False, evaluation_function=evaluate_board, white=True, san=False):
@@ -123,7 +123,7 @@ def get_best_move(board, R, depth=3, timer=False, evaluation_function=evaluate_b
     moves = tqdm([move for move in board.legal_moves]) if timer else board.legal_moves
     for move in moves:
         board.push(move)
-        Q = alpha_beta_search(board, alpha=alpha, depth=depth - 1, maximize=not white, R=R,
+        Q, _ = alpha_beta_search(board, alpha=alpha, depth=depth - 1, maximize=not white, R=R,
                               evaluation_function=evaluation_function)
         board.pop()
         if Q > alpha:
@@ -264,46 +264,56 @@ def policy_walk(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, pe
     """
     for epoch in tqdm(range(epochs), desc='Iterating over epochs'):
         i = 0
-        Q_moves = np.zeros(len(boards))
-        Q_policy = np.zeros(len(boards))
-        energy_new, energy_old = 0, 0
+        Q_newR_O = np.zeros(len(boards))
+        Q_newR_DO = np.zeros(len(boards))
+        Q_boards_oldR_DO_list = []
+        energy_newR_DO, energy_oldR_DO = 0, 0
+
+        R_ = R
+        if permute_all:
+            add = np.random.uniform(low=-delta, high=delta, size=R.shape[0] - 1).astype(R.dtype)
+            R_[1:] += add
+        else:
+            choice = np.random.choice(np.arange(len(R_)))
+            R_[choice] += np.random.rand(1).item() * (delta / 2)
+
         for board, move in tqdm(zip(boards, moves), total=len(boards), desc='Policy walking over reward functions'):
-            R_ = R
-            if permute_all:
-                add = np.random.uniform(low=-delta, high=delta, size=R.shape[0] - 1).astype(R.dtype)
-                R_[1:] += add
-            else:
-                choice = np.random.choice(np.arange(len(R_)))
-                R_[choice] += np.random.rand(1).item() * (delta / 2)
+
             board.push_san(move) if san else board.push(move)
             # First we get the board from the state/action pair seen in the data using the old weights
-            _, board_old, = alpha_beta_search(board=board, R=R, depth=depth-1, maximize=board.turn)
+            if len(Q_boards_oldR_DO_list):
+                Q_oldR_DO_policy, board_old = Q_boards_oldR_DO_list[i]
+            else:
+                Q_oldR_DO_policy, board_old, = alpha_beta_search(board=board, R=R, depth=depth-1, maximize=board.turn)
             # Then we evaluate the found board using the new weights
-            Q_new = evaluate_board(board=board_old, R=R_, white=board_old.turn)     # Q^pi(s,a,R_)
+            Q_newR_DO_policy = evaluate_board(board=board_old, R=R_, white=board_old.turn)     # Q^pi(s,a,R_)
             board.pop()
             # Finally we calculate the Q-value of the old policy on the state without the original move
             _, board_old_, = alpha_beta_search(board=board, R=R, depth=depth, maximize=board.turn)
-            Q_old = evaluate_board(board=board, R=R_, white=board_old_.turn)    # Q^pi(s,pi(s),R_)
+            Q_newR_O_policy = evaluate_board(board=board, R=R_, white=board_old_.turn)    # Q^pi(s,pi(s),R_)
 
-            if Q_old is not None and Q_new is not None:
-                # _, Q_old_energy = get_best_move(board=state, R=R, depth=depth)
+            Q_newR_O[i] = Q_newR_O_policy     # Q^pi(s,pi(s),R_)
+            Q_newR_DO[i] = Q_newR_DO_policy   # Q^pi(s,a,R_)
 
-                Q_moves[i] = Q_old
-                Q_policy[i] = Q_new
+            energy_oldR_DO += Q_oldR_DO_policy
+            energy_newR_DO += Q_newR_DO_policy
+            i += 1
 
-                energy_old += Q_old
-                energy_new += Q_new
+        if np.sum(Q_newR_DO < Q_newR_O):
+            energy_newR_DN = 0
+            for board, move in tqdm(zip(boards, moves), total=len(boards), desc='Calculating Q-values for new Policy'):
+                Q_newR_DN_policy, board_newR_DN = alpha_beta_search(board=board, R=R_, depth=depth, maximize=board.turn)
+                Q_boards_oldR_DO_list.append((Q_newR_DN_policy, board_newR_DN))
+                energy_newR_DN += Q_newR_DN_policy
+            log_prob = min(0, log_prob_dist(R_, energy_newR_DN, alpha=alpha) - log_prob_dist(R, energy_oldR_DO, alpha=alpha))
+        else:
+            log_prob = min(0, log_prob_dist(R_, energy_newR_DO, alpha=alpha) - log_prob_dist(R, energy_oldR_DO, alpha=alpha))
 
-                log_prob = min(0, log_prob_dist(R_, energy_new, alpha=alpha) - log_prob_dist(R, energy_old, alpha=alpha))
-
-                if np.sum(Q_policy < Q_moves):
-                    p = np.random.rand(1).item()
-                    if log_prob > -1e7 and p < np.exp(log_prob):
-                        R = R_
-                if save_every is not None and i % save_every == 0:
-                    pd.DataFrame(R_.reshape((-1, 1)), columns=['Result']).to_csv(join(save_path, f'{i}.csv'), index=False)
-
-                i += 1
+        p = np.random.rand(1).item()
+        if log_prob > -1e7 and p < np.exp(log_prob):
+            R = R_
+        if save_every is not None and epoch % save_every == 0:
+            pd.DataFrame(R_.reshape((-1, 1)), columns=['Result']).to_csv(join(save_path, f'{epoch}.csv'), index=False)
 
     return R
 
