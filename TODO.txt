@@ -1,6 +1,6 @@
 ---- Current tasks ----
 [x]    Get sunfish up and running.
-[ ]        Write trainable alpha-beta search function weighted with BIRL heuristics.
+[x]        Write trainable alpha-beta search function weighted with BIRL heuristics.
 [ ]        Combine the two by permuting the weights and using the function to approximate the true ones
 [ ]            Evaluate performance
 [ ]                Evaluate heuristics qualitatively for different trained chess engines.
@@ -9,6 +9,12 @@
 [ ]        Begin with a small sample.
 [ ]    Go through Berkely Deep RL course
 [ ]    Read and understand reading list (see reading list section)
+
+[ ]     Consider GAN like architecture with descriminator for policy moves and data moves 
+            (optimize reward function to distinguish between policy moves and data moves,
+            policy is then informed by that reward function. Sample from that. Gradient step again.)
+                Figure out how this works and if we want to try it. 
+            
 
 
 
