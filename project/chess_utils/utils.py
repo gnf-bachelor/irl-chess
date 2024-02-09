@@ -281,7 +281,7 @@ def policy_walk(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, pe
             R_[1:] += add
         else:
             choice = np.random.choice(np.arange(len(R_)))
-            R_[choice] += np.random.rand(1).item() * (delta / 2)
+            R_[choice] += np.random.uniform(low=-delta, high=delta, size=1).item()
 
         for board, move in tqdm(zip(boards, moves), total=len(boards), desc='Policy walking over reward functions'):
 

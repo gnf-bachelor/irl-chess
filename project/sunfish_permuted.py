@@ -108,9 +108,9 @@ if __name__ == '__main__':
     min_elo = 1000
     max_elo = 1200
     delta = 20.
-    n_boards = 20
+    n_boards = 200
     search_depth = 3
-    epochs = 10
+    epochs = 100
     save_every = 1
     permute_all = 0     # 0/1 for true/false so it can be used in the filename
 
