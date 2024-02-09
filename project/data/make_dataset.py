@@ -163,6 +163,7 @@ def download_lichess_pgn(websites_filepath, file_path_data, n_files=np.inf, over
             print(f'\n\n-------------------  {i}/{len(urls)}  -------------------\n\n')
             filepath_out = destination[:-4]
             if overwrite or not os.path.exists(filepath_out):
+                os.makedirs(filepath_out, exist_ok=True)
                 if download_file(url, destination):
                     decompress_zstd(destination, extract_path=filepath_out)
             filepath_csv = txt_to_csv(filepath_out, overwrite=overwrite)
