@@ -182,4 +182,3 @@ wandb
 lightning_logs
 *.ckpt
 downloads/api_tokens
-models/sunfish_permuted
