@@ -47,7 +47,7 @@ def run_sun(df,
     R_ = policy_walk(R_noisy, boards, moves_sunfish, delta=1., epochs=epochs, save_every=save_every,
                      save_path=out_path)
 
-    plot_weights(n_boards, save_every, out_path)
+    plot_weights(epochs=epochs, save_every=save_every, out_path=out_path)
 
     return R_
 
@@ -75,16 +75,16 @@ def get_sunfish_moves(boards, depth, out_path):
     return boards, moves_sunfish
 
 
-def plot_weights(n_boards, save_every, out_path, start_idx=0, ignore_king=True):
+def plot_weights(epochs, save_every, out_path, start_idx=0, ignore_king=True):
     weights = []
-    X = np.repeat(np.arange(start_idx, n_boards+1, save_every), 6-ignore_king).reshape((-1, 6-ignore_king))
-    for i in range(start_idx, n_boards+1, save_every):
+    X = np.repeat(np.arange(start_idx, epochs + 1, save_every), 6 - ignore_king).reshape((-1, 6 - ignore_king))
+    for i in range(start_idx, epochs + 1, save_every):
         path = os.path.join(out_path, f'{i}.csv')
         if os.path.exists(path):
             df = pd.read_csv(path, index_col=None)
+            weights.append(df.values.flatten())
         else:
             print(f'Could not find weights at {i}')
-        weights.append(df.values.flatten())
     weights = np.array(weights)
 
     plt.plot(X, np.array(weights)[:, :6-ignore_king])
@@ -104,11 +104,11 @@ if __name__ == '__main__':
     n_files = 6
     min_elo = 1000
     max_elo = 1200
-    n_boards = 200
+    n_boards = 20
     search_depth = 3
-    epochs = 1
-    save_every = 10
-    permute_all = 1     # 0/1 for true/false so it can be used in the filename
+    epochs = 10
+    save_every = 1
+    permute_all = 0     # 0/1 for true/false so it can be used in the filename
 
     websites_filepath = join(os.getcwd(), 'downloads', 'lichess_websites.txt')
     file_path_data = join(os.getcwd(), 'data', 'raw')
