@@ -10,8 +10,9 @@
 [ ]    Go through Berkely Deep RL course
 [ ]    Read and understand reading list
 
-[ ]     Implement evaluation for king safety, pawn structure, etc.
-[ ]     Implement self-play for sunfish vs sunfish with moderated eval function.
+[ ]    Use pst in evaluation function.
+[ ]    Implement evaluation for king safety, pawn structure, etc.
+[ ]    Implement self-play for sunfish vs sunfish with moderated eval function.
 
 
 
