@@ -1,0 +1,12 @@
+{
+  "n_files": 6,
+  "min_elo": 1100,
+  "max_elo": 1200,
+  "delta": 20.0,
+  "n_boards": 200,
+  "search_depth": 3,
+  "epochs": 100,
+  "save_every": 1,
+  "permute_all": 0,
+  "R_noisy_vals": 100
+}
