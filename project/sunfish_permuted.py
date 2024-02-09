@@ -104,7 +104,7 @@ if __name__ == '__main__':
     websites_filepath = join(os.getcwd(), 'downloads', 'lichess_websites.txt')
     file_path_data = join(os.getcwd(), 'data', 'raw')
 
-    datapaths = download_lichess_pgn(websites_filepath, file_path_data, n_files=n_files, overwrite=False)
+    datapaths = download_lichess_pgn(websites_filepath, file_path_data, n_files=n_files, overwrite=True)
     df = pd.read_csv(datapaths[0], index_col=None)
     for path in tqdm(datapaths[1:], desc='Contatenating DataFrames'):
         df_ = pd.read_csv(path, index_col=None)
