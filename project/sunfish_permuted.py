@@ -10,9 +10,11 @@ import matplotlib.pyplot as plt
 
 def run_sun(df,
             R_sunfish,
+            search_depth=3,
             min_elo=1000,
             max_elo=1200,
             n_boards=1000,
+            delta=20.,
             permute_all=1,
             sd_noise=50,
             epochs=1,
@@ -32,7 +34,8 @@ def run_sun(df,
     """
 
     R_noisy = copy(R_sunfish)   # Keep the pawn constant:
-    R_noisy[1:] += np.random.normal(loc=0, scale=sd_noise, size=R_sunfish.shape[0] - 1)
+    R_noisy[1:] = 0
+    # R_noisy[1:] += np.random.normal(loc=0, scale=sd_noise, size=R_sunfish.shape[0] - 1)
 
     boards, _ = get_midgame_boards(df, n_boards, min_elo=min_elo, max_elo=max_elo, sunfish=False)
     n_boards = len(boards)
@@ -40,11 +43,11 @@ def run_sun(df,
 
     if path_result is None:
         path_result = join(os.getcwd(), 'models', 'sunfish_permuted')
-    out_path = join(path_result, f'{permute_all}-{min_elo}-{max_elo}-{search_depth}-{n_boards}')
+    out_path = join(path_result, f'{permute_all}-{min_elo}-{max_elo}-{search_depth}-{n_boards}-{delta}')
     os.makedirs(out_path, exist_ok=True)
 
     boards, moves_sunfish = get_sunfish_moves(boards=boards, depth=depth, out_path=out_path)
-    R_ = policy_walk(R_noisy, boards, moves_sunfish, delta=1., epochs=epochs, save_every=save_every,
+    R_ = policy_walk(R_noisy, boards, moves_sunfish, delta=delta, epochs=epochs, save_every=save_every,
                      save_path=out_path)
 
     plot_weights(epochs=epochs, save_every=save_every, out_path=out_path)
@@ -77,8 +80,8 @@ def get_sunfish_moves(boards, depth, out_path):
 
 def plot_weights(epochs, save_every, out_path, start_idx=0, ignore_king=True):
     weights = []
-    X = np.repeat(np.arange(start_idx, epochs + 1, save_every), 6 - ignore_king).reshape((-1, 6 - ignore_king))
-    for i in range(start_idx, epochs + 1, save_every):
+    X = np.repeat(np.arange(start_idx, epochs, save_every), 6 - ignore_king).reshape((-1, 6 - ignore_king))
+    for i in range(start_idx, epochs, save_every):
         path = os.path.join(out_path, f'{i}.csv')
         if os.path.exists(path):
             df = pd.read_csv(path, index_col=None)
@@ -104,6 +107,7 @@ if __name__ == '__main__':
     n_files = 6
     min_elo = 1000
     max_elo = 1200
+    delta = 20.
     n_boards = 20
     search_depth = 3
     epochs = 10
@@ -126,6 +130,7 @@ if __name__ == '__main__':
     result = run_sun(df,
                      R_sunfish=R_sunfish,
                      min_elo=min_elo,
+                     search_depth=search_depth,
                      max_elo=max_elo,
                      depth=search_depth,
                      n_boards=n_boards,
