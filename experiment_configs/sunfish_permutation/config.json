@@ -1,6 +1,6 @@
 {
   "n_files": 6,
-  "min_elo": 1100,
+  "min_elo": 1000,
   "max_elo": 1200,
   "delta": 20.0,
   "n_boards": 200,
@@ -8,5 +8,5 @@
   "epochs": 100,
   "save_every": 1,
   "permute_all": 0,
-  "R_noisy_vals": 100
+  "R_noisy_vals": "100"
 }
