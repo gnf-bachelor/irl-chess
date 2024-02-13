@@ -1,6 +1,6 @@
-#BSUB -J sunfish-permuted
-#BSUB -o sunfish-permuted%J.out
-#BSUB -e sunfish-permuted%J.err
+#BSUB -J sunfish-D35
+#BSUB -o sunfish-D35%J.out
+#BSUB -e sunfish-D35%J.err
 #BSUB -q hpc
 #BSUB -n 4
 #BSUB -R "rusage[mem=16G]"
