@@ -130,4 +130,5 @@ if __name__ == '__main__':
                      permute_all=permute_all,
                      path_result=path_result,
                      save_every=save_every,
-                     epochs=epochs)
+                     epochs=epochs,
+                     delta=delta)
