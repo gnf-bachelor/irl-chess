@@ -74,6 +74,7 @@ def get_sunfish_moves(boards, depth, out_path):
 
     sunfish_moves_path = os.path.join(out_path, 'sunfish_moves.csv')
     if os.path.exists(sunfish_moves_path):
+        print('Loaded saved SUNFISH moves!')
         moves_sunfish = list(pd.read_csv(sunfish_moves_path, index_col=None, header=None).values.flatten())
     else:
         moves_sunfish = []
