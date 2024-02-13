@@ -26,7 +26,7 @@ def decompress_zstd(zstd_path, extract_path):
 
     destination_path = extract_path
     print(f'Attempting to decompress to: {destination_path}')
-    print(f'In parent directory: {destination_path.replace(os.path.dirname(destination_path), '')}')
+    print(f'In parent directory: {destination_path.replace(os.path.dirname(destination_path), "")}')
     os.makedirs(destination_path.replace(os.path.dirname(destination_path), ''), exist_ok=True)
     with open(destination_path, 'wb') as decompressed_file:
         decompressed_file.write(decompressed_data)
