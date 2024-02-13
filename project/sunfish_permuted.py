@@ -2,6 +2,7 @@ import json
 import os
 import pickle
 from copy import copy
+from shutil import copy2
 
 import numpy as np
 import pandas as pd
@@ -48,6 +49,8 @@ def run_sun(df,
         path_result = join(os.getcwd(), 'models', 'sunfish_permuted')
     out_path = join(path_result, f'{permute_all}-{min_elo}-{max_elo}-{search_depth}-{n_boards}-{delta}-{R_noisy_vals}')
     os.makedirs(out_path, exist_ok=True)
+    copy2(join(os.getcwd(), 'experiment_configs', 'sunfish_permutation', 'config.json'),
+          join(os.path.dirname(out_path), 'config.json'))
 
     boards, moves_sunfish = get_sunfish_moves(boards=boards, depth=depth, out_path=out_path)
     R_ = policy_walk(R_noisy, boards, moves_sunfish, delta=delta, epochs=epochs, save_every=save_every,
