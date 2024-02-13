@@ -2,7 +2,7 @@
   "n_files": 3,
   "min_elo": 1000,
   "max_elo": 1200,
-  "delta": 25.0,
+  "delta": 35.0,
   "n_boards": 200,
   "search_depth": 3,
   "epochs": 100,
