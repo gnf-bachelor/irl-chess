@@ -7,7 +7,7 @@
   "search_depth": 3,
   "epochs": 100,
   "save_every": 1,
-  "permute_all": 0,
+  "permute_all": 1,
   "R_noisy_vals": 100,
   "overwrite": false
 }
