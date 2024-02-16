@@ -245,7 +245,7 @@ def log_prob_dist(R, energy, alpha, prior=lambda R: 1):
     return log_prob
 
 
-def policy_walk(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, permute_all=True, save_every=None, save_path=None, san=True):
+def policy_walk(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, permute_end_idx=-1, permute_all=True, save_every=None, save_path=None, san=True):
     """ Policy walk algorithm over given class of reward functions.
     Iterates over the initial reward function by perterbing each dimension uniformly and then
     accepting the new reward function with probability proportional to how much better they explain the given trajectories. 
@@ -272,9 +272,9 @@ def policy_walk(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, pe
         R_ = R
         if permute_all:
             add = np.random.uniform(low=-delta, high=delta, size=R.shape[0] - 1).astype(R.dtype)
-            R_[1:] += add
+            R_[1:permute_end_idx] += add
         else:
-            choice = np.random.choice(np.arange(len(R_)))
+            choice = np.random.choice(np.arange(1, len(R_) if permute_end_idx < 0 else permute_end_idx))
             R_[choice] += np.random.uniform(low=-delta, high=delta, size=1).item()
 
         for board, move in tqdm(zip(boards, moves), total=len(boards), desc='Policy walking over reward functions'):
