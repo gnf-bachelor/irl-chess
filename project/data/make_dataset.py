@@ -1,116 +1,195 @@
+import re
 import os
+import time
+import requests
+import pyzstd
 
 import numpy as np
-import opendatasets as od
-import json
 import pandas as pd
 from tqdm import tqdm
-
-dataset_URL = "https://www.kaggle.com/datasets/milesh1/35-million-chess-games"
-data_folder = "landuse-scene-classification"
+from os.path import join
 
 
-def make_dataset():
+def decompress_zstd(zstd_path, extract_path):
     """
-    Description:
-        Downloads the dataset into data and extracts the content using the opendatasets library.
-        Important to have the kaggle.json file in the root folder.
-    Returns:
-        None
-
-    """
-    od.download(dataset_URL, data_dir="data/", unzip=True)
-    try:
-        os.rename('data/35-million-chess-games/all_with_filtered_anotations_since1998.txt', 'data/35-million-chess-games/all_with_filtered_annotations_since1998.txt')
-        print('Fixed spelling error')
-    except FileNotFoundError:
-        pass
-
-
-def win_loss_translation(outcome):
-    # positive for white, 2 for checkmate, 1 for resignation
-    if outcome[0] == '0':  # White loss
-        out = -1
-    elif outcome[1] == '-':  # White win
-        out = 1
-    else:  # Draw
-        out = 0
-    return out
-
-
-def parse_pgn(game):
-    # CHATGPT (Modified)
-    white_elo_start = game.find("WhiteElo") + 10
-    white_elo_end = white_elo_start + game[white_elo_start:].find('"')
-    white_elo = int(game[white_elo_start:white_elo_end].strip())
-
-    black_elo_start = game.find("BlackElo") + 10
-    black_elo_end = black_elo_start + game[black_elo_start:].find('"')
-    black_elo = int(game[black_elo_start:black_elo_end].strip())
-
-    moves = []
-    game_split = game.split("\n\n")[1].split(' ')
-    for move in game_split:
-        if '{' in move:
-            break
-        if '.' not in move:  # Remove numbering
-            moves.append(move)
-    outcome = win_loss_translation(game_split[-1])  # Get reason for game ending
-
-    game_length = len(moves)
-    # (for data), moves
-    return (white_elo, black_elo, game_length, outcome), moves
-
-
-def load_games(path, dtype=np.int16):
-    """
-    Returns a data matrix consisting of
-    (White ELO, Black ELO, Game Length, Outcome)
-    along with a list containing strings of the
-    moves in standard algebraic notation (san)
-    :param path:
-    :param dtype:
+    Given a path to a .zst file, decompress the .zst
+    and extract the files within it, then delete the
+    .zst file
+    :param zstd_path:
+    :param extract_path:
+    :param overwrite:
     :return:
     """
-    moves_list = []
-    data = []
-    path_data = path.replace(path.split('/')[-1], 'data.csv')
-    path_moves = path.replace(path.split('/')[-1], 'moves.txt')
-    try:
-        data = pd.read_csv(path_data, sep=',', index_col=0).values
-        moves_list = []
-        with open(path_moves, 'r') as file:
-            for line in file:
-                moves_list.append(line.split())
-        print('Stored files successfully loaded')
-        return moves_list, data
-    except FileNotFoundError:
-        pass
+    with open(zstd_path, 'rb') as zstd_file:
+        compressed_data = zstd_file.read()
+        decompressed_data = pyzstd.decompress(compressed_data)
 
-    with open(path, 'r') as file:
-        game = ""
-        event_count = 0
-        for line in tqdm(file, total=8_936_708, desc='Parsing'):    # Copied from the data file, hard to do dynamically
-            game += line
-            if 'Event' in line:
-                event_count += 1
-            if event_count == 2:  # Check if game string is not empty
-                (temp), moves = parse_pgn(game)
-                moves_list.append(moves)
-                data.append(temp)
-                game = ""
-                event_count = 1
-    data = np.array(data, dtype=dtype)
-    pd.DataFrame(data).to_csv(path_data, sep=',')
-    with open(path_moves, 'w') as file:
-        for move in tqdm(moves_list, desc='Saving Moves'):
-            temp_move = ''
-            for char in move:
-                temp_move += char + ' '
-            file.writelines(temp_move[:-1] + '\n')
-    print('Data loaded and files successfully created and saved')
-    return moves_list, data
+    destination_path = extract_path
+    print(f'Attempting to decompress to: {destination_path}')
+    os.makedirs(os.path.dirname(destination_path), exist_ok=True)
+    with open(destination_path, 'wb') as decompressed_file:
+        decompressed_file.write(decompressed_data)
+    os.remove(zstd_path)
+    print(f"Decompressed: {zstd_path} and deleted the zip file!")
+
+
+
+def download_file(url, destination):
+    """
+    Use the requests package to download an url and save
+    the file to the given destination. Returns True if
+    the file was successfully downloaded else False.
+    :param url:
+    :param destination:
+    :return:
+    """
+    try:
+        response = requests.get(url)
+        with open(destination, 'wb') as file:
+            file.write(response.content)
+        print(f"Downloaded: {url}")
+
+        return True
+    except Exception as e:
+        print(f"Failed to download {url}: {e}")
+        return False
+
+
+def parse_moves(moves):
+    """
+    Parse the moves of a chess game from the Lichess chess game format.
+    :param moves:
+    :return:
+    """
+    out = ''
+    for el in moves.split(' '):
+        if '.' not in el:
+            out += el + ','
+    return [out]
+
+
+def parse_game(input_string, included_keys):
+    pattern = r'\[([^\]]+)\]'
+
+    # Use regular expression to find all matches within square brackets
+    matches = re.findall(pattern, input_string)
+
+    # Specify the keys you want to include
+    # included_keys = ['Event', 'Site', 'Date', 'White', 'Black', 'Result', 'UTCDate',
+    #                  'UTCTime', 'WhiteElo', 'BlackElo', 'WhiteRatingDiff', 'BlackRatingDiff',
+    #                  'WhiteTitle', 'ECO', 'Opening', 'TimeControl', 'Termination']
+
+    # Create a list to store the extracted values
+    data_list = []
+    for match in matches:
+        key, value = map(str.strip, match.split(' ', 1))
+
+        # Include only the specified keys
+        if key.lower() == 'timecontrol':
+            data_list += value.split('+')
+        elif key in included_keys:
+            # Remove double quotes from the value
+            value = value.replace('"', '')
+            data_list.append(value)
+
+    return data_list
+
+
+def txt_to_csv(filename, overwrite=True):
+    """
+    Given a .pgn file from the lichess database, convert it to a .csv file
+    and return the path. There is something funky going on with pandas
+    where it creates an extra column full of None values. If a row has an
+    invalid length it is ignored.
+    :param filename:
+    :param overwrite:
+    :return:
+    """
+    filename_out = filename[:-4].replace('raw', 'processed') + '.csv'
+    os.makedirs(os.path.dirname(filename_out), exist_ok=True)
+    if not overwrite and os.path.exists(filename_out):
+        print(f'{filename_out} already exists and was not changed')
+        return filename_out
+
+    columns = ['Event', 'Site', 'White', 'Black', 'Result', 'UTCDate', 'UTCTime', 'WhiteElo', 'BlackElo',
+               'WhiteRatingDiff', 'BlackRatingDiff', 'ECO', 'Opening', 'TimeStart', 'TimeIncrement',
+               'Termination', 'Moves']
+    data_raw = []
+    with open(filename, 'r') as f:
+        game = ''
+        for line in tqdm(f.readlines(), 'Converting to csv'):
+            if line[0] == '1' or line == ' 0-1\n':
+                row = parse_game(game, included_keys=columns[:-1] + ['TimeControl']) + parse_moves(line)
+                if len(row) == len(columns):    # Only pass valid rows... sadly necessary
+                    data_raw.append(row)
+                game = ''
+            elif line.strip():
+                game += line
+
+        df = pd.DataFrame(data_raw, columns=columns)
+        df.dropna(inplace=True)
+        df.to_csv(filename_out, index=False, mode='w')
+    print(f'Converted .txt to .csv!')
+    return filename_out
+
+
+def download_lichess_pgn(websites_filepath, file_path_data, n_files=np.inf, overwrite=True):
+    """
+    Given a list of websites and the path to the data folders
+    download the data from the websites using the helpers defined
+    above. This function is always verbose and returns a list of
+    the paths to the .csv files in question.
+    :param websites_filepath:
+    :param file_path_data:
+    :param n_files:
+    :param overwrite:
+    :return:
+    """
+    os.makedirs(file_path_data, exist_ok=True)
+    start = time.time()
+    filepaths_csv = []
+    with open(websites_filepath, 'r') as filename:
+        urls = filename.readlines()
+        urls = [url.strip() for url in urls]
+
+    for i, url in enumerate(urls, start=1):
+        start_file = time.time()
+        destination = join(file_path_data, url.split("/")[-1])
+        print(f'\n\n-------------------  {i}/{len(urls)}  -------------------\n\n')
+        filepath_out = destination[:-4]
+        if overwrite or not os.path.exists(filepath_out):
+            os.makedirs(os.path.dirname(filepath_out), exist_ok=True)
+            if download_file(url, destination):
+                decompress_zstd(destination, extract_path=filepath_out)
+        filepath_csv = txt_to_csv(filepath_out, overwrite=overwrite)
+        filepaths_csv.append(filepath_csv)
+        print(f'Time taken: {time.time() - start_file:.2f} seconds for file')
+        print(f'Time taken: {time.time() - start:.2f} seconds in total')
+
+        if i == n_files:
+            break
+
+    return filepaths_csv
+
+
+def load_lichess_csv(year, month):
+    """
+    Given the desired year and month as strings, load the lichess
+    data from the csv file and return it as a DataFrame.
+    Month must have 2 digits.
+    No errors are caught in the function.
+    :param year:    YYYY
+    :param month:   MM
+    :return:
+    """
+    file_path_data = join(os.getcwd(), 'data', 'processed')
+    file = join(file_path_data, f'lichess_db_standard_rated_{year}-{month}.csv')
+    return pd.read_csv(file, index_col=None)
 
 
 if __name__ == "__main__":
-    make_dataset()
+    n_files = np.inf
+    websites_filepath = join(os.getcwd(), 'downloads', 'lichess_websites.txt')
+    file_path_data = join(os.getcwd(), 'data', 'raw')
+
+    download_lichess_pgn(websites_filepath, file_path_data, n_files=n_files, overwrite=True)

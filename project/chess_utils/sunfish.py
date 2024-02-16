@@ -2,6 +2,8 @@
 from __future__ import print_function
 
 import time, math
+import numpy as np
+import copy
 from itertools import count
 from collections import namedtuple, defaultdict
 
@@ -71,6 +73,15 @@ pst = {
             -4,   3, -14, -50, -57, -18,  13,   4,
             17,  30,  -3, -14,   6,  -1,  40,  18),
 }
+
+# pst eval added for black
+pst_only = copy.deepcopy(pst)
+for piece_str in pst.keys():
+    piece_array = -np.array(pst[piece_str]).reshape((8, 8))[np.arange(7, -1, -1)]
+    pst_only[piece_str.lower()] = tuple(piece_array.reshape((-1)))
+
+# Set the positional matrices to 1 and the bounds to 0
+# pst = {key: (1,) * len(val) for key, val in pst.items()}
 # Pad tables and join piece and pst dictionaries
 for k, table in pst.items():
     padrow = lambda row: (0,) + tuple(x + piece[k] for x in row) + (0,)
@@ -149,6 +160,8 @@ class Position(namedtuple("Position", "board score wc bc ep kp")):
     ep - the en passant square
     kp - the king passant square
     """
+    def generate_legal_moves(self):
+        return self.gen_moves()
 
     def gen_moves(self):
         # For each of our pieces, iterate through each possible 'ray' of moves,
@@ -197,6 +210,9 @@ class Position(namedtuple("Position", "board score wc bc ep kp")):
             119 - self.ep if self.ep and not nullmove else 0,
             119 - self.kp if self.kp and not nullmove else 0,
         )
+
+    def push(self, move):
+        return self.move(move)
 
     def move(self, move):
         i, j, prom = move
