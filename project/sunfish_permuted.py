@@ -20,6 +20,7 @@ def run_sun(df,
             n_boards=1000,
             delta=20.,
             permute_all=1,
+            permute_end_idx=-1,
             sd_noise=50,
             epochs=1,
             depth=3,
@@ -38,7 +39,7 @@ def run_sun(df,
     """
 
     R_noisy = copy(R_sunfish)
-    R_noisy[1:] = R_noisy_vals  # Keep the pawn constant
+    R_noisy[1:3] = R_noisy_vals  # Keep the pawn constant
     # R_noisy[1:] += np.random.normal(loc=0, scale=sd_noise, size=R_sunfish.shape[0] - 1)
 
     boards, _ = get_midgame_boards(df, n_boards, min_elo=min_elo, max_elo=max_elo, sunfish=False)
@@ -47,14 +48,14 @@ def run_sun(df,
 
     if path_result is None:
         path_result = join(os.getcwd(), 'models', 'sunfish_permuted')
-    out_path = join(path_result, f'{permute_all}-{min_elo}-{max_elo}-{search_depth}-{n_boards}-{delta}-{R_noisy_vals}')
+    out_path = join(path_result, f'{permute_all}-{min_elo}-{max_elo}-{search_depth}-{n_boards}-{delta}-{R_noisy_vals}-{max(permute_end_idx, 0)}')
     os.makedirs(out_path, exist_ok=True)
     copy2(join(os.getcwd(), 'experiment_configs', 'sunfish_permutation', 'config.json'),
           join(os.path.dirname(out_path), 'config.json'))
 
     boards, moves_sunfish = get_sunfish_moves(boards=boards, depth=depth, out_path=out_path)
     R_ = policy_walk(R_noisy, boards, moves_sunfish, delta=delta, epochs=epochs, save_every=save_every,
-                     save_path=out_path, permute_all=permute_all)
+                     save_path=out_path, permute_all=permute_all, permute_end_idx=permute_end_idx)
 
     from project import plot_permuted_sunfish_weights
     plot_permuted_sunfish_weights(epochs=epochs, save_every=save_every, out_path=out_path)
@@ -105,6 +106,7 @@ if __name__ == '__main__':
     permute_all = config_data['permute_all']
     R_noisy_vals = config_data['R_noisy_vals']
     overwrite = config_data['overwrite']
+    permute_end_idx = config_data['permute_end_idx']
 
     websites_filepath = join(os.getcwd(), 'downloads', 'lichess_websites.txt')
     file_path_data = join(os.getcwd(), 'data', 'raw')
@@ -126,6 +128,7 @@ if __name__ == '__main__':
                      search_depth=search_depth,
                      max_elo=max_elo,
                      depth=search_depth,
+                     permute_end_idx=permute_end_idx,
                      n_boards=n_boards,
                      permute_all=permute_all,
                      path_result=path_result,
