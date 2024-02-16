@@ -52,7 +52,7 @@ def run_sun(df,
     copy2(join(os.getcwd(), 'experiment_configs', 'sunfish_permutation', 'config.json'),
           join(os.path.dirname(out_path), 'config.json'))
 
-    boards, moves_sunfish = get_sunfish_moves(boards=boards, depth=depth, out_path=out_path)
+    boards, moves_sunfish = get_sunfish_moves(R_sunfish=R_sunfish, boards=boards, depth=depth, out_path=out_path)
     R_ = policy_walk(R_noisy, boards, moves_sunfish, delta=delta, epochs=epochs, save_every=save_every,
                      save_path=out_path, permute_all=permute_all, permute_end_idx=permute_end_idx)
 
@@ -62,7 +62,7 @@ def run_sun(df,
     return R_
 
 
-def get_sunfish_moves(boards, depth, out_path):
+def get_sunfish_moves(R_sunfish, boards, depth, out_path):
     """
     If the moves have already been calculated for the configuration
     this function just reads the file, otherwise the moves are found
