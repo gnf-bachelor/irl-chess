@@ -87,7 +87,7 @@ def get_sunfish_moves(R_sunfish, boards, depth, out_path):
 
 
 if __name__ == '__main__':
-    if os.getcwd().split('\\')[-1] != 'irl-chess':
+    if os.getcwd()[-len('irl-chess'):] != 'irl-chess':
         print(os.getcwd())
         os.chdir('../')
     from project import policy_walk, policy_walk_multi, get_midgame_boards, get_best_move, piece, download_lichess_pgn
