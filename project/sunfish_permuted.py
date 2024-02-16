@@ -2,6 +2,7 @@ import json
 import os
 import pickle
 from copy import copy
+from shutil import copy2
 
 import numpy as np
 import pandas as pd
@@ -36,8 +37,8 @@ def run_sun(df,
     :return:
     """
 
-    R_noisy = copy(R_sunfish)  # Keep the pawn constant:
-    R_noisy[1:] = R_noisy_vals
+    R_noisy = copy(R_sunfish)
+    R_noisy[1:] = R_noisy_vals  # Keep the pawn constant
     # R_noisy[1:] += np.random.normal(loc=0, scale=sd_noise, size=R_sunfish.shape[0] - 1)
 
     boards, _ = get_midgame_boards(df, n_boards, min_elo=min_elo, max_elo=max_elo, sunfish=False)
@@ -48,6 +49,8 @@ def run_sun(df,
         path_result = join(os.getcwd(), 'models', 'sunfish_permuted')
     out_path = join(path_result, f'{permute_all}-{min_elo}-{max_elo}-{search_depth}-{n_boards}-{delta}-{R_noisy_vals}')
     os.makedirs(out_path, exist_ok=True)
+    copy2(join(os.getcwd(), 'experiment_configs', 'sunfish_permutation', 'config.json'),
+          join(os.path.dirname(out_path), 'config.json'))
 
     boards, moves_sunfish = get_sunfish_moves(boards=boards, depth=depth, out_path=out_path)
     R_ = policy_walk(R_noisy, boards, moves_sunfish, delta=delta, epochs=epochs, save_every=save_every,
@@ -71,6 +74,7 @@ def get_sunfish_moves(boards, depth, out_path):
 
     sunfish_moves_path = os.path.join(out_path, 'sunfish_moves.csv')
     if os.path.exists(sunfish_moves_path):
+        print(f'Loaded saved SUNFISH moves from {sunfish_moves_path}')
         moves_sunfish = list(pd.read_csv(sunfish_moves_path, index_col=None, header=None).values.flatten())
     else:
         moves_sunfish = []
@@ -100,11 +104,12 @@ if __name__ == '__main__':
     save_every = config_data['save_every']
     permute_all = config_data['permute_all']
     R_noisy_vals = config_data['R_noisy_vals']
+    overwrite = config_data['overwrite']
 
     websites_filepath = join(os.getcwd(), 'downloads', 'lichess_websites.txt')
     file_path_data = join(os.getcwd(), 'data', 'raw')
 
-    datapaths = download_lichess_pgn(websites_filepath, file_path_data, n_files=n_files, overwrite=True)
+    datapaths = download_lichess_pgn(websites_filepath, file_path_data, n_files=n_files, overwrite=overwrite)
     df = pd.read_csv(datapaths[0], index_col=None)
     for path in tqdm(datapaths[1:], desc='Contatenating DataFrames'):
         df_ = pd.read_csv(path, index_col=None)
@@ -125,4 +130,5 @@ if __name__ == '__main__':
                      permute_all=permute_all,
                      path_result=path_result,
                      save_every=save_every,
-                     epochs=epochs)
+                     epochs=epochs,
+                     delta=delta)

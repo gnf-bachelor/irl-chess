@@ -20,22 +20,18 @@ def decompress_zstd(zstd_path, extract_path):
     :param overwrite:
     :return:
     """
-    try:
-        with open(zstd_path, 'rb') as zstd_file:
-            compressed_data = zstd_file.read()
-            decompressed_data = pyzstd.decompress(compressed_data)
+    with open(zstd_path, 'rb') as zstd_file:
+        compressed_data = zstd_file.read()
+        decompressed_data = pyzstd.decompress(compressed_data)
 
-        destination_path = extract_path
-        os.makedirs(destination_path.replace(os.path.dirname(destination_path), ''), exist_ok=True)
-        with open(destination_path, 'wb') as decompressed_file:
-            decompressed_file.write(decompressed_data)
+    destination_path = extract_path
+    print(f'Attempting to decompress to: {destination_path}')
+    os.makedirs(os.path.dirname(destination_path), exist_ok=True)
+    with open(destination_path, 'wb') as decompressed_file:
+        decompressed_file.write(decompressed_data)
+    os.remove(zstd_path)
+    print(f"Decompressed: {zstd_path} and deleted the zip file!")
 
-        print(f"Decompressed: {zstd_path}")
-        os.remove(zstd_path)
-        print(f'Unzipped and deleted the zip file!')
-
-    except Exception as e:
-        print(f"Failed to decompress {zstd_path}: {e}")
 
 
 def download_file(url, destination):
