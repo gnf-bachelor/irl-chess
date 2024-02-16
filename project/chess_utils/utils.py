@@ -1,6 +1,6 @@
 from copy import deepcopy
 from os.path import join
-
+from joblib import Parallel, delayed
 import pandas as pd
 import torch
 import chess
@@ -278,7 +278,6 @@ def policy_walk(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, pe
             R_[choice] += np.random.uniform(low=-delta, high=delta, size=1).item()
 
         for board, move in tqdm(zip(boards, moves), total=len(boards), desc='Policy walking over reward functions'):
-
             board.push_san(move) if san else board.push(move)
             # First we get the board from the state/action pair seen in the data using the old weights
             if len(Q_boards_oldR_DO_list):
@@ -308,6 +307,92 @@ def policy_walk(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, pe
             log_prob = min(0, log_prob_dist(R_, energy_newR_DN, alpha=alpha) - log_prob_dist(R, energy_oldR_DO, alpha=alpha))
         else:
             log_prob = min(0, log_prob_dist(R_, energy_newR_DO, alpha=alpha) - log_prob_dist(R, energy_oldR_DO, alpha=alpha))
+
+        p = np.random.rand(1).item()
+        if log_prob > -1e7 and p < np.exp(log_prob):
+            R = R_
+        if save_every is not None and epoch % save_every == 0:
+            pd.DataFrame(R_.reshape((-1, 1)), columns=['Result']).to_csv(join(save_path, f'{epoch}.csv'), index=False)
+
+    return R
+
+
+def policy_walk_multi(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, permute_end_idx=-1, permute_all=True,
+                save_every=None, save_path=None, san=True):
+    """ Policy walk algorithm over given class of reward functions.
+    Iterates over the initial reward function by perterbing each dimension uniformly and then
+    accepting the new reward function with probability proportional to how much better they explain the given trajectories.
+
+    Args:
+        R (_type_): The reward function (heuristic for statically evaluation a board).
+        boards (_type_): list of chess.Move() objects
+        moves (_type_): _description_
+        delta (_type_, optional): _description_. Defaults to 1e-3.
+        epochs (int, optional): _description_. Defaults to 10.
+        depth (int, optional): _description_. Defaults to 3.
+        alpha (_type_, optional): _description_. Defaults to 2e-2.
+
+    Returns:
+        _type_: _description_
+    """
+
+    # Multiprocessesing
+    def step(board, move, Q_boards_oldR_DO_list, R, depth):
+        board.push_san(move) if san else board.push(move)
+        # First we get the board from the state/action pair seen in the data using the old weights
+        if len(Q_boards_oldR_DO_list):
+            Q_oldR_DO_policy, board_old = Q_boards_oldR_DO_list[i]
+        else:
+            Q_oldR_DO_policy, board_old, = alpha_beta_search(board=board, R=R, depth=depth - 1, maximize=board.turn)
+        # Then we evaluate the found board using the new weights
+        Q_newR_DO_policy = evaluate_board(board=board_old, R=R_, white=board_old.turn)  # Q^pi(s,a,R_)
+        board.pop()
+        # Finally we calculate the Q-value of the old policy on the state without the original move
+        _, board_old_, = alpha_beta_search(board=board, R=R, depth=depth, maximize=board.turn)
+        Q_newR_O_policy = evaluate_board(board=board, R=R_, white=board_old_.turn)
+        return Q_newR_O_policy, Q_newR_DO_policy, Q_oldR_DO_policy
+
+    for epoch in tqdm(range(epochs), desc='Iterating over epochs'):
+        i = 0
+        Q_newR_O = np.zeros(len(boards))
+        Q_newR_DO = np.zeros(len(boards))
+        Q_boards_oldR_DO_list = []
+        energy_newR_DO, energy_oldR_DO = 0, 0
+
+        R_ = R
+        if permute_all:
+            add = np.random.uniform(low=-delta, high=delta, size=R.shape[0] - 1).astype(R.dtype)
+            R_[1:permute_end_idx] += add
+        else:
+            choice = np.random.choice(np.arange(1, len(R_) if permute_end_idx < 0 else permute_end_idx))
+            R_[choice] += np.random.uniform(low=-delta, high=delta, size=1).item()
+
+        result = Parallel(n_jobs=-2)(delayed(step)(board, moves, Q_boards_oldR_DO_list, R, depth)
+                                     for board, moves in tqdm(zip(boards, moves), total=len(boards),
+                                                              desc='Policy walking over reward functions'))
+
+        for Q_newR_O_policy, Q_newR_DO_policy, Q_oldR_DO_policy in result:
+            Q_newR_O[i] = Q_newR_O_policy  # Q^pi(s,pi(s),R_)
+            Q_newR_DO[i] = Q_newR_DO_policy  # Q^pi(s,a,R_)
+
+            energy_oldR_DO += Q_oldR_DO_policy
+            energy_newR_DO += Q_newR_DO_policy
+            i += 1
+
+        if np.sum(Q_newR_DO < Q_newR_O):
+            energy_newR_DN = 0
+            result = Parallel(n_jobs=-2)(delayed(alpha_beta_search)(board=board, R=R_, depth=depth,
+                                                                    maximize=board.turn)
+                                         for board, move in tqdm(zip(boards, moves), total=len(boards),
+                                                                 desc='Calculating Q-values for new Policy'))
+            for Q_newR_DN_policy, board_newR_DN in result:
+                Q_boards_oldR_DO_list.append((Q_newR_DN_policy, board_newR_DN))
+                energy_newR_DN += Q_newR_DN_policy
+            log_prob = min(0, log_prob_dist(R_, energy_newR_DN, alpha=alpha) - log_prob_dist(R, energy_oldR_DO,
+                                                                                             alpha=alpha))
+        else:
+            log_prob = min(0, log_prob_dist(R_, energy_newR_DO, alpha=alpha) - log_prob_dist(R, energy_oldR_DO,
+                                                                                             alpha=alpha))
 
         p = np.random.rand(1).item()
         if log_prob > -1e7 and p < np.exp(log_prob):
