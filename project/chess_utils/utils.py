@@ -357,18 +357,20 @@ def policy_walk_multi(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e
 
     # Multiprocessesing
     def step(board, move, Q_boards_oldR_DO_list, R, depth):
+        reward_sign = 1 if board.turn else -1 # White seeks to maximize and black to minimize, so the reward for black is the flipped evaluation. 
         board.push_san(move) if san else board.push(move)
         # First we get the board from the state/action pair seen in the data using the old weights
         if len(Q_boards_oldR_DO_list):
             Q_oldR_DO_policy, board_old = Q_boards_oldR_DO_list[i]
         else:
             Q_oldR_DO_policy, board_old, = alpha_beta_search(board=board, R=R, depth=depth - 1, maximize=board.turn)
+            Q_oldR_DO_policy *= reward_sign
         # Then we evaluate the found board using the new weights
-        Q_newR_DO_policy = evaluate_board(board=board_old, R=R_, white=board_old.turn)  # Q^pi(s,a,R_)
+        Q_newR_DO_policy = evaluate_board(board=board_old, R=R_, white=board_old.turn)*reward_sign  # Q^pi(s,a,R_)
         board.pop()
         # Finally we calculate the Q-value of the old policy on the state without the original move
         _, board_old_, = alpha_beta_search(board=board, R=R, depth=depth, maximize=board.turn)
-        Q_newR_O_policy = evaluate_board(board=board, R=R_, white=board_old_.turn)
+        Q_newR_O_policy = evaluate_board(board=board, R=R_, white=board_old_.turn)*reward_sign
         return Q_newR_O_policy, Q_newR_DO_policy, Q_oldR_DO_policy
 
     for epoch in tqdm(range(epochs), desc='Iterating over epochs'):
@@ -442,6 +444,7 @@ def policy_walk_depth(R, boards, moves, delta=1e-3, epochs=10, depth_max=3, alph
     Returns:
         ndarray : final array of search depth probability distribution pre-softmax. Indexes signify depth starting from 1. 
     """
+    print("policy_walk_depth, to be fixed")
     depth_dist = np.ones(depth_max)
     start = time()
     for epoch in tqdm(range(epochs)):
