@@ -85,7 +85,8 @@ def alpha_beta_search(board,
     assert board.turn == maximize
 
     if depth == 0 or board.is_game_over():
-        if board.is_game_over(): return (np.inf if maximize else -np.inf), deepcopy(board), deque()
+        if board.is_game_over(): 
+            return (-np.inf if maximize else np.inf), deepcopy(board), deque()
         return evaluation_function(board, R, pst), deepcopy(board), deque() # This evaluation function should be static. Positive is good for white and negative is good for black.
 
     if maximize:
@@ -121,7 +122,7 @@ def alpha_beta_search(board,
         move_queue.appendleft(move_best)
         return min_eval, board_best, move_queue
 
-
+# Deprecated I would believe. 
 def get_best_move(board, R, depth=3, timer=False, evaluation_function=evaluate_board, white=True, san=False):
     """
 
@@ -133,6 +134,7 @@ def get_best_move(board, R, depth=3, timer=False, evaluation_function=evaluate_b
     :param white:               Is it white's turn to make a move?
     :return:
     """
+    print("Warning: get_best_move is deprecated in favour of alpha_beta_search")
     best_move, Q = None, None
     alpha = -np.inf
     moves = tqdm([move for move in board.legal_moves]) if timer else board.legal_moves
