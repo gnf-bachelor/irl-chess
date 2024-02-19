@@ -1,4 +1,5 @@
 from copy import deepcopy
+from collections import deque
 from os.path import join
 from joblib import Parallel, delayed
 import pandas as pd
@@ -38,25 +39,26 @@ def eval_pst_only(board):
             eval += pst_only[char][i]
     return eval
 
-def evaluate_board(board, R, white=False):
+def evaluate_board(board, R, pst = False, white=True):
     """
-    positive if (w + not lower), (not w + lower)
-    negative if (w + lower), (not w + not lower)
+    positive if (WhitePieces + white perspective), 
+    negative if (Not WhitePieces + white perspective), 
 
     :param board:
     :param R:
-    :param white:
+    :param pst: Whether to include piece square tables or not. Currently not implemented.
+    :param white: True if viewing from White's perspective. Should be always be left as true since black is trying to minimize.  
     :return:
     """
     eval = 0
-    for lower in (False, True):
-        keys = {val.lower() if lower else val: 0 for val in piece.keys()}
-        for char in board.fen():
+    for WhitePieces in (True, False):
+        keys = {val if WhitePieces else val.lower(): 0 for val in piece.keys()}
+        for char in board.fen().split(" ", 1)[0]: # Do not include turn and castling information. The "b" for black turn is counted as a black rook. Strip the end of the string.
             if char in keys:
                 keys[char] += 1
         pos = np.array([val for val in keys.values()])
-        eval += (pos @ R) * (-1 if white == lower else 1)
-    return eval
+        eval += (pos @ R) * (1 if WhitePieces else -1) # Add if 
+    return eval * (1 if white else -1) + (eval_pst_only(board) if pst else 0)
 
 
 def alpha_beta_search(board,
@@ -65,6 +67,7 @@ def alpha_beta_search(board,
                       beta=np.inf,
                       maximize=True,
                       R: np.array = np.zeros(1),
+                      pst: bool = False,
                       evaluation_function=evaluate_board):
     """
     When maximize is True the board must be evaluated from the White
@@ -74,37 +77,49 @@ def alpha_beta_search(board,
     :param depth:
     :param alpha:
     :param beta:
-    :param maximize:
+    :param maximize: The current turn. White is True and black is False.
     :param R:
     :param evaluation_function:
     :return:
     """
+    assert board.turn == maximize
+
     if depth == 0 or board.is_game_over():
-        return evaluation_function(board, R, maximize), board
+        if board.is_game_over(): return (np.inf if maximize else -np.inf), deepcopy(board), deque()
+        return evaluation_function(board, R, pst), deepcopy(board), deque() # This evaluation function should be static. Positive is good for white and negative is good for black.
 
     if maximize:
         max_eval = -np.inf
         for move in board.generate_legal_moves():
             board.push(move)
-            eval, board_last = alpha_beta_search(board, depth - 1, alpha, beta, False, R=R, evaluation_function=evaluation_function)
+            eval, board_last, move_queue = alpha_beta_search(board, depth - 1, alpha, beta, False, R=R, pst=pst, evaluation_function=evaluation_function)
             board.pop()
-            max_eval = max(max_eval, eval)
-            alpha = max(alpha, eval)
+            if max_eval < eval:
+                max_eval = eval
+                board_best = deepcopy(board_last)
+                move_best = move
+                alpha = eval
+            # alpha = max(alpha, eval)
             if beta <= alpha:
                 break  # Beta cut-off
-        return max_eval, board_last
+        move_queue.appendleft(move_best)
+        return max_eval, board_best, move_queue
     else:
         min_eval = np.inf
         for move in board.generate_legal_moves():
             board.push(move)
-            eval, board_last = alpha_beta_search(board, alpha=alpha, depth=depth - 1, maximize=True, R=R,
-                                     evaluation_function=evaluation_function)
+            eval, board_last, move_queue = alpha_beta_search(board, alpha=alpha, depth=depth - 1, maximize=True, R=R, pst=pst, evaluation_function=evaluation_function)
             board.pop()
-            min_eval = min(min_eval, eval)
-            beta = min(beta, eval)
+            if min_eval > eval:
+                min_eval = eval
+                board_best = deepcopy(board_last)
+                move_best = move
+                beta = eval
+            #beta = min(beta, eval)
             if beta <= alpha:
                 break  # Alpha cut-off
-        return min_eval, board_last
+        move_queue.appendleft(move_best)
+        return min_eval, board_best, move_queue
 
 
 def get_best_move(board, R, depth=3, timer=False, evaluation_function=evaluate_board, white=True, san=False):
@@ -279,17 +294,19 @@ def policy_walk(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, pe
 
         for board, move in tqdm(zip(boards, moves), total=len(boards), desc='Policy walking over reward functions'):
             board.push_san(move) if san else board.push(move)
+            reward_sign = 1 if board.turn else -1 # White seeks to maximize and black to minimize, so the reward for black is the flipped evaluation. 
             # First we get the board from the state/action pair seen in the data using the old weights
             if len(Q_boards_oldR_DO_list):
                 Q_oldR_DO_policy, board_old = Q_boards_oldR_DO_list[i]
             else:
                 Q_oldR_DO_policy, board_old, = alpha_beta_search(board=board, R=R, depth=depth-1, maximize=board.turn)
+                Q_oldR_DO_policy *= reward_sign
             # Then we evaluate the found board using the new weights
-            Q_newR_DO_policy = evaluate_board(board=board_old, R=R_, white=board_old.turn)     # Q^pi(s,a,R_)
+            Q_newR_DO_policy = evaluate_board(board=board_old, R=R_)*reward_sign     # Q^pi(s,a,R_)
             board.pop()
             # Finally we calculate the Q-value of the old policy on the state without the original move
             _, board_old_, = alpha_beta_search(board=board, R=R, depth=depth, maximize=board.turn)
-            Q_newR_O_policy = evaluate_board(board=board, R=R_, white=board_old_.turn)    # Q^pi(s,pi(s),R_)
+            Q_newR_O_policy = evaluate_board(board=board_old_, R=R_)*reward_sign    # Q^pi(s,pi(s),R_)
 
             Q_newR_O[i] = Q_newR_O_policy     # Q^pi(s,pi(s),R_)
             Q_newR_DO[i] = Q_newR_DO_policy   # Q^pi(s,a,R_)
