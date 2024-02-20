@@ -4,7 +4,7 @@
   "max_elo": 1200,
   "delta": 35.0,
   "n_boards": 200,
-  "search_depth": 3,
+  "search_depth": 4,
   "permute_end_idx": 4,
   "epochs": 500,
   "save_every": 1,
