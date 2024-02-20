@@ -85,9 +85,14 @@ def alpha_beta_search(board,
     assert board.turn == maximize
 
     if depth == 0 or board.is_game_over():
-        if board.is_game_over(): 
-            return (-np.inf if maximize else np.inf), deepcopy(board), deque()
-        return evaluation_function(board, R, pst), deepcopy(board), deque() # This evaluation function should be static. Positive is good for white and negative is good for black.
+        if board.is_checkmate():
+            final_score = (-np.sum(R) * 100 if maximize else np.sum(R) * 100)
+        elif board.is_stalemate():
+            final_score = 0
+        else:
+            final_score = evaluation_function(board, R, pst)
+        return final_score, deepcopy(
+            board), deque()  # This evaluation function should be static. Positive is good for white and negative is good for black.
 
     if maximize:
         max_eval = -np.inf
@@ -262,7 +267,7 @@ def log_prob_dist(R, energy, alpha, prior=lambda R: 1):
     return log_prob
 
 
-def policy_walk(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, permute_end_idx=-1, permute_all=True, save_every=None, save_path=None, san=True):
+def policy_walk(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, permute_end_idx=-1, permute_all=True, save_every=None, save_path=None, san=False):
     """ Policy walk algorithm over given class of reward functions.
     Iterates over the initial reward function by perterbing each dimension uniformly and then
     accepting the new reward function with probability proportional to how much better they explain the given trajectories. 

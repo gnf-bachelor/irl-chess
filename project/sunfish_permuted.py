@@ -7,7 +7,9 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from os.path import join
+import pickle
 import matplotlib.pyplot as plt
+from project.chess_utils.utils import alpha_beta_search
 
 
 def run_sun(df,
@@ -38,7 +40,7 @@ def run_sun(df,
     """
 
     R_noisy = copy(R_sunfish)
-    R_noisy[1:3] = R_noisy_vals  # Keep the pawn constant
+    R_noisy[1:permute_end_idx] = R_noisy_vals  # Keep the pawn constant
     # R_noisy[1:] += np.random.normal(loc=0, scale=sd_noise, size=R_sunfish.shape[0] - 1)
 
     boards, _ = get_midgame_boards(df, n_boards, min_elo=min_elo, max_elo=max_elo, sunfish=False)
@@ -50,9 +52,9 @@ def run_sun(df,
     out_path = join(path_result, f'{permute_all}-{min_elo}-{max_elo}-{search_depth}-{n_boards}-{delta}-{R_noisy_vals}-{max(permute_end_idx, 0)}')
     os.makedirs(out_path, exist_ok=True)
     copy2(join(os.getcwd(), 'experiment_configs', 'sunfish_permutation', 'config.json'),
-          join(os.path.dirname(out_path), 'config.json'))
+          join(out_path, 'config.json'))
 
-    boards, moves_sunfish = get_sunfish_moves(R_sunfish=R_sunfish, boards=boards, depth=depth, out_path=out_path)
+    boards, moves_sunfish = get_sunfish_moves(R_sunfish=R_sunfish, boards=boards, depth=depth, out_path=out_path, overwrite=overwrite)
     R_ = policy_walk(R_noisy, boards, moves_sunfish, delta=delta, epochs=epochs, save_every=save_every,
                      save_path=out_path, permute_all=permute_all, permute_end_idx=permute_end_idx)
 
@@ -62,26 +64,28 @@ def run_sun(df,
     return R_
 
 
-def get_sunfish_moves(R_sunfish, boards, depth, out_path):
+def get_sunfish_moves(R_sunfish, boards, depth, out_path, overwrite=False):
     """
     If the moves have already been calculated for the configuration
     this function just reads the file, otherwise the moves are found
-    and saved as strings in the SAN format.
+    and pickled.
     :param depth:
     :param out_path:
     :return:
     """
 
-    sunfish_moves_path = os.path.join(out_path, 'sunfish_moves.csv')
-    if os.path.exists(sunfish_moves_path):
+    sunfish_moves_path = os.path.join(out_path, 'sunfish_moves.pkl')
+    if not overwrite and os.path.exists(sunfish_moves_path):
         print(f'Loaded saved SUNFISH moves from {sunfish_moves_path}')
-        moves_sunfish = list(pd.read_csv(sunfish_moves_path, index_col=None, header=None).values.flatten())
+        with open(sunfish_moves_path, 'rb') as f:
+            moves_sunfish = pickle.load(f)
     else:
         moves_sunfish = []
         for board in tqdm(boards, desc='Getting Sunfish moves'):
-            move, Q = get_best_move(board, R_sunfish, depth=depth, san=True)
-            moves_sunfish.append(move)
-        pd.DataFrame(moves_sunfish).to_csv(sunfish_moves_path, index=None, header=None)
+            Q, _, moves = alpha_beta_search(board, R=R_sunfish, depth=depth, maximize=board.turn)
+            moves_sunfish.append(moves.popleft())
+        with open(sunfish_moves_path, 'wb') as f:
+            pickle.dump(moves_sunfish, f)
 
     return boards, moves_sunfish
 
@@ -90,8 +94,8 @@ if __name__ == '__main__':
     if os.getcwd()[-len('irl-chess'):] != 'irl-chess':
         print(os.getcwd())
         os.chdir('../')
-    from project import policy_walk_multi as policy_walk
-    from project import get_midgame_boards, get_best_move, piece, download_lichess_pgn
+    from project import policy_walk as policy_walk
+    from project import get_midgame_boards, piece, download_lichess_pgn
 
     with open(join(os.getcwd(), 'experiment_configs', 'sunfish_permutation', 'config.json'), 'r') as file:
         config_data = json.load(file)
