@@ -342,7 +342,7 @@ def policy_walk(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, pe
 
 
 def policy_walk_multi(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, permute_end_idx=-1, permute_all=True,
-                save_every=None, save_path=None, san=True):
+                save_every=None, save_path=None, san=False):
     """ Policy walk algorithm over given class of reward functions.
     Iterates over the initial reward function by perterbing each dimension uniformly and then
     accepting the new reward function with probability proportional to how much better they explain the given trajectories.
