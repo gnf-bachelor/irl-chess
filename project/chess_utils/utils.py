@@ -180,7 +180,7 @@ def get_best_move(board, R, depth=3, timer=False, evaluation_function=evaluate_b
     moves = tqdm([move for move in board.legal_moves]) if timer else board.legal_moves
     for move in moves:
         board.push(move)
-        Q, _ = alpha_beta_search(board, alpha=alpha, depth=depth - 1, maximize=not white, R=R,
+        Q, _, _ = alpha_beta_search(board, alpha=alpha, depth=depth - 1, maximize=not white, R=R,
                               evaluation_function=evaluation_function)
         board.pop()
         if Q > alpha:
@@ -302,7 +302,7 @@ def log_prob_dist(R, energy, alpha, prior=lambda R: 1):
     return log_prob
 
 
-def policy_walk(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, permute_end_idx=-1, permute_all=True, save_every=None, save_path=None, san=True):
+def policy_walk(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, permute_end_idx=-1, permute_all=True, save_every=None, save_path=None, san=False):
     """ Policy walk algorithm over given class of reward functions.
     Iterates over the initial reward function by perterbing each dimension uniformly and then
     accepting the new reward function with probability proportional to how much better they explain the given trajectories. 
@@ -341,13 +341,13 @@ def policy_walk(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, pe
             if len(Q_boards_oldR_DO_list):
                 Q_oldR_DO_policy, board_old = Q_boards_oldR_DO_list[i]
             else:
-                Q_oldR_DO_policy, board_old, = alpha_beta_search(board=board, R=R, depth=depth-1, maximize=board.turn)
+                Q_oldR_DO_policy, board_old, _ = alpha_beta_search(board=board, R=R, depth=depth-1, maximize=board.turn)
                 Q_oldR_DO_policy *= reward_sign
             # Then we evaluate the found board using the new weights
             Q_newR_DO_policy = evaluate_board(board=board_old, R=R_)*reward_sign     # Q^pi(s,a,R_)
             board.pop()
             # Finally we calculate the Q-value of the old policy on the state without the original move
-            _, board_old_, = alpha_beta_search(board=board, R=R, depth=depth, maximize=board.turn)
+            _, board_old_, _ = alpha_beta_search(board=board, R=R, depth=depth, maximize=board.turn)
             Q_newR_O_policy = evaluate_board(board=board_old_, R=R_)*reward_sign    # Q^pi(s,pi(s),R_)
 
             Q_newR_O[i] = Q_newR_O_policy     # Q^pi(s,pi(s),R_)
@@ -360,7 +360,7 @@ def policy_walk(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, pe
         if np.sum(Q_newR_DO < Q_newR_O):
             energy_newR_DN = 0
             for board, move in tqdm(zip(boards, moves), total=len(boards), desc='Calculating Q-values for new Policy'):
-                Q_newR_DN_policy, board_newR_DN = alpha_beta_search(board=board, R=R_, depth=depth, maximize=board.turn)
+                Q_newR_DN_policy, board_newR_DN, _ = alpha_beta_search(board=board, R=R_, depth=depth, maximize=board.turn)
                 Q_boards_oldR_DO_list.append((Q_newR_DN_policy, board_newR_DN))
                 energy_newR_DN += Q_newR_DN_policy
             log_prob = min(0, log_prob_dist(R_, energy_newR_DN, alpha=alpha) - log_prob_dist(R, energy_oldR_DO, alpha=alpha))
@@ -377,7 +377,7 @@ def policy_walk(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, pe
 
 
 def policy_walk_multi(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, permute_end_idx=-1, permute_all=True,
-                save_every=None, save_path=None, san=True):
+                save_every=None, save_path=None, san=False):
     """ Policy walk algorithm over given class of reward functions.
     Iterates over the initial reward function by perterbing each dimension uniformly and then
     accepting the new reward function with probability proportional to how much better they explain the given trajectories.
@@ -403,13 +403,13 @@ def policy_walk_multi(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e
         if len(Q_boards_oldR_DO_list):
             Q_oldR_DO_policy, board_old = Q_boards_oldR_DO_list[i]
         else:
-            Q_oldR_DO_policy, board_old, = alpha_beta_search(board=board, R=R, depth=depth - 1, maximize=board.turn)
+            Q_oldR_DO_policy, board_old, _ = alpha_beta_search(board=board, R=R, depth=depth - 1, maximize=board.turn)
             Q_oldR_DO_policy *= reward_sign
         # Then we evaluate the found board using the new weights
         Q_newR_DO_policy = evaluate_board(board=board_old, R=R_, white=board_old.turn)*reward_sign  # Q^pi(s,a,R_)
         board.pop()
         # Finally we calculate the Q-value of the old policy on the state without the original move
-        _, board_old_, = alpha_beta_search(board=board, R=R, depth=depth, maximize=board.turn)
+        _, board_old_, _ = alpha_beta_search(board=board, R=R, depth=depth, maximize=board.turn)
         Q_newR_O_policy = evaluate_board(board=board, R=R_, white=board_old_.turn)*reward_sign
         return Q_newR_O_policy, Q_newR_DO_policy, Q_oldR_DO_policy
 
@@ -446,7 +446,7 @@ def policy_walk_multi(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e
                                                                     maximize=board.turn)
                                          for board, move in tqdm(zip(boards, moves), total=len(boards),
                                                                  desc='Calculating Q-values for new Policy'))
-            for Q_newR_DN_policy, board_newR_DN in result:
+            for Q_newR_DN_policy, board_newR_DN, _ in result:
                 Q_boards_oldR_DO_list.append((Q_newR_DN_policy, board_newR_DN))
                 energy_newR_DN += Q_newR_DN_policy
             log_prob = min(0, log_prob_dist(R_, energy_newR_DN, alpha=alpha) - log_prob_dist(R, energy_oldR_DO,
