@@ -3,7 +3,8 @@ import json
 from os.path import join
 
 if __name__ == '__main__':
-    if os.getcwd().split('\\')[-1] != 'irl-chess':
+    if os.getcwd()[-len('irl-chess'):] != 'irl-chess':
+        print(os.getcwd())
         os.chdir('../')
     from project import plot_permuted_sunfish_weights
 
