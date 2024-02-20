@@ -90,7 +90,8 @@ if __name__ == '__main__':
     if os.getcwd()[-len('irl-chess'):] != 'irl-chess':
         print(os.getcwd())
         os.chdir('../')
-    from project import policy_walk, policy_walk_multi, get_midgame_boards, get_best_move, piece, download_lichess_pgn
+    from project import policy_walk_multi as policy_walk
+    from project import get_midgame_boards, get_best_move, piece, download_lichess_pgn
 
     with open(join(os.getcwd(), 'experiment_configs', 'sunfish_permutation', 'config.json'), 'r') as file:
         config_data = json.load(file)
