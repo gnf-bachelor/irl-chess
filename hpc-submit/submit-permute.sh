@@ -1,6 +1,6 @@
-#BSUB -J sunfish-D35
-#BSUB -o sunfish-D35%J.out
-#BSUB -e sunfish-D35%J.err
+#BSUB -J sunfish-D4
+#BSUB -o sunfish-D4%J.out
+#BSUB -e sunfish-D4%J.err
 #BSUB -q hpc
 #BSUB -n 4
 #BSUB -R "rusage[mem=16G]"
