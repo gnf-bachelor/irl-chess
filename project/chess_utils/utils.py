@@ -62,11 +62,10 @@ def evaluate_board(board, R, pst = False, white=True):
         eval += (pos @ R) * (1 if WhitePieces else -1) # Add if 
     return eval * (1 if white else -1) + (eval_pst_only(board) if pst else 0)
 
-def move_generator(board: chess.Board, depth: int, explore_captures: bool) -> Iterator[chess.Move]:
-    if explore_captures: # Skip captures on the second pass since we already considered them.
-        if depth > 0: it = chain(board.generate_legal_captures(), filter(lambda m : not board.is_capture(m), board.generate_legal_moves()))
-        else: it = board.generate_legal_captures()
-    else: it = board.generate_legal_moves()
+def move_generator(board: chess.Board, depth: int) -> Iterator[chess.Move]:
+    # Skip captures on the second pass since we already considered them.
+    if depth > 0: it = chain(board.generate_legal_captures(), filter(lambda m : not board.is_capture(m), board.generate_legal_moves()))
+    else: it = board.generate_legal_captures()
     next_move = next(it, -1)
     no_moves = next_move == -1
     if not no_moves: it = chain([next_move], it)
@@ -91,7 +90,6 @@ def alpha_beta_search(board: chess.Board,
                       R: np.array = np.zeros(1),
                       pst: bool = False,
                       evaluation_function=evaluate_board,
-                      explore_captures: bool = True,
                       quiesce: bool = True) -> tuple[float, chess.Board, deque]: 
     """
     When maximize is True the board must be evaluated from the White
@@ -112,7 +110,7 @@ def alpha_beta_search(board: chess.Board,
 
     if maximize:
         max_eval = -np.inf
-        it, no_move = move_generator(board, depth, explore_captures)
+        it, no_move = move_generator(board, depth)
         
         if depth <= 0 or no_move: # entering quiescence search
             static_eval, board_best, move_queue_best = no_moves_eval(board, R, pst, evaluation_function)
@@ -123,7 +121,7 @@ def alpha_beta_search(board: chess.Board,
         if ((not no_move) and (depth > 0 or quiesce)): # Consider next moves if we have the depth or we are quiescing. 
             for move in it:
                 board.push(move)
-                eval, board_last, move_queue = alpha_beta_search(board, depth - 1, alpha, beta, False, R=R, pst=pst, evaluation_function=evaluation_function, explore_captures=explore_captures, quiesce=quiesce)
+                eval, board_last, move_queue = alpha_beta_search(board, depth - 1, alpha, beta, False, R=R, pst=pst, evaluation_function=evaluation_function, quiesce=quiesce)
                 board.pop()
                 if max_eval < eval:
                     max_eval = eval
@@ -138,7 +136,7 @@ def alpha_beta_search(board: chess.Board,
     
     else:
         min_eval = np.inf
-        it, no_move = move_generator(board, depth, explore_captures)
+        it, no_move = move_generator(board, depth)
         
         if depth <= 0 or no_move: # entering quiescence search
             static_eval, board_best, move_queue_best = no_moves_eval(board, R, pst, evaluation_function)
@@ -149,7 +147,7 @@ def alpha_beta_search(board: chess.Board,
         if ((not no_move) and (depth > 0 or quiesce)): # Consider next moves if we have the depth or we are quiescing.
             for move in it:
                 board.push(move)
-                eval, board_last, move_queue = alpha_beta_search(board, alpha=alpha, depth=depth - 1, maximize=True, R=R, pst=pst, evaluation_function=evaluation_function, explore_captures=explore_captures, quiesce=quiesce)
+                eval, board_last, move_queue = alpha_beta_search(board, alpha=alpha, depth=depth - 1, maximize=True, R=R, pst=pst, evaluation_function=evaluation_function, quiesce=quiesce)
                 board.pop()
                 if min_eval > eval:
                     min_eval = eval
