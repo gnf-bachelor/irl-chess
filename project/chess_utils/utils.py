@@ -1,5 +1,7 @@
 from copy import deepcopy
 from collections import deque
+from itertools import chain
+from collections.abc import Sized, Iterable, Iterator
 from os.path import join
 from joblib import Parallel, delayed
 import pandas as pd
@@ -60,15 +62,35 @@ def evaluate_board(board, R, pst = False, white=True):
         eval += (pos @ R) * (1 if WhitePieces else -1) # Add if 
     return eval * (1 if white else -1) + (eval_pst_only(board) if pst else 0)
 
+def move_generator(board: chess.Board, depth: int) -> Iterator[chess.Move]:
+    # Skip captures on the second pass since we already considered them.
+    if depth > 0: it = chain(board.generate_legal_captures(), filter(lambda m : not board.is_capture(m), board.generate_legal_moves()))
+    else: it = board.generate_legal_captures()
+    next_move = next(it, -1)
+    no_moves = next_move == -1
+    if not no_moves: it = chain([next_move], it)
+    return it, no_moves
 
-def alpha_beta_search(board,
+def no_moves_eval(board: chess.Board, R: np.array, pst: bool, evaluation_function=evaluate_board, _maximize: bool = True) -> tuple[float, chess.Board, deque]:
+    if board.outcome() is None: # Game is still going on
+        assert not board.is_game_over()
+        final_score = evaluation_function(board, R, pst)
+    elif board.outcome().winner is None: # The game is tied
+        final_score = 0
+    else:
+        final_score = (np.sum(R)*100 if board.outcome().winner else -np.sum(R)*100)
+    return final_score * (1 if _maximize else -1), deepcopy(board), deque() # This evaluation function should be static. Positive is good for white and negative is good for black.
+
+
+def alpha_beta_search(board: chess.Board,
                       depth,
                       alpha=-np.inf,
                       beta=np.inf,
                       maximize=True,
                       R: np.array = np.zeros(1),
                       pst: bool = False,
-                      evaluation_function=evaluate_board):
+                      evaluation_function=evaluate_board,
+                      quiesce: bool = True) -> tuple[float, chess.Board, deque]: 
     """
     When maximize is True the board must be evaluated from the White
     player's perspective.
@@ -83,49 +105,60 @@ def alpha_beta_search(board,
     :return:
     """
     assert board.turn == maximize
-
-    if depth == 0 or board.is_game_over():
-        if board.is_checkmate():
-            final_score = (-np.sum(R) * 100 if maximize else np.sum(R) * 100)
-        elif board.is_stalemate():
-            final_score = 0
-        else:
-            final_score = evaluation_function(board, R, pst)
-        return final_score, deepcopy(
-            board), deque()  # This evaluation function should be static. Positive is good for white and negative is good for black.
+    #if depth < 0: print(f"Deep diving with depth: {depth}")
+    took_move = False
 
     if maximize:
         max_eval = -np.inf
-        for move in board.generate_legal_moves():
-            board.push(move)
-            eval, board_last, move_queue = alpha_beta_search(board, depth - 1, alpha, beta, False, R=R, pst=pst, evaluation_function=evaluation_function)
-            board.pop()
-            if max_eval < eval:
-                max_eval = eval
-                board_best = deepcopy(board_last)
-                move_best = move
-                alpha = eval
-            # alpha = max(alpha, eval)
-            if beta <= alpha:
-                break  # Beta cut-off
-        move_queue.appendleft(move_best)
-        return max_eval, board_best, move_queue
+        it, no_move = move_generator(board, depth)
+        
+        if depth <= 0 or no_move: # entering quiescence search
+            static_eval, board_best, move_queue_best = no_moves_eval(board, R, pst, evaluation_function)
+            if static_eval >= beta: return beta, board_best, move_queue_best
+            elif static_eval > alpha: alpha = static_eval
+            max_eval = alpha
+        
+        if ((not no_move) and (depth > 0 or quiesce)): # Consider next moves if we have the depth or we are quiescing. 
+            for move in it:
+                board.push(move)
+                eval, board_last, move_queue = alpha_beta_search(board, depth - 1, alpha, beta, False, R=R, pst=pst, evaluation_function=evaluation_function, quiesce=quiesce)
+                board.pop()
+                if max_eval < eval:
+                    max_eval = eval
+                    board_best = deepcopy(board_last)
+                    move_queue_best, move_best, took_move = move_queue, move, True
+                    alpha = eval
+                # alpha = max(alpha, eval)
+                if beta <= alpha:
+                    break  # Beta cut-off
+            if took_move: move_queue_best.appendleft(move_best)
+        return max_eval, board_best, move_queue_best
+    
     else:
         min_eval = np.inf
-        for move in board.generate_legal_moves():
-            board.push(move)
-            eval, board_last, move_queue = alpha_beta_search(board, alpha=alpha, depth=depth - 1, maximize=True, R=R, pst=pst, evaluation_function=evaluation_function)
-            board.pop()
-            if min_eval > eval:
-                min_eval = eval
-                board_best = deepcopy(board_last)
-                move_best = move
-                beta = eval
-            #beta = min(beta, eval)
-            if beta <= alpha:
-                break  # Alpha cut-off
-        move_queue.appendleft(move_best)
-        return min_eval, board_best, move_queue
+        it, no_move = move_generator(board, depth)
+        
+        if depth <= 0 or no_move: # entering quiescence search
+            static_eval, board_best, move_queue_best = no_moves_eval(board, R, pst, evaluation_function)
+            if static_eval <= alpha: return alpha, board_best, move_queue_best
+            elif static_eval < beta: beta = static_eval
+            min_eval = beta
+
+        if ((not no_move) and (depth > 0 or quiesce)): # Consider next moves if we have the depth or we are quiescing.
+            for move in it:
+                board.push(move)
+                eval, board_last, move_queue = alpha_beta_search(board, alpha=alpha, depth=depth - 1, maximize=True, R=R, pst=pst, evaluation_function=evaluation_function, quiesce=quiesce)
+                board.pop()
+                if min_eval > eval:
+                    min_eval = eval
+                    board_best = deepcopy(board_last)
+                    move_queue_best, move_best, took_move = move_queue, move, True
+                    beta = eval
+                #beta = min(beta, eval)
+                if beta <= alpha:
+                    break  # Alpha cut-off
+            if took_move: move_queue_best.appendleft(move_best)
+        return min_eval, board_best, move_queue_best
 
 # Deprecated I would believe. 
 def get_best_move(board, R, depth=3, timer=False, evaluation_function=evaluate_board, white=True, san=False):
