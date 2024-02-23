@@ -90,8 +90,7 @@ def alpha_beta_search(board: chess.Board,
                       R: np.array = np.zeros(1),
                       pst: bool = False,
                       evaluation_function=evaluate_board,
-                      quiesce: bool = False,
-                      count=0) -> tuple[float, chess.Board, deque]:
+                      quiesce: bool = False) -> tuple[float, chess.Board, deque]:
     """
     When maximize is True the board must be evaluated from the White
     player's perspective.
@@ -105,8 +104,6 @@ def alpha_beta_search(board: chess.Board,
     :param evaluation_function:
     :return:
     """
-    if count > 10000:
-        print(count)
     assert board.turn == maximize
     #if depth < 0: print(f"Deep diving with depth: {depth}")
     took_move = False
@@ -136,7 +133,6 @@ def alpha_beta_search(board: chess.Board,
                     break  # Beta cut-off
             if took_move:
                 move_queue_best.appendleft(move_best)
-                count += 1
         return max_eval, board_best, move_queue_best
     
     else:
@@ -163,7 +159,6 @@ def alpha_beta_search(board: chess.Board,
                 if beta <= alpha:
                     break  # Alpha cut-off
             if took_move:
-                count += 1
                 move_queue_best.appendleft(move_best)
         return min_eval, board_best, move_queue_best
 
