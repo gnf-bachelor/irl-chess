@@ -5,7 +5,7 @@
   "delta": 35.0,
   "n_boards": 500,
   "search_depth": 3,
-  "permute_end_idx": 3,
+  "permute_end_idx": 4,
   "epochs": 500,
   "save_every": 1,
   "plot_every": 10,
