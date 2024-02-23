@@ -10,6 +10,10 @@ from tqdm import tqdm
 from os.path import join
 import pickle
 import matplotlib.pyplot as plt
+if 'TERM_PROGRAM' in os.environ.keys() and os.environ['TERM_PROGRAM'] == 'vscode':
+    print("Running in VS Code, fixing sys path")
+    import sys
+    sys.path.append("./")
 from project.chess_utils.utils import alpha_beta_search
 
 
