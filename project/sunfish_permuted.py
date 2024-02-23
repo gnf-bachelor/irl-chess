@@ -22,7 +22,7 @@ def run_sun(df,
             delta=20.,
             permute_all=1,
             permute_end_idx=-1,
-            sd_noise=50,
+            quiesce=True,
             epochs=1,
             depth=3,
             path_result=None,
@@ -49,14 +49,14 @@ def run_sun(df,
 
     if path_result is None:
         path_result = join(os.getcwd(), 'models', 'sunfish_permuted')
-    out_path = join(path_result, f'{permute_all}-{min_elo}-{max_elo}-{search_depth}-{n_boards}-{delta}-{R_noisy_vals}-{max(permute_end_idx, 0)}')
+    out_path = join(path_result, f'{permute_all}-{min_elo}-{max_elo}-{search_depth}-{n_boards}-{delta}-{R_noisy_vals}-{max(permute_end_idx, 0)}-{quiesce}')
     os.makedirs(out_path, exist_ok=True)
     copy2(join(os.getcwd(), 'experiment_configs', 'sunfish_permutation', 'config.json'),
           join(out_path, 'config.json'))
 
-    boards, moves_sunfish = get_sunfish_moves(R_sunfish=R_sunfish, boards=boards, depth=depth, out_path=out_path, overwrite=overwrite)
+    boards, moves_sunfish = get_sunfish_moves(R_sunfish=R_sunfish, boards=boards, depth=depth, out_path=out_path, overwrite=overwrite, quiesce=quiesce)
     R_ = policy_walk(R_noisy, boards, moves_sunfish, delta=delta, epochs=epochs, save_every=save_every,
-                     save_path=out_path, permute_all=permute_all, permute_end_idx=permute_end_idx)
+                     save_path=out_path, permute_all=permute_all, permute_end_idx=permute_end_idx, quiesce=quiesce)
 
     from project import plot_permuted_sunfish_weights
     plot_permuted_sunfish_weights(epochs=epochs, save_every=save_every, out_path=out_path)
@@ -64,7 +64,7 @@ def run_sun(df,
     return R_
 
 
-def get_sunfish_moves(R_sunfish, boards, depth, out_path, overwrite=False):
+def get_sunfish_moves(R_sunfish, boards, depth, out_path, overwrite=False, quiesce=False):
     """
     If the moves have already been calculated for the configuration
     this function just reads the file, otherwise the moves are found
@@ -82,7 +82,7 @@ def get_sunfish_moves(R_sunfish, boards, depth, out_path, overwrite=False):
     else:
         moves_sunfish = []
         for board in tqdm(boards, desc='Getting Sunfish moves'):
-            Q, _, moves = alpha_beta_search(board, R=R_sunfish, depth=depth, maximize=board.turn, quiesce=False)
+            Q, _, moves = alpha_beta_search(board, R=R_sunfish, depth=depth, maximize=board.turn, quiesce=quiesce)
             moves_sunfish.append(moves.popleft())
         with open(sunfish_moves_path, 'wb') as f:
             pickle.dump(moves_sunfish, f)
@@ -94,7 +94,7 @@ if __name__ == '__main__':
     if os.getcwd()[-len('irl-chess'):] != 'irl-chess':
         print(os.getcwd())
         os.chdir('../')
-    from project import policy_walk as policy_walk
+    from project import policy_walk_multi as policy_walk
     from project import get_midgame_boards, piece, download_lichess_pgn
 
     with open(join(os.getcwd(), 'experiment_configs', 'sunfish_permutation', 'config.json'), 'r') as file:
@@ -112,6 +112,7 @@ if __name__ == '__main__':
     R_noisy_vals = config_data['R_noisy_vals']
     overwrite = config_data['overwrite']
     permute_end_idx = config_data['permute_end_idx']
+    quiesce = config_data['quiesce']
 
     websites_filepath = join(os.getcwd(), 'downloads', 'lichess_websites.txt')
     file_path_data = join(os.getcwd(), 'data', 'raw')
@@ -138,5 +139,6 @@ if __name__ == '__main__':
                      permute_all=permute_all,
                      path_result=path_result,
                      save_every=save_every,
+                     quiesce=quiesce,
                      epochs=epochs,
                      delta=delta)
