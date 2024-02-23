@@ -1,6 +1,6 @@
 #BSUB -J sunfish-D4
-#BSUB -o sunfish-D4%J.out
-#BSUB -e sunfish-D4%J.err
+#BSUB -o ~/Desktop/irl-chess/hpc-logs/sunfish-permute/%J.out
+#BSUB -e ~/Desktop/irl-chess/hpc-logs/sunfish-permute/%J.err
 #BSUB -q hpc
 #BSUB -n 24
 #BSUB -R "rusage[mem=1G]"
