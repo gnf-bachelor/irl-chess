@@ -8,7 +8,7 @@ if __name__ == '__main__':
         os.chdir('../')
     from project import plot_permuted_sunfish_weights
 
-    with open(join(os.getcwd(), 'experiment_configs', 'sunfish_permutation', 'config.json'), 'r') as file:
+    with open(join(os.getcwd(), 'experiment_configs', 'current', 'config.json'), 'r') as file:
         config_data = json.load(file)
 
     n_files = config_data['n_files']
