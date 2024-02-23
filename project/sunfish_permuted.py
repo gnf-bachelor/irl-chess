@@ -5,6 +5,7 @@ from copy import copy
 from shutil import copy2
 import numpy as np
 import pandas as pd
+from joblib import Parallel, delayed
 from tqdm import tqdm
 from os.path import join
 import pickle
@@ -64,7 +65,7 @@ def run_sun(df,
     return R_
 
 
-def get_sunfish_moves(R_sunfish, boards, depth, out_path, overwrite=False):
+def get_sunfish_moves(R_sunfish, boards, depth, out_path, overwrite=False, quiesce=False):
     """
     If the moves have already been calculated for the configuration
     this function just reads the file, otherwise the moves are found
@@ -73,6 +74,9 @@ def get_sunfish_moves(R_sunfish, boards, depth, out_path, overwrite=False):
     :param out_path:
     :return:
     """
+    def step(board, R, depth, quiesce):
+        Q, _, moves = alpha_beta_search(board, R=R, depth=depth, maximize=board.turn, quiesce=quiesce)
+        return moves.popleft()
 
     sunfish_moves_path = os.path.join(out_path, 'sunfish_moves.pkl')
     if not overwrite and os.path.exists(sunfish_moves_path):
@@ -80,10 +84,8 @@ def get_sunfish_moves(R_sunfish, boards, depth, out_path, overwrite=False):
         with open(sunfish_moves_path, 'rb') as f:
             moves_sunfish = pickle.load(f)
     else:
-        moves_sunfish = []
-        for board in tqdm(boards, desc='Getting Sunfish moves'):
-            Q, _, moves = alpha_beta_search(board, R=R_sunfish, depth=depth, maximize=board.turn)
-            moves_sunfish.append(moves.popleft())
+        moves_sunfish = Parallel(n_jobs=-2)(delayed(step)(board=board, R=R_sunfish, depth=depth, quiesce=quiesce)
+                                     for board in tqdm(boards, desc='Getting Sunfish moves'))
         with open(sunfish_moves_path, 'wb') as f:
             pickle.dump(moves_sunfish, f)
 
