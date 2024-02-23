@@ -512,8 +512,9 @@ def policy_walk_v0_multi(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha
                                                               desc='Policy walking over reward functions'))
 
         result_array = np.array(result)
-        if np.argmax(result_array.sum(axis=1)):
-            R = R_
+
+        if np.argmax(result_array.sum(axis=0)):
+            R = copy(R_)
         if save_every is not None and epoch % save_every == 0:
             pd.DataFrame(R_.reshape((-1, 1)), columns=['Result']).to_csv(join(save_path, f'{epoch}.csv'), index=False)
         if plot_every is not None and epoch % plot_every == 0:
