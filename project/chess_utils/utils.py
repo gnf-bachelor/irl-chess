@@ -328,7 +328,7 @@ def policy_walk(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, pe
         Q_boards_oldR_DO_list = []
         energy_newR_DO, energy_oldR_DO = 0, 0
 
-        R_ = R
+        R_ = copy(R)
         if permute_all:
             add = np.random.uniform(low=-delta, high=delta, size=R.shape[0] - 1).astype(R.dtype)
             R_[1:permute_end_idx] += add
@@ -461,6 +461,58 @@ def policy_walk_multi(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e
 
         p = np.random.rand(1).item()
         if log_prob > -1e7 and p < np.exp(log_prob):
+            R = R_
+        if save_every is not None and epoch % save_every == 0:
+            pd.DataFrame(R_.reshape((-1, 1)), columns=['Result']).to_csv(join(save_path, f'{epoch}.csv'), index=False)
+        if plot_every is not None and epoch % plot_every == 0:
+            plot_permuted_sunfish_weights(epochs=epochs, save_every=save_every, out_path=save_path, )
+
+    return R
+
+def policy_walk_v0_multi(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, permute_end_idx=-1, permute_all=True,
+                      save_every=None, save_path=None, san=False, quiesce=False, n_threads=-2, plot_every=None):
+    """ Policy walk algorithm over given class of reward functions.
+    Iterates over the initial reward function by perterbing each dimension uniformly and then
+    accepting the new reward function with probability proportional to how much better they explain the given trajectories.
+
+    Args:
+        R (_type_): The reward function (heuristic for statically evaluation a board).
+        boards (_type_): list of chess.Move() objects
+        moves (_type_): _description_
+        delta (_type_, optional): _description_. Defaults to 1e-3.
+        epochs (int, optional): _description_. Defaults to 10.
+        depth (int, optional): _description_. Defaults to 3.
+        alpha (_type_, optional): _description_. Defaults to 2e-2.
+
+    Returns:
+        _type_: _description_
+    """
+
+    # Multiprocessesing
+    def step(board, move, R, R_, depth):
+        reward_sign = 1 if board.turn else -1 # White seeks to maximize and black to minimize, so the reward for black is the flipped evaluation.
+        # Finally we calculate the Q-value of the old policy on the state without the original move
+        _, board_old_, move_queue_old = alpha_beta_search(board=board, R=R, depth=depth, maximize=board.turn, quiesce=quiesce)
+        _, board_old_, move_queue_new = alpha_beta_search(board=board, R=R_, depth=depth, maximize=board.turn, quiesce=quiesce)
+        return move == move_queue_old.popleft(), move == move_queue_new.popleft()
+
+    for epoch in tqdm(range(epochs), desc='Iterating over epochs'):
+        i = 0
+
+        R_ = copy(R)
+        if permute_all:
+            add = np.random.uniform(low=-delta, high=delta, size=R.shape[0] - 1).astype(R.dtype)
+            R_[1:permute_end_idx] += add
+        else:
+            choice = np.random.choice(np.arange(1, len(R_) if permute_end_idx < 0 else permute_end_idx))
+            R_[choice] += np.random.uniform(low=-delta, high=delta, size=1).item()
+
+        result = Parallel(n_jobs=n_threads)(delayed(step)(board, moves, R, R_, depth)
+                                            for board, moves in tqdm(zip(boards, moves), total=len(boards),
+                                                              desc='Policy walking over reward functions'))
+
+        result_array = np.array(result)
+        if np.argmax(result_array.sum(axis=1)):
             R = R_
         if save_every is not None and epoch % save_every == 0:
             pd.DataFrame(R_.reshape((-1, 1)), columns=['Result']).to_csv(join(save_path, f'{epoch}.csv'), index=False)
