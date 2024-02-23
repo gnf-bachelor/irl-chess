@@ -13,6 +13,7 @@ from time import time
 from copy import copy
 from project.chess_utils.sunfish_utils import board2sunfish
 from project.chess_utils.sunfish import piece, pst, pst_only
+from project.visualizations.visualize import plot_permuted_sunfish_weights
 from scipy.special import softmax
 
 material_dict = {
@@ -121,7 +122,7 @@ def alpha_beta_search(board: chess.Board,
         if ((not no_move) and (depth > 0 or quiesce)): # Consider next moves if we have the depth or we are quiescing. 
             for move in it:
                 board.push(move)
-                eval, board_last, move_queue = alpha_beta_search(board, depth - 1, alpha, beta, False, R=R, pst=pst, evaluation_function=evaluation_function, quiesce=quiesce, count=count)
+                eval, board_last, move_queue = alpha_beta_search(board, depth - 1, alpha, beta, False, R=R, pst=pst, evaluation_function=evaluation_function, quiesce=quiesce)
                 board.pop()
                 if max_eval < eval:
                     max_eval = eval
@@ -148,7 +149,7 @@ def alpha_beta_search(board: chess.Board,
         if ((not no_move) and (depth > 0 or quiesce)): # Consider next moves if we have the depth or we are quiescing.
             for move in it:
                 board.push(move)
-                eval, board_last, move_queue = alpha_beta_search(board, alpha=alpha, depth=depth - 1, maximize=True, R=R, pst=pst, evaluation_function=evaluation_function, quiesce=quiesce, count=count)
+                eval, board_last, move_queue = alpha_beta_search(board, alpha=alpha, depth=depth - 1, maximize=True, R=R, pst=pst, evaluation_function=evaluation_function, quiesce=quiesce)
                 board.pop()
                 if min_eval > eval:
                     min_eval = eval
@@ -302,7 +303,8 @@ def log_prob_dist(R, energy, alpha, prior=lambda R: 1):
     return log_prob
 
 
-def policy_walk(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, permute_end_idx=-1, permute_all=True, save_every=None, save_path=None, san=False, quiesce=False, n_threads=-2):
+def policy_walk(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, permute_end_idx=-1, permute_all=True,
+                save_every=None, save_path=None, san=False, quiesce=False, n_threads=-2, plot_every=None):
     """ Policy walk algorithm over given class of reward functions.
     Iterates over the initial reward function by perterbing each dimension uniformly and then
     accepting the new reward function with probability proportional to how much better they explain the given trajectories. 
@@ -372,12 +374,14 @@ def policy_walk(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, pe
             R = R_
         if save_every is not None and epoch % save_every == 0:
             pd.DataFrame(R_.reshape((-1, 1)), columns=['Result']).to_csv(join(save_path, f'{epoch}.csv'), index=False)
+        if plot_every is not None and epoch % plot_every == 0:
+            plot_permuted_sunfish_weights(epochs=epochs, save_every=save_every, out_path=save_path, )
 
     return R
 
 
 def policy_walk_multi(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, permute_end_idx=-1, permute_all=True,
-                      save_every=None, save_path=None, san=False, quiesce=False, n_threads=-2):
+                      save_every=None, save_path=None, san=False, quiesce=False, n_threads=-2, plot_every=None):
     """ Policy walk algorithm over given class of reward functions.
     Iterates over the initial reward function by perterbing each dimension uniformly and then
     accepting the new reward function with probability proportional to how much better they explain the given trajectories.
@@ -460,6 +464,8 @@ def policy_walk_multi(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e
             R = R_
         if save_every is not None and epoch % save_every == 0:
             pd.DataFrame(R_.reshape((-1, 1)), columns=['Result']).to_csv(join(save_path, f'{epoch}.csv'), index=False)
+        if plot_every is not None and epoch % plot_every == 0:
+            plot_permuted_sunfish_weights(epochs=epochs, save_every=save_every, out_path=save_path, )
 
     return R
 

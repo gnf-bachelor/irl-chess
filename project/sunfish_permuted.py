@@ -28,7 +28,8 @@ def run_sun(df,
             depth=3,
             path_result=None,
             save_every=1000,
-            n_threads=-2
+            n_threads=-2,
+            plot_every=1
             ):
     """
 
@@ -36,7 +37,6 @@ def run_sun(df,
     :param min_elo:
     :param max_elo:
     :param n_boards:
-    :param sd_noise:
     :param depth:
     :return:
     """
@@ -58,7 +58,7 @@ def run_sun(df,
 
     boards, moves_sunfish = get_sunfish_moves(R_sunfish=R_sunfish, boards=boards, depth=depth, out_path=out_path, overwrite=overwrite, quiesce=quiesce, n_threads=n_threads)
     R_ = policy_walk(R_noisy, boards, moves_sunfish, delta=delta, epochs=epochs, save_every=save_every,
-                     save_path=out_path, permute_all=permute_all, permute_end_idx=permute_end_idx, quiesce=quiesce, n_threads=n_threads)
+                     save_path=out_path, permute_all=permute_all, permute_end_idx=permute_end_idx, quiesce=quiesce, n_threads=n_threads, plot_every=plot_every)
 
     from project import plot_permuted_sunfish_weights
     plot_permuted_sunfish_weights(epochs=epochs, save_every=save_every, out_path=out_path)
@@ -119,6 +119,7 @@ if __name__ == '__main__':
     permute_end_idx = config_data['permute_end_idx']
     quiesce = config_data['quiesce']
     n_threads = config_data['n_threads']
+    plot_every = config_data['plot_every']
 
     websites_filepath = join(os.getcwd(), 'downloads', 'lichess_websites.txt')
     file_path_data = join(os.getcwd(), 'data', 'raw')
@@ -148,4 +149,5 @@ if __name__ == '__main__':
                      quiesce=quiesce,
                      epochs=epochs,
                      n_threads=n_threads,
+                     plot_every=plot_every,
                      delta=delta)
