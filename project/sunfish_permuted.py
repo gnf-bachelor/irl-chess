@@ -82,7 +82,7 @@ def get_sunfish_moves(R_sunfish, boards, depth, out_path, overwrite=False):
     else:
         moves_sunfish = []
         for board in tqdm(boards, desc='Getting Sunfish moves'):
-            Q, _, moves = alpha_beta_search(board, R=R_sunfish, depth=depth, maximize=board.turn)
+            Q, _, moves = alpha_beta_search(board, R=R_sunfish, depth=depth, maximize=board.turn, quiesce=False)
             moves_sunfish.append(moves.popleft())
         with open(sunfish_moves_path, 'wb') as f:
             pickle.dump(moves_sunfish, f)
