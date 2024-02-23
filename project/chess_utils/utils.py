@@ -307,7 +307,7 @@ def log_prob_dist(R, energy, alpha, prior=lambda R: 1):
     return log_prob
 
 
-def policy_walk(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, permute_end_idx=-1, permute_all=True, save_every=None, save_path=None, san=False, quiesce=False):
+def policy_walk(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, permute_end_idx=-1, permute_all=True, save_every=None, save_path=None, san=False, quiesce=False, n_threads=-2):
     """ Policy walk algorithm over given class of reward functions.
     Iterates over the initial reward function by perterbing each dimension uniformly and then
     accepting the new reward function with probability proportional to how much better they explain the given trajectories. 
@@ -382,7 +382,7 @@ def policy_walk(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, pe
 
 
 def policy_walk_multi(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, permute_end_idx=-1, permute_all=True,
-                save_every=None, save_path=None, san=False, quiesce=False):
+                      save_every=None, save_path=None, san=False, quiesce=False, n_threads=-2):
     """ Policy walk algorithm over given class of reward functions.
     Iterates over the initial reward function by perterbing each dimension uniformly and then
     accepting the new reward function with probability proportional to how much better they explain the given trajectories.
@@ -433,8 +433,8 @@ def policy_walk_multi(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e
             choice = np.random.choice(np.arange(1, len(R_) if permute_end_idx < 0 else permute_end_idx))
             R_[choice] += np.random.uniform(low=-delta, high=delta, size=1).item()
 
-        result = Parallel(n_jobs=-2)(delayed(step)(board, moves, Q_boards_oldR_DO_list, R, depth)
-                                     for board, moves in tqdm(zip(boards, moves), total=len(boards),
+        result = Parallel(n_jobs=n_threads)(delayed(step)(board, moves, Q_boards_oldR_DO_list, R, depth)
+                                            for board, moves in tqdm(zip(boards, moves), total=len(boards),
                                                               desc='Policy walking over reward functions'))
 
         for Q_newR_O_policy, Q_newR_DO_policy, Q_oldR_DO_policy in result:

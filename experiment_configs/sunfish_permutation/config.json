@@ -11,5 +11,6 @@
   "permute_all": 0,
   "R_noisy_vals": 100,
   "overwrite": false,
-  "quiesce": false
+  "quiesce": false,
+  "n_threads": -1
 }
