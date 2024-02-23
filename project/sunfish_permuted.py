@@ -10,6 +10,10 @@ from tqdm import tqdm
 from os.path import join
 import pickle
 import matplotlib.pyplot as plt
+if 'TERM_PROGRAM' in os.environ.keys() and os.environ['TERM_PROGRAM'] == 'vscode':
+    print("Running in VS Code, fixing sys path")
+    import sys
+    sys.path.append("./")
 from project.chess_utils.utils import alpha_beta_search
 
 
@@ -23,11 +27,13 @@ def run_sun(df,
             delta=20.,
             permute_all=1,
             permute_end_idx=-1,
-            sd_noise=50,
+            quiesce=False,
             epochs=1,
             depth=3,
             path_result=None,
             save_every=1000,
+            n_threads=-2,
+            plot_every=1
             ):
     """
 
@@ -35,7 +41,6 @@ def run_sun(df,
     :param min_elo:
     :param max_elo:
     :param n_boards:
-    :param sd_noise:
     :param depth:
     :return:
     """
@@ -50,14 +55,14 @@ def run_sun(df,
 
     if path_result is None:
         path_result = join(os.getcwd(), 'models', 'sunfish_permuted')
-    out_path = join(path_result, f'{permute_all}-{min_elo}-{max_elo}-{search_depth}-{n_boards}-{delta}-{R_noisy_vals}-{max(permute_end_idx, 0)}')
+    out_path = join(path_result, f'{permute_all}-{min_elo}-{max_elo}-{search_depth}-{n_boards}-{delta}-{R_noisy_vals}-{max(permute_end_idx, 0)}-{quiesce}')
     os.makedirs(out_path, exist_ok=True)
     copy2(join(os.getcwd(), 'experiment_configs', 'sunfish_permutation', 'config.json'),
           join(out_path, 'config.json'))
 
-    boards, moves_sunfish = get_sunfish_moves(R_sunfish=R_sunfish, boards=boards, depth=depth, out_path=out_path, overwrite=overwrite)
+    boards, moves_sunfish = get_sunfish_moves(R_sunfish=R_sunfish, boards=boards, depth=depth, out_path=out_path, overwrite=overwrite, quiesce=quiesce, n_threads=n_threads)
     R_ = policy_walk(R_noisy, boards, moves_sunfish, delta=delta, epochs=epochs, save_every=save_every,
-                     save_path=out_path, permute_all=permute_all, permute_end_idx=permute_end_idx)
+                     save_path=out_path, permute_all=permute_all, permute_end_idx=permute_end_idx, quiesce=quiesce, n_threads=n_threads, plot_every=plot_every)
 
     from project import plot_permuted_sunfish_weights
     plot_permuted_sunfish_weights(epochs=epochs, save_every=save_every, out_path=out_path)
@@ -65,7 +70,8 @@ def run_sun(df,
     return R_
 
 
-def get_sunfish_moves(R_sunfish, boards, depth, out_path, overwrite=False, quiesce=False):
+def get_sunfish_moves(R_sunfish, boards, depth, out_path, overwrite=False, quiesce=False, n_threads=-2):
+
     """
     If the moves have already been calculated for the configuration
     this function just reads the file, otherwise the moves are found
@@ -84,8 +90,9 @@ def get_sunfish_moves(R_sunfish, boards, depth, out_path, overwrite=False, quies
         with open(sunfish_moves_path, 'rb') as f:
             moves_sunfish = pickle.load(f)
     else:
-        moves_sunfish = Parallel(n_jobs=-2)(delayed(step)(board=board, R=R_sunfish, depth=depth, quiesce=quiesce)
-                                     for board in tqdm(boards, desc='Getting Sunfish moves'))
+        moves_sunfish = Parallel(n_jobs=n_threads)(delayed(step)(board=board, R=R_sunfish, depth=depth, quiesce=quiesce)
+                                                   for board in tqdm(boards, desc='Getting Sunfish moves'))
+
         with open(sunfish_moves_path, 'wb') as f:
             pickle.dump(moves_sunfish, f)
 
@@ -114,6 +121,9 @@ if __name__ == '__main__':
     R_noisy_vals = config_data['R_noisy_vals']
     overwrite = config_data['overwrite']
     permute_end_idx = config_data['permute_end_idx']
+    quiesce = config_data['quiesce']
+    n_threads = config_data['n_threads']
+    plot_every = config_data['plot_every']
 
     websites_filepath = join(os.getcwd(), 'downloads', 'lichess_websites.txt')
     file_path_data = join(os.getcwd(), 'data', 'raw')
@@ -140,5 +150,8 @@ if __name__ == '__main__':
                      permute_all=permute_all,
                      path_result=path_result,
                      save_every=save_every,
+                     quiesce=quiesce,
                      epochs=epochs,
+                     n_threads=n_threads,
+                     plot_every=plot_every,
                      delta=delta)

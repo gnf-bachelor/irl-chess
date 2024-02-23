@@ -14,7 +14,7 @@ def plot_permuted_sunfish_weights(epochs, save_every, out_path, start_idx=0, ign
             df = pd.read_csv(path, index_col=None)
             weights.append(df.values.flatten())
         else:
-            print(f'Could not find weights at {i}')
+            break
     weights = np.array(weights)
     X = np.repeat(np.arange(start_idx, weights.shape[0], save_every), 6 - ignore_king).reshape((-1, 6 - ignore_king))
 
