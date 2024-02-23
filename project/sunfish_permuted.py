@@ -33,7 +33,8 @@ def run_sun(df,
             path_result=None,
             save_every=1000,
             n_threads=-2,
-            plot_every=1
+            plot_every=1,
+            version=''
             ):
     """
 
@@ -55,7 +56,7 @@ def run_sun(df,
 
     if path_result is None:
         path_result = join(os.getcwd(), 'models', 'sunfish_permuted')
-    out_path = join(path_result, f'{permute_all}-{min_elo}-{max_elo}-{search_depth}-{n_boards}-{delta}-{R_noisy_vals}-{max(permute_end_idx, 0)}-{quiesce}')
+    out_path = join(path_result, f'{permute_all}-{min_elo}-{max_elo}-{search_depth}-{n_boards}-{delta}-{R_noisy_vals}-{max(permute_end_idx, 0)}-{quiesce}-{version}')
     os.makedirs(out_path, exist_ok=True)
     copy2(join(os.getcwd(), 'experiment_configs', 'sunfish_permutation', 'config.json'),
           join(out_path, 'config.json'))
@@ -103,7 +104,6 @@ if __name__ == '__main__':
     if os.getcwd()[-len('irl-chess'):] != 'irl-chess':
         print(os.getcwd())
         os.chdir('../')
-    from project import policy_walk_multi as policy_walk
     from project import get_midgame_boards, piece, download_lichess_pgn
 
     with open(join(os.getcwd(), 'experiment_configs', 'sunfish_permutation', 'config.json'), 'r') as file:
@@ -124,7 +124,13 @@ if __name__ == '__main__':
     quiesce = config_data['quiesce']
     n_threads = config_data['n_threads']
     plot_every = config_data['plot_every']
-
+    version = config_data['version']
+    if version == 'v0_multi':
+        from project import policy_walk_v0_multi as policy_walk
+    elif version == 'v1_multi':
+        from project import policy_walk_multi as policy_walk
+    elif version == 'v1_default':
+        from project import policy_walk as policy_walk
     websites_filepath = join(os.getcwd(), 'downloads', 'lichess_websites.txt')
     file_path_data = join(os.getcwd(), 'data', 'raw')
 
@@ -154,4 +160,5 @@ if __name__ == '__main__':
                      epochs=epochs,
                      n_threads=n_threads,
                      plot_every=plot_every,
-                     delta=delta)
+                     delta=delta,
+                     version=version)
