@@ -1,10 +1,10 @@
 {
-  "n_files": 4,
+  "n_files": 12,
   "min_elo": 1000,
   "max_elo": 1200,
   "delta": 35.0,
-  "n_boards": 500,
-  "search_depth": 3,
+  "n_boards": 5000,
+  "search_depth": 2,
   "permute_end_idx": 4,
   "epochs": 500,
   "save_every": 1,
