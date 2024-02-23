@@ -1,14 +1,14 @@
----- Current tasks ----
+---- Current tasks ---- X = Done, ? = Unsure, . = Partially ocmplete
 [x]    Get sunfish up and running.
 [x]        Write trainable alpha-beta search function weighted with BIRL heuristics.
-[ ]        Combine the two by permuting the weights and using the function to approximate the true ones
-[ ]            Evaluate performance
+[X]        Combine the two by permuting the weights and using the function to approximate the true ones
+[?]            Evaluate performance (doesn't yeild promising results)
 [ ]                Evaluate heuristics qualitatively for different trained chess engines.
 
 [X]    Segment Lichess dataset and make it amenable to Bayesian IRL algorithm.
-[ ]        Begin with a small sample.
-[ ]    Go through Berkely Deep RL course
-[ ]    Read and understand reading list (see reading list section)
+[X]        Begin with a small sample.
+[.]    Go through Berkely Deep RL course
+[.]    Read and understand reading list (see reading list section)
 
 [ ]     Consider GAN like architecture with descriminator for policy moves and data moves 
             (optimize reward function to distinguish between policy moves and data moves,
@@ -24,6 +24,8 @@
 
 
 ---- Tentative timeline ----
+1st February: 
+    Start date
 
 1st March:
     Finish projektplan
@@ -52,4 +54,14 @@ Important/potentially project changing:
 Less vital/useful background:
     - Algorithms for Inverse Reinforcement Learning (original Andrew Yang paper)
 
+
+---- Questions for Tue ----
+    - Discuss current performance of algorithm.
+    - Discuss trajectory from here. Other approaches?
+        - Minimum viable prototype?
+        - GAN architecture. Make Network that tries to maximize difference between performance of data and most recent trained policy. 
+            - Ideas from Tue of representation and feasibility. 
+        - MAP estimation instead of bayesian approach.
+    - Projektplan? 
+    - Thoughts on whether model trajectories are optimal enough with respect to any reward function we can reasonably model?
 
