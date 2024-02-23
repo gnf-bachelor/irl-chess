@@ -67,6 +67,7 @@ def run_sun(df,
 
 
 def get_sunfish_moves(R_sunfish, boards, depth, out_path, overwrite=False, quiesce=False, n_threads=-2):
+
     """
     If the moves have already been calculated for the configuration
     this function just reads the file, otherwise the moves are found
@@ -87,6 +88,7 @@ def get_sunfish_moves(R_sunfish, boards, depth, out_path, overwrite=False, quies
     else:
         moves_sunfish = Parallel(n_jobs=n_threads)(delayed(step)(board=board, R=R_sunfish, depth=depth, quiesce=quiesce)
                                                    for board in tqdm(boards, desc='Getting Sunfish moves'))
+
         with open(sunfish_moves_path, 'wb') as f:
             pickle.dump(moves_sunfish, f)
 
