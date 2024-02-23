@@ -3,7 +3,7 @@
   "min_elo": 1000,
   "max_elo": 1200,
   "delta": 35.0,
-  "n_boards": 350,
+  "n_boards": 351,
   "search_depth": 3,
   "permute_end_idx": 4,
   "epochs": 500,
