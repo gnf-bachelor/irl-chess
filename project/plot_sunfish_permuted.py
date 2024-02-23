@@ -22,8 +22,10 @@ if __name__ == '__main__':
     permute_all = config_data['permute_all']
     R_noisy_vals = config_data['R_noisy_vals']
     permute_end_idx = config_data['permute_end_idx']
+    n_threads = config_data['n_threads']
+    quiesce = config_data['quiesce']
 
     path_result = join(os.getcwd(), 'models', 'sunfish_permuted')
     out_path = join(path_result, f'{permute_all}-{min_elo}-{max_elo}-{search_depth}-{n_boards}-{delta}'
-                    + (f'-{R_noisy_vals}' if type(R_noisy_vals) is int else '') + f'-{permute_end_idx}')
+                    + (f'-{R_noisy_vals}' if type(R_noisy_vals) is int else '') + f'-{permute_end_idx}-{quiesce}')
     plot_permuted_sunfish_weights(epochs=epochs, save_every=save_every, out_path=out_path)
