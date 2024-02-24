@@ -20,6 +20,12 @@
 [ ]    Implement evaluation for king safety, pawn structure, etc.
 [ ]    Implement self-play for sunfish vs sunfish with moderated eval function.
 
+Tue ideer:
+- greedy eval, glem 3.c else statement
+- top k idé, for R og R_ hvor mange af trækkene i deres top k er i A? w+1/W+1
+- Leela0 vektorer?
+- evt prøv at lave en walk der skifter R, hvis vi gætter flere træk rigtigt.
+
 
 
 
