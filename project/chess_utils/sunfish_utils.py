@@ -125,3 +125,4 @@ def sunfish2board(pos: Position):
     board.set_fen(fen)
     return board
 
+
