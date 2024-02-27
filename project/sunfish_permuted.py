@@ -33,6 +33,7 @@ def run_sun(df,
     :param depth:
     :return:
     """
+    # Full unpack in order to cut and paste:
     n_files = config_data['n_files']
     min_elo = config_data['min_elo']
     max_elo = config_data['max_elo']
@@ -44,6 +45,7 @@ def run_sun(df,
     permute_all = config_data['permute_all']
     R_noisy_vals = config_data['R_noisy_vals']
     overwrite = config_data['overwrite']
+    permute_start_idx = config_data['permute_start_idx']
     permute_end_idx = config_data['permute_end_idx']
     quiesce = config_data['quiesce']
     n_threads = config_data['n_threads']
@@ -54,7 +56,7 @@ def run_sun(df,
         path_result = join(os.getcwd(), 'models', 'sunfish_permuted')
     out_path = create_sunfish_path(config_data, path_result=path_result)
     R_noisy = copy(R_sunfish)
-    R_noisy[1:permute_end_idx] = R_noisy_vals  # Keep the pawn constant
+    R_noisy[permute_start_idx:permute_end_idx] = R_noisy_vals  # Keep the pawn constant
     # R_noisy[1:] += np.random.normal(loc=0, scale=sd_noise, size=R_sunfish.shape[0] - 1)
 
     boards, _ = get_midgame_boards(df, n_boards, min_elo=min_elo, max_elo=max_elo, sunfish=False)
@@ -67,12 +69,10 @@ def run_sun(df,
 
     boards, moves_sunfish = get_sunfish_moves(R_sunfish=R_sunfish, boards=boards, depth=depth, out_path=out_path,
                                               overwrite=overwrite, quiesce=quiesce, n_threads=n_threads)
-    R_ = policy_walk(R_noisy, boards, moves_sunfish, delta=delta, epochs=epochs, save_every=save_every,
-                     save_path=out_path, permute_all=permute_all, permute_end_idx=permute_end_idx, quiesce=quiesce,
-                     n_threads=n_threads, plot_every=plot_every)
+    R_ = policy_walk(R_noisy, boards, moves_sunfish, config_data=config_data, out_path=out_path)
 
     from project import plot_permuted_sunfish_weights
-    plot_permuted_sunfish_weights(epochs=epochs, save_every=save_every, out_path=out_path)
+    plot_permuted_sunfish_weights(config_data=config_data, out_path=out_path)
 
     return R_
 
@@ -115,11 +115,12 @@ def create_sunfish_path(config_data, path_result):
     epochs = config_data['epochs']
     permute_all = config_data['permute_all']
     R_noisy_vals = config_data['R_noisy_vals']
+    permute_start_idx = config_data['permute_start_idx']
     permute_end_idx = config_data['permute_end_idx']
     quiesce = config_data['quiesce']
     version = config_data['version']
     out_path = join(path_result,
-                    f'{permute_all}-{min_elo}-{max_elo}-{search_depth}-{n_boards}-{delta}-{R_noisy_vals}-{max(permute_end_idx, 0)}-{quiesce}-{version}')
+                    f'{permute_all}-{min_elo}-{max_elo}-{search_depth}-{n_boards}-{delta}-{R_noisy_vals}-{permute_start_idx}-{max(permute_end_idx, 0)}-{quiesce}-{version}')
     return out_path
 
 

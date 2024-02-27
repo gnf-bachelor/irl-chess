@@ -13,4 +13,4 @@ if __name__ == '__main__':
 
     path_result = join(os.getcwd(), 'models', 'sunfish_permuted')
     out_path = create_sunfish_path(config_data=config_data, path_result=path_result)
-    plot_permuted_sunfish_weights(epochs=config_data['epochs'], save_every=config_data['save_every'], out_path=out_path)
+    plot_permuted_sunfish_weights(config_data=config_data, out_path=out_path)

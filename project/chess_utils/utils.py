@@ -469,8 +469,7 @@ def policy_walk_multi(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e
 
     return R
 
-def policy_walk_v0_multi(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, permute_end_idx=-1, permute_all=True,
-                      save_every=None, save_path=None, san=False, quiesce=False, n_threads=-2, plot_every=None):
+def policy_walk_v0_multi(R, boards, moves, config_data, out_path):
     """ Policy walk algorithm over given class of reward functions.
     Iterates over the initial reward function by perterbing each dimension uniformly and then
     accepting the new reward function with probability proportional to how much better they explain the given trajectories.
@@ -487,6 +486,17 @@ def policy_walk_v0_multi(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha
     Returns:
         _type_: _description_
     """
+    delta = config_data['delta']
+    depth = config_data['search_depth']
+    epochs = config_data['epochs']
+    save_every = config_data['save_every']
+    permute_all = config_data['permute_all']
+    permute_start_idx = config_data['permute_start_idx']
+    permute_end_idx = config_data['permute_end_idx']
+    quiesce = config_data['quiesce']
+    n_threads = config_data['n_threads']
+    plot_every = config_data['plot_every']
+
 
     # Multiprocessesing
     def step(board, move, R, R_, depth):
@@ -502,9 +512,9 @@ def policy_walk_v0_multi(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha
         R_ = copy(R)
         if permute_all:
             add = np.random.uniform(low=-delta, high=delta, size=R.shape[0] - 1).astype(R.dtype)
-            R_[1:permute_end_idx] += add
+            R_[permute_start_idx:permute_end_idx] += add
         else:
-            choice = np.random.choice(np.arange(1, len(R_) if permute_end_idx < 0 else permute_end_idx))
+            choice = np.random.choice(np.arange(permute_start_idx, permute_end_idx))
             R_[choice] += np.random.uniform(low=-delta, high=delta, size=1).item()
 
         result = Parallel(n_jobs=n_threads)(delayed(step)(board, moves, R, R_, depth)
@@ -516,9 +526,9 @@ def policy_walk_v0_multi(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha
         if np.argmax(result_array.sum(axis=0)):
             R = copy(R_)
         if save_every is not None and epoch % save_every == 0:
-            pd.DataFrame(R_.reshape((-1, 1)), columns=['Result']).to_csv(join(save_path, f'{epoch}.csv'), index=False)
+            pd.DataFrame(R_.reshape((-1, 1)), columns=['Result']).to_csv(join(out_path, f'{epoch}.csv'), index=False)
         if plot_every is not None and epoch % plot_every == 0:
-            plot_permuted_sunfish_weights(epochs=epochs, save_every=save_every, out_path=save_path, )
+            plot_permuted_sunfish_weights(config_data=config_data, out_path=out_path, )
 
     return R
 
