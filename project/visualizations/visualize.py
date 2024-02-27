@@ -22,6 +22,6 @@ def plot_permuted_sunfish_weights(epochs, save_every, out_path, start_idx=0, ign
     plt.title('Sunfish weights over time')
     plt.xlabel('Epochs')
     plt.ylabel('Weight values')
-    plt.legend(legend_names)
+    plt.legend(legend_names[:-ignore_idx])
     plt.savefig(join(out_path, 'weights_over_time.png'))
     plt.show()
