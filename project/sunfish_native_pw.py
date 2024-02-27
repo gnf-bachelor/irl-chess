@@ -96,10 +96,8 @@ if __name__ == '__main__':
     # games = []
     # for i in range(1000):
     #     games.append(chess.pgn.read_game(pgn))
-    print(os.getcwd(), os.getcwd()[-len('irl-chess'):])
-    if os.getcwd()[-len('irl-chess'):] != 'irl-chess':
-        os.chdir('../')
-        print(os.getcwd())
+    # if os.getcwd()[-len('irl-chess'):] != 'irl-chess':
+    #     os.chdir('../')
     from project import get_midgame_boards, piece, load_lichess_dfs, create_sunfish_path, plot_permuted_sunfish_weights
 
     with open(join(os.getcwd(), 'experiment_configs', 'sunfish_permutation_native', 'config.json'), 'r') as file:
