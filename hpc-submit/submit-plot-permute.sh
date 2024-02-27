@@ -1,6 +1,6 @@
 #BSUB -J sunfish-D35
-#BSUB -o sunfish-D35%J.out
-#BSUB -e sunfish-D35%J.err
+#BSUB -o /zhome/de/d/169059/Desktop/irl-chess/hpc-logs/sunfish-D35%J.out
+#BSUB -e /zhome/de/d/169059/Desktop/irl-chess/hpc-logs/sunfish-D35%J.err
 #BSUB -q hpc
 #BSUB -n 4
 #BSUB -R "rusage[mem=1G]"

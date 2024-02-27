@@ -10,31 +10,19 @@ from tqdm import tqdm
 from os.path import join
 import pickle
 import matplotlib.pyplot as plt
+
 if 'TERM_PROGRAM' in os.environ.keys() and os.environ['TERM_PROGRAM'] == 'vscode':
     print("Running in VS Code, fixing sys path")
     import sys
+
     sys.path.append("./")
 from project.chess_utils.utils import alpha_beta_search
 
 
 def run_sun(df,
             R_sunfish,
-            R_noisy_vals=0,
-            search_depth=3,
-            min_elo=1000,
-            max_elo=1200,
-            n_boards=1000,
-            delta=20.,
-            permute_all=1,
-            permute_end_idx=-1,
-            quiesce=False,
-            epochs=1,
-            depth=3,
+            config_data,
             path_result=None,
-            save_every=1000,
-            n_threads=-2,
-            plot_every=1,
-            version=''
             ):
     """
 
@@ -45,7 +33,26 @@ def run_sun(df,
     :param depth:
     :return:
     """
+    n_files = config_data['n_files']
+    min_elo = config_data['min_elo']
+    max_elo = config_data['max_elo']
+    delta = config_data['delta']
+    n_boards = config_data['n_boards']
+    depth = config_data['search_depth']
+    epochs = config_data['epochs']
+    save_every = config_data['save_every']
+    permute_all = config_data['permute_all']
+    R_noisy_vals = config_data['R_noisy_vals']
+    overwrite = config_data['overwrite']
+    permute_end_idx = config_data['permute_end_idx']
+    quiesce = config_data['quiesce']
+    n_threads = config_data['n_threads']
+    plot_every = config_data['plot_every']
+    version = config_data['version']
 
+    if path_result is None:
+        path_result = join(os.getcwd(), 'models', 'sunfish_permuted')
+    out_path = create_sunfish_path(config_data, path_result=path_result)
     R_noisy = copy(R_sunfish)
     R_noisy[1:permute_end_idx] = R_noisy_vals  # Keep the pawn constant
     # R_noisy[1:] += np.random.normal(loc=0, scale=sd_noise, size=R_sunfish.shape[0] - 1)
@@ -54,16 +61,15 @@ def run_sun(df,
     n_boards = len(boards)
     print(f'Found {n_boards} boards, setting n_boards to {n_boards}')
 
-    if path_result is None:
-        path_result = join(os.getcwd(), 'models', 'sunfish_permuted')
-    out_path = join(path_result, f'{permute_all}-{min_elo}-{max_elo}-{search_depth}-{n_boards}-{delta}-{R_noisy_vals}-{max(permute_end_idx, 0)}-{quiesce}-{version}')
     os.makedirs(out_path, exist_ok=True)
     copy2(join(os.getcwd(), 'experiment_configs', 'sunfish_permutation', 'config.json'),
           join(out_path, 'config.json'))
 
-    boards, moves_sunfish = get_sunfish_moves(R_sunfish=R_sunfish, boards=boards, depth=depth, out_path=out_path, overwrite=overwrite, quiesce=quiesce, n_threads=n_threads)
+    boards, moves_sunfish = get_sunfish_moves(R_sunfish=R_sunfish, boards=boards, depth=depth, out_path=out_path,
+                                              overwrite=overwrite, quiesce=quiesce, n_threads=n_threads)
     R_ = policy_walk(R_noisy, boards, moves_sunfish, delta=delta, epochs=epochs, save_every=save_every,
-                     save_path=out_path, permute_all=permute_all, permute_end_idx=permute_end_idx, quiesce=quiesce, n_threads=n_threads, plot_every=plot_every)
+                     save_path=out_path, permute_all=permute_all, permute_end_idx=permute_end_idx, quiesce=quiesce,
+                     n_threads=n_threads, plot_every=plot_every)
 
     from project import plot_permuted_sunfish_weights
     plot_permuted_sunfish_weights(epochs=epochs, save_every=save_every, out_path=out_path)
@@ -72,7 +78,6 @@ def run_sun(df,
 
 
 def get_sunfish_moves(R_sunfish, boards, depth, out_path, overwrite=False, quiesce=False, n_threads=-2):
-
     """
     If the moves have already been calculated for the configuration
     this function just reads the file, otherwise the moves are found
@@ -81,6 +86,7 @@ def get_sunfish_moves(R_sunfish, boards, depth, out_path, overwrite=False, quies
     :param out_path:
     :return:
     """
+
     def step(board, R, depth, quiesce):
         Q, _, moves = alpha_beta_search(board, R=R, depth=depth, maximize=board.turn, quiesce=quiesce)
         return moves.popleft()
@@ -100,6 +106,23 @@ def get_sunfish_moves(R_sunfish, boards, depth, out_path, overwrite=False, quies
     return boards, moves_sunfish
 
 
+def create_sunfish_path(config_data, path_result):
+    min_elo = config_data['min_elo']
+    max_elo = config_data['max_elo']
+    delta = config_data['delta']
+    n_boards = config_data['n_boards']
+    search_depth = config_data['search_depth']
+    epochs = config_data['epochs']
+    permute_all = config_data['permute_all']
+    R_noisy_vals = config_data['R_noisy_vals']
+    permute_end_idx = config_data['permute_end_idx']
+    quiesce = config_data['quiesce']
+    version = config_data['version']
+    out_path = join(path_result,
+                    f'{permute_all}-{min_elo}-{max_elo}-{search_depth}-{n_boards}-{delta}-{R_noisy_vals}-{max(permute_end_idx, 0)}-{quiesce}-{version}')
+    return out_path
+
+
 if __name__ == '__main__':
     if os.getcwd()[-len('irl-chess'):] != 'irl-chess':
         print(os.getcwd())
@@ -108,23 +131,10 @@ if __name__ == '__main__':
 
     with open(join(os.getcwd(), 'experiment_configs', 'sunfish_permutation', 'config.json'), 'r') as file:
         config_data = json.load(file)
-
     n_files = config_data['n_files']
-    min_elo = config_data['min_elo']
-    max_elo = config_data['max_elo']
-    delta = config_data['delta']
-    n_boards = config_data['n_boards']
-    search_depth = config_data['search_depth']
-    epochs = config_data['epochs']
-    save_every = config_data['save_every']
-    permute_all = config_data['permute_all']
-    R_noisy_vals = config_data['R_noisy_vals']
     overwrite = config_data['overwrite']
-    permute_end_idx = config_data['permute_end_idx']
-    quiesce = config_data['quiesce']
-    n_threads = config_data['n_threads']
-    plot_every = config_data['plot_every']
     version = config_data['version']
+
     if version == 'v0_multi':
         from project import policy_walk_v0_multi as policy_walk
     elif version == 'v1_multi':
@@ -145,20 +155,7 @@ if __name__ == '__main__':
     path_result = join(os.getcwd(), 'models', 'sunfish_permuted')
 
     result = run_sun(df,
-                     R_noisy_vals=R_noisy_vals,
                      R_sunfish=R_sunfish,
-                     min_elo=min_elo,
-                     search_depth=search_depth,
-                     max_elo=max_elo,
-                     depth=search_depth,
-                     permute_end_idx=permute_end_idx,
-                     n_boards=n_boards,
-                     permute_all=permute_all,
                      path_result=path_result,
-                     save_every=save_every,
-                     quiesce=quiesce,
-                     epochs=epochs,
-                     n_threads=n_threads,
-                     plot_every=plot_every,
-                     delta=delta,
-                     version=version)
+                     config_data=config_data
+                     )
