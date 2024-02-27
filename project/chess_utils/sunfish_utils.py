@@ -2,7 +2,7 @@ import chess
 import numpy as np
 from tqdm import tqdm
 
-from project.chess_utils.sunfish import Position, Move, Searcher, render, pst
+from project.chess_utils.sunfish import Position, Move, Searcher, render, pst, piece
 from time import time
 
 def sunfish_move(searcher: Searcher, hist: list[Position], time_limit:float=1., ) -> tuple[Move, dict]:
@@ -125,4 +125,24 @@ def sunfish2board(pos: Position):
     board.set_fen(fen)
     return board
 
+
+def eval_pos(board, R=None):
+    pos = board2sunfish(board, 0)
+    pieces = 'PNBRQK'
+    if R is not None:
+        piece_dict = {p: R[i] for i, p in enumerate(pieces)}
+    else:
+        piece_dict = piece
+    eval = 0
+    for row in range(20,100,10):
+        for square in range(1 + row,9 + row):
+            p = pos.board[square]
+            if p == '.':
+                continue
+            if p.islower():
+                p = p.upper()
+                eval -= piece_dict[p] + pst[p][119-square]
+            else:
+                eval += piece_dict[p] + pst[p][square]
+    return eval
 

@@ -11,7 +11,7 @@ import numpy as np
 from tqdm import tqdm
 from time import time
 from copy import copy
-from project.chess_utils.sunfish_utils import board2sunfish
+from project.chess_utils.sunfish_utils import board2sunfish, eval_pos
 from project.chess_utils.sunfish import piece, pst, pst_only
 from project.visualizations.visualize import plot_permuted_sunfish_weights
 from scipy.special import softmax
@@ -248,7 +248,7 @@ def get_midgame_boards(df,
                     moves.append(move_translation(moveset_split[-1]))
 
                     if sunfish:
-                        boards.append(board2sunfish(board))
+                        boards.append(board2sunfish(board, eval_pos(board)))
                     else:
                         boards.append(copy(board))
             except chess.InvalidMoveError:

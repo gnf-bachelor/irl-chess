@@ -172,7 +172,7 @@ def download_lichess_pgn(websites_filepath, file_path_data, n_files=np.inf, over
     return filepaths_csv
 
 
-def load_lichess_csv(year, month):
+def load_lichess_dfs(websites_filepath, file_path_data, n_files, overwrite=False):
     """
     Given the desired year and month as strings, load the lichess
     data from the csv file and return it as a DataFrame.
@@ -182,9 +182,13 @@ def load_lichess_csv(year, month):
     :param month:   MM
     :return:
     """
-    file_path_data = join(os.getcwd(), 'data', 'processed')
-    file = join(file_path_data, f'lichess_db_standard_rated_{year}-{month}.csv')
-    return pd.read_csv(file, index_col=None)
+    datapaths = download_lichess_pgn(websites_filepath, file_path_data, n_files=n_files, overwrite=overwrite)
+    df = pd.read_csv(datapaths[0], index_col=None)
+    for path in tqdm(datapaths[1:], desc='Contatenating DataFrames'):
+        df_ = pd.read_csv(path, index_col=None)
+        df = pd.concat((df, df_), axis=0)
+    df.dropna(inplace=True)
+    return df
 
 
 if __name__ == "__main__":

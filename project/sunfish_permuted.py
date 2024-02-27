@@ -128,7 +128,7 @@ if __name__ == '__main__':
     if os.getcwd()[-len('irl-chess'):] != 'irl-chess':
         print(os.getcwd())
         os.chdir('../')
-    from project import get_midgame_boards, piece, download_lichess_pgn
+    from project import get_midgame_boards, piece, load_lichess_dfs
 
     with open(join(os.getcwd(), 'experiment_configs', 'sunfish_permutation', 'config.json'), 'r') as file:
         config_data = json.load(file)
@@ -145,12 +145,10 @@ if __name__ == '__main__':
     websites_filepath = join(os.getcwd(), 'downloads', 'lichess_websites.txt')
     file_path_data = join(os.getcwd(), 'data', 'raw')
 
-    datapaths = download_lichess_pgn(websites_filepath, file_path_data, n_files=n_files, overwrite=overwrite)
-    df = pd.read_csv(datapaths[0], index_col=None)
-    for path in tqdm(datapaths[1:], desc='Contatenating DataFrames'):
-        df_ = pd.read_csv(path, index_col=None)
-        df = pd.concat((df, df_), axis=0)
-    df.dropna(inplace=True)
+    df = load_lichess_dfs(websites_filepath=websites_filepath,
+                          file_path_data=file_path_data,
+                          n_files=n_files,
+                          overwrite=overwrite)
 
     R_sunfish = np.array([val for val in piece.values()]).astype(float)
     path_result = join(os.getcwd(), 'models', 'sunfish_permuted')
