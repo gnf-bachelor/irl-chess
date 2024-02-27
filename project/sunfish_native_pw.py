@@ -89,12 +89,10 @@ def plot_R(Rs, path=None):
 #     actions.append(move)
 
 if __name__ == '__main__':
-    # pgn = open("data/lichess_db_standard_rated_2014-09.pgn/lichess_db_standard_rated_2014-09.pgn")
-    # games = []
-    # for i in range(1000):
-    #     games.append(chess.pgn.read_game(pgn))
-    # if os.getcwd()[-len('irl-chess'):] != 'irl-chess':
-    #     os.chdir('../')
+    print(os.getcwd())
+    if os.getcwd()[-len('irl-chess'):] != 'irl-chess':
+        os.chdir('../')
+        print(os.getcwd())
     from project import get_midgame_boards, piece, load_lichess_dfs, create_sunfish_path, plot_permuted_sunfish_weights
 
     with open(join(os.getcwd(), 'experiment_configs', 'sunfish_permutation_native', 'config.json'), 'r') as file:
