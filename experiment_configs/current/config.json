@@ -1,16 +1,18 @@
 {
-  "n_files": 2,
-  "min_elo": 1000,
-  "max_elo": 1200,
+  "n_files": 6,
+  "min_elo": 1300,
+  "max_elo": 1500,
   "delta": 35.0,
-  "n_boards": 351,
+  "n_boards": 300,
   "search_depth": 3,
   "permute_end_idx": 4,
   "epochs": 500,
   "save_every": 1,
+  "plot_every": 10,
   "permute_all": 0,
   "R_noisy_vals": 100,
   "overwrite": false,
   "quiesce": false,
-  "n_threads": -1
+  "n_threads": -1,
+  "version": "v0_multi"
 }
