@@ -1,3 +1,4 @@
+import chess
 import numpy as np
 from tqdm import tqdm
 
@@ -25,7 +26,7 @@ def sunfish_move(searcher: Searcher, hist: list[Position], time_limit:float=1., 
             'gamma': gamma,
             'score': score,
             'nodes': searcher.nodes}
-    return best_move, info
+    return best_move, info, searcher.tp_move, searcher.tp_score
 
 
 def sunfish_move_to_str(move: Move, is_black:bool=False):
@@ -73,20 +74,20 @@ def str_to_sunfish_move(move):
 
 # Takes a board object and returns the position
 # in the format sunfish uses. Mangler score.
-def board2sunfish(board):
+def board2sunfish(board, score):
     fen = board.fen()
 
     board_string, to_move, castling, ep, half_move, full_move = fen.split()
 
-    start = '         \n         \n '
-    end = '         \n         \n'
-    board_string = board_string.replace('/', '\n ')
+    start = '\n         \n         \n'
+    end = ' \n         \n         '
+    board_string = board_string.replace('/', ' \n')
     board_string = start + board_string + end
     for char in board_string:
         if char in '123456789':
             board_string = board_string.replace(char, int(char) * '.')
 
-    score = 0
+    score = score
 
     wc = ('Q' in castling, 'K' in castling)
     bc = ('q' in castling, 'k' in castling)
@@ -105,3 +106,23 @@ def board2sunfish(board):
                         119 - kp if kp else 0)
 
     return Position(board_string, score, wc, bc, ep, kp)
+
+def sunfish2board(pos: Position):
+    pos_string = pos.board[21:-20].replace(' \n', '/')
+    for i in range(8, 0, -1):
+        pos_string = pos_string.replace('.' * i, str(i))
+    to_move = 'w'
+    castling = ''
+    for i, condition in enumerate(pos.wc + pos.bc):
+        if condition:
+            castling += 'KQkq'[i]
+    if pos.ep == 0:
+        ep = '-'
+    else:
+        ep = render(ep)
+    fen = str(' '.join([pos_string[:-1], to_move, castling, ep, '0 0']))
+    board = chess.Board()
+    board.set_fen(fen)
+    return board
+
+

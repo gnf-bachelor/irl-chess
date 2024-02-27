@@ -76,9 +76,9 @@ pst = {
 
 # pst eval added for black
 pst_only = copy.deepcopy(pst)
-for piece_str in pst.keys():
-    piece_array = -np.array(pst[piece_str]).reshape((8, 8))[np.arange(7, -1, -1)]
-    pst_only[piece_str.lower()] = tuple(piece_array.reshape((-1)))
+# for piece_str in pst.keys():
+#     piece_array = -np.array(pst[piece_str]).reshape((8, 8))[np.arange(7, -1, -1)]
+#     pst_only[piece_str.lower()] = tuple(piece_array.reshape((-1)))
 
 # Set the positional matrices to 1 and the bounds to 0
 # pst = {key: (1,) * len(val) for key, val in pst.items()}
@@ -211,17 +211,17 @@ class Position(namedtuple("Position", "board score wc bc ep kp")):
             119 - self.kp if self.kp and not nullmove else 0,
         )
 
-    def push(self, move):
-        return self.move(move)
+    def push(self, move, pst):
+        return self.move(move, pst)
 
-    def move(self, move):
+    def move(self, move, pst):
         i, j, prom = move
         p, q = self.board[i], self.board[j]
         put = lambda board, i, p: board[:i] + p + board[i + 1 :]
         # Copy variables and reset ep and kp
         board = self.board
         wc, bc, ep, kp = self.wc, self.bc, 0, 0
-        score = self.score + self.value(move)
+        score = self.score + self.value(move, pst)
         # Actual move
         board = put(board, j, board[i])
         board = put(board, i, ".")
@@ -248,7 +248,7 @@ class Position(namedtuple("Position", "board score wc bc ep kp")):
         # We rotate the returned position, so it's ready for the next player
         return Position(board, score, wc, bc, ep, kp).rotate()
 
-    def value(self, move):
+    def value(self, move, pst=pst):
         i, j, prom = move
         p, q = self.board[i], self.board[j]
         # Actual move
@@ -281,11 +281,12 @@ Entry = namedtuple("Entry", "lower upper")
 
 
 class Searcher:
-    def __init__(self):
+    def __init__(self, search_pst):
         self.tp_score = {}
         self.tp_move = {}
         self.history = set()
         self.nodes = 0
+        self.search_pst = search_pst
 
     def bound(self, pos, gamma, depth, can_null=True):
         """ Let s* be the "true" score of the sub-tree we are searching.
@@ -357,11 +358,11 @@ class Searcher:
             # since otherwise we'd get search instability.
             # We will search it again in the main loop below, but the tp will fix
             # things for us.
-            if killer and pos.value(killer) >= val_lower:
-                yield killer, -self.bound(pos.move(killer), 1 - gamma, depth - 1)
+            if killer and pos.value(killer, self.search_pst) >= val_lower:
+                yield killer, -self.bound(pos.move(killer, self.search_pst), 1 - gamma, depth - 1)
 
             # Then all the other moves
-            for val, move in sorted(((pos.value(m), m) for m in pos.gen_moves()), reverse=True):
+            for val, move in sorted(((pos.value(m, self.search_pst), m) for m in pos.gen_moves()), reverse=True):
                 # Quiescent search
                 if val < val_lower:
                     break
@@ -377,7 +378,7 @@ class Searcher:
                     # so it can't get any better than this.
                     break
 
-                yield move, -self.bound(pos.move(move), 1 - gamma, depth - 1)
+                yield move, -self.bound(pos.move(move, self.search_pst), 1 - gamma, depth - 1)
 
         # Run through the moves, shortcutting when possible
         best = -MATE_UPPER
@@ -490,7 +491,7 @@ if __name__ == '__main__':
                 i, j, prom = parse(move[:2]), parse(move[2:4]), move[4:].upper()
                 if ply % 2 == 1:
                     i, j = 119 - i, 119 - j
-                hist.append(hist[-1].move(Move(i, j, prom)))
+                hist.append(hist[-1].move(Move(i, j, prom), pst))
 
         elif args[0] == "go":
             wtime, btime, winc, binc = [int(a) / 1000 for a in args[2::2]]
