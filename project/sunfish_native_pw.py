@@ -2,9 +2,6 @@ import json
 import os
 from os.path import join
 
-if os.getcwd().split('\\')[-1] != 'irl-chess':
-    os.chdir('../')
-
 import copy
 import chess
 import chess.pgn
