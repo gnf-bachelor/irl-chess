@@ -10,7 +10,7 @@
   "permute_end_idx": 6,
   "epochs": 500,
   "save_every": 1,
-  "plot_every": 1,
+  "plot_every": 50,
   "permute_all": 0,
   "R_noisy_vals": 0,
   "overwrite": false,
