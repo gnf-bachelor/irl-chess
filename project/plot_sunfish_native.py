@@ -4,7 +4,7 @@ from os.path import join
 
 
 if __name__ == '__main__':
-    from project import plot_permuted_sunfish_weights
+    from project import plot_permuted_sunfish_weights, create_sunfish_path
 
     with open(join(os.getcwd(), 'experiment_configs', 'sunfish_permutation_native', 'config.json'), 'r') as file:
         config_data = json.load(file)
@@ -13,5 +13,7 @@ if __name__ == '__main__':
     overwrite = config_data['overwrite']
     version = config_data['version']
 
-    out_path = join(os.getcwd(), 'models', 'sunfish_permuted_native')
+    path_result = join(os.getcwd(), 'models', 'sunfish_permuted_native')
+    out_path = create_sunfish_path(config_data, path_result)
+
     plot_permuted_sunfish_weights(config_data, out_path)

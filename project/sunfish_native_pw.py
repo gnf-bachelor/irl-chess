@@ -134,6 +134,7 @@ if __name__ == '__main__':
     n_threads = config_data['n_threads']
     plot_every = config_data['plot_every']
     decay = config_data['decay']
+    decay_step = config_data['decay_step']
     R_noisy_vals = config_data['R_noisy_vals']
 
     last_acc = 0
@@ -164,10 +165,7 @@ if __name__ == '__main__':
                 last_acc = copy.copy(acc)
             Rs.append(R)
 
-            if epoch % 10 == 0 and epoch != 0:
-                plot_R(Rs)
-
-            if epoch % 30 == 0 and epoch != 0:
+            if epoch % decay_step == 0 and epoch != 0:
                 delta *= decay
 
             if save_every is not None and epoch % save_every == 0:
