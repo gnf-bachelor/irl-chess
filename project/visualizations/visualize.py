@@ -6,7 +6,7 @@ from os.path import join
 from matplotlib import pyplot as plt
 
 
-def plot_permuted_sunfish_weights(config_data, out_path, start_weight_idx=0, legend_names=['P', 'N', 'B', 'R', 'Q', 'K'], epoch=0):
+def plot_permuted_sunfish_weights(config_data, out_path, start_weight_idx=0, legend_names=['P', 'N', 'B', 'R', 'Q', 'K'], epoch=None):
     os.makedirs(out_path, exist_ok=True)
     start_plot_idx = config_data['permute_start_idx']
     end_plot_idx = config_data['permute_end_idx']
@@ -20,6 +20,8 @@ def plot_permuted_sunfish_weights(config_data, out_path, start_weight_idx=0, leg
             df = pd.read_csv(path, index_col=None)
             weights.append(df.values.flatten())
         else:
+            if epoch is None:
+                epoch = i
             break
     weights = np.array(weights)
     X = np.repeat(np.arange(start_weight_idx, weights.shape[0], save_every), end_plot_idx - start_plot_idx).reshape((-1, end_plot_idx - start_plot_idx))
