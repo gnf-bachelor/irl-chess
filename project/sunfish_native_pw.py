@@ -119,7 +119,6 @@ if __name__ == '__main__':
                                    sunfish=False,
                                    n_steps=15)
 
-    n_games = 200
     # states_boards = [get_board_after_n(game, 15) for game in games[:n_games]]
     states = [board2sunfish(board, eval_pos(board)) for board in boards]
 
@@ -136,6 +135,7 @@ if __name__ == '__main__':
     decay = config_data['decay']
     decay_step = config_data['decay_step']
     R_noisy_vals = config_data['R_noisy_vals']
+    n_boards = config_data['n_boards']
 
     last_acc = 0
     Rs = []
@@ -159,7 +159,7 @@ if __name__ == '__main__':
             actions_new = parallel(delayed(sunfish_move_mod)(state, pst_new, time_limit, True)
                                    for state in tqdm(states, desc='Getting new actions'))
 
-            acc = sum([a == a_new for a, a_new in list(zip(actions_true, actions_new))]) / n_games
+            acc = sum([a == a_new for a, a_new in list(zip(actions_true, actions_new))]) / n_boards
             if acc >= last_acc:
                 R = copy.copy(R_new)
                 last_acc = copy.copy(acc)
