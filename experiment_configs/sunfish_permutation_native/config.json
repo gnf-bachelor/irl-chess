@@ -1,7 +1,7 @@
 {
   "n_files": 6,
-  "min_elo": 1300,
-  "max_elo": 1500,
+  "min_elo": 1800,
+  "max_elo": 2000,
   "delta": 35.0,
   "decay": 0.85,
   "n_boards": 300,
