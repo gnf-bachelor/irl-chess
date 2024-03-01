@@ -160,7 +160,7 @@ if __name__ == '__main__':
             acc = sum([a == a_new for a, a_new in list(zip(actions_true, actions_new))]) / n_games
             if acc >= last_acc:
                 R = copy.copy(R_new)
-                last_acc = acc
+                last_acc = copy.copy(acc)
             Rs.append(R)
 
             if epoch % 10 == 0 and epoch != 0:
