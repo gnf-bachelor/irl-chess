@@ -1,8 +1,5 @@
 import os
 from os.path import join
-if os.getcwd().split('\\')[-1] != 'irl-chess':
-    os.chdir('../')
-
 import copy
 import chess
 import chess.pgn
@@ -80,38 +77,41 @@ def plot_R(Rs):
 #     actions.append(move)
 
 if __name__ == '__main__':
+    if os.getcwd().split('\\')[-1] != 'irl-chess':
+        os.chdir('../')
+
     pgn = open("data/lichess_db_standard_rated_2014-09.pgn/lichess_db_standard_rated_2014-09.pgn")
     games = []
     for i in range(1000):
         games.append(chess.pgn.read_game(pgn))
 
-    n_games = 200
+    n_games = 500
     states_boards = [get_board_after_n(game, 15) for game in games[:n_games]]
     states = [board2sunfish(board, eval_pos(board)) for board in states_boards]
 
-    epochs = 200
+    epochs = 400
     time_limit = 0.1
     step = 20
-    decay = 0.85
-    last_acc = 0
+    decay = 0.95
+    best_accs = [0]
     Rs = []
     with Parallel(n_jobs=-2) as parallel:
         print('Getting true moves\n', '-' * 20)
         actions_true = parallel(delayed(sunfish_move_mod)(state, pst, time_limit, True)
                                 for state in tqdm(states))
-        R = np.array([100, 100, 100, 100, 100, 60000])
+        R = np.array([100, 280, 100, 100, 929, 60000])
         for i in range(epochs):
             print(f'Epoch {i + 1}\n', '-' * 20)
-            R_new = R + np.pad(np.random.choice([-step, step], 4), 1)
+            R_new = R + np.pad(np.random.choice([-step, step], 2), 2)
             pst_new = get_new_pst(R_new)
             states = [board2sunfish(board, eval_pos(board, R_new)) for board in states_boards]
             actions_new = parallel(delayed(sunfish_move_mod)(state, pst_new, time_limit, True)
                                    for state in tqdm(states))
 
             acc = sum([a == a_new for a, a_new in list(zip(actions_true, actions_new))])/n_games
-            if acc >= last_acc:
+            if acc >= best_accs[-1]:
                 R = R_new
-                last_acc = acc
+                best_accs.append(acc)
             Rs.append(R)
 
             if i % 10 == 0 and i != 0:
