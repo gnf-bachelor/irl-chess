@@ -103,7 +103,8 @@ if __name__ == '__main__':
     version = config_data['version']
     websites_filepath = join(os.getcwd(), 'downloads', 'lichess_websites.txt')
     file_path_data = join(os.getcwd(), 'data', 'raw')
-    out_path = join(os.getcwd(), 'models', 'sunfish_permuted_native')
+    path_result = join(os.getcwd(), 'models', 'sunfish_permuted_native')
+    out_path = create_sunfish_path(config_data, path_result)
     os.makedirs(out_path, exist_ok=True)
 
     df = load_lichess_dfs(websites_filepath=websites_filepath,
@@ -160,7 +161,7 @@ if __name__ == '__main__':
             acc = sum([a == a_new for a, a_new in list(zip(actions_true, actions_new))]) / n_games
             if acc >= last_acc:
                 R = copy.copy(R_new)
-                last_acc = acc
+                last_acc = copy.copy(acc)
             Rs.append(R)
 
             if epoch % 10 == 0 and epoch != 0:
@@ -173,7 +174,7 @@ if __name__ == '__main__':
                 pd.DataFrame(R_new.reshape((-1, 1)), columns=['Result']).to_csv(join(out_path, f'{epoch}.csv'),
                                                                              index=False)
             if plot_every is not None and epoch % plot_every == 0:
-                plot_permuted_sunfish_weights(config_data=config_data, out_path=out_path, )
+                plot_permuted_sunfish_weights(config_data=config_data, out_path=out_path, epoch=epoch)
 
             print(f'Current accuracy: {acc}')
     plot_R(Rs)

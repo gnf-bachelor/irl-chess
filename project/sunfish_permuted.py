@@ -111,7 +111,10 @@ def create_sunfish_path(config_data, path_result):
     max_elo = config_data['max_elo']
     delta = config_data['delta']
     n_boards = config_data['n_boards']
-    search_depth = config_data['search_depth']
+    try:
+        search_depth = config_data['search_depth']
+    except KeyError:
+        search_depth = config_data['time_limit']
     epochs = config_data['epochs']
     permute_all = config_data['permute_all']
     R_noisy_vals = config_data['R_noisy_vals']
