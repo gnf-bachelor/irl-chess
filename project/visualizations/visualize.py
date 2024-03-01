@@ -6,7 +6,7 @@ from os.path import join
 from matplotlib import pyplot as plt
 
 
-def plot_permuted_sunfish_weights(config_data, out_path, start_weight_idx=0, legend_names=['P', 'N', 'B', 'R', 'Q', 'K']):
+def plot_permuted_sunfish_weights(config_data, out_path, start_weight_idx=0, legend_names=['P', 'N', 'B', 'R', 'Q', 'K'], epoch=0):
     os.makedirs(out_path, exist_ok=True)
     start_plot_idx = config_data['permute_start_idx']
     end_plot_idx = config_data['permute_end_idx']
@@ -29,5 +29,5 @@ def plot_permuted_sunfish_weights(config_data, out_path, start_weight_idx=0, leg
     plt.xlabel('Epochs')
     plt.ylabel('Weight values')
     plt.legend(legend_names[start_plot_idx:end_plot_idx])
-    plt.savefig(join(out_path, 'weights_over_time.png'))
+    plt.savefig(join(out_path, f'weights_at{epoch}.png'))
     plt.show()
