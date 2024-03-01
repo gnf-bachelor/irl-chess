@@ -103,7 +103,8 @@ if __name__ == '__main__':
     version = config_data['version']
     websites_filepath = join(os.getcwd(), 'downloads', 'lichess_websites.txt')
     file_path_data = join(os.getcwd(), 'data', 'raw')
-    out_path = join(os.getcwd(), 'models', 'sunfish_permuted_native')
+    path_result = join(os.getcwd(), 'models', 'sunfish_permuted_native')
+    out_path = create_sunfish_path(config_data, path_result)
     os.makedirs(out_path, exist_ok=True)
 
     df = load_lichess_dfs(websites_filepath=websites_filepath,
