@@ -11,11 +11,6 @@ from os.path import join
 import pickle
 import matplotlib.pyplot as plt
 
-if 'TERM_PROGRAM' in os.environ.keys() and os.environ['TERM_PROGRAM'] == 'vscode':
-    print("Running in VS Code, fixing sys path")
-    import sys
-
-    sys.path.append("./")
 from project.chess_utils.utils import alpha_beta_search
 
 
@@ -133,6 +128,12 @@ if __name__ == '__main__':
     if os.getcwd()[-len('irl-chess'):] != 'irl-chess':
         print(os.getcwd())
         os.chdir('../')
+
+    if 'TERM_PROGRAM' in os.environ.keys() and os.environ['TERM_PROGRAM'] == 'vscode':
+        print("Running in VS Code, fixing sys path")
+        import sys
+        sys.path.append("./")
+
     from project import get_midgame_boards, piece, load_lichess_dfs
 
     with open(join(os.getcwd(), 'experiment_configs', 'sunfish_permutation', 'config.json'), 'r') as file:

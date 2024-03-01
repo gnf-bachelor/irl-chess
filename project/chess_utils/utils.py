@@ -3,6 +3,7 @@ from collections import deque
 from itertools import chain
 from collections.abc import Sized, Iterable, Iterator
 from os.path import join
+import os
 from joblib import Parallel, delayed
 import pandas as pd
 import torch
@@ -15,6 +16,13 @@ from project.chess_utils.sunfish_utils import board2sunfish, eval_pos
 from project.chess_utils.sunfish import piece, pst, pst_only
 from project.visualizations.visualize import plot_permuted_sunfish_weights
 from scipy.special import softmax
+
+def vscode_fix():
+    if 'TERM_PROGRAM' in os.environ.keys() and os.environ['TERM_PROGRAM'] == 'vscode':
+        print("Running in VS Code, fixing sys path")
+        import sys
+
+        sys.path.append("./")
 
 material_dict = {
     chess.PAWN: 1,
