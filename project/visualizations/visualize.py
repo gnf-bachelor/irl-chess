@@ -11,6 +11,8 @@ def plot_permuted_sunfish_weights(config_data, out_path, start_weight_idx=0, leg
     end_plot_idx = 5
     save_every = config_data['save_every']
     epochs = config_data['epochs']
+    target_idxs = config_data['target_idxs']
+    R_true = config_data['R_true']
 
     plot_path = os.path.join(out_path, 'plots')
     os.makedirs(plot_path, exist_ok=True)
@@ -29,6 +31,7 @@ def plot_permuted_sunfish_weights(config_data, out_path, start_weight_idx=0, leg
     X = np.repeat(np.arange(start_weight_idx, weights.shape[0], save_every), end_plot_idx - start_plot_idx).reshape((-1, end_plot_idx - start_plot_idx))
 
     plt.plot(X, np.array(weights)[:, start_plot_idx:end_plot_idx])
+    plt.hlines(R_true[:end_plot_idx],0, epoch, linestyles='--')
     plt.title('Sunfish weights over time')
     plt.xlabel('Epochs')
     plt.ylabel('Weight values')

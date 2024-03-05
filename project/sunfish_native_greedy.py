@@ -106,7 +106,7 @@ if __name__ == '__main__':
         print(os.getcwd())
     from project import get_midgame_boards, piece, load_lichess_dfs, create_sunfish_path, plot_permuted_sunfish_weights
 
-    path_config = join(os.getcwd(), 'experiment_configs', 'sunfish_permutation_native', 'config.json')
+    path_config = join(os.getcwd(), 'experiment_configs', 'sunfish_native_greedy', 'config.json')
     with open(path_config, 'r') as file:
         config_data = json.load(file)
         path_result = join(os.getcwd(), 'models', 'sunfish_permuted_native')
@@ -149,28 +149,30 @@ if __name__ == '__main__':
     decay_step = config_data['decay_step']
     R_noisy_vals = config_data['R_noisy_vals']
     n_boards = config_data['n_boards']
+    target_idxs = config_data['target_idxs']
+    R_start = np.array(config_data['R_start'])
 
     last_acc = 0
     accuracies = []
-    R = np.array([val for val in piece.values()]).astype(float)
-    R_new = copy.copy(R)
-    R_new[permute_start_idx:permute_end_idx] = R_noisy_vals
-
+    R_true = np.array([val for val in piece.values()]).astype(float)
+    R = copy.copy(R_start)
     with Parallel(n_jobs=n_threads) as parallel:
         actions_true = parallel(delayed(sunfish_move_mod)(state, pst, time_limit, True)
                                 for state in tqdm(states, desc='Getting true moves',))
         for epoch in tqdm(range(epochs), desc='Epoch'):
+            print(f'Epoch {epoch+1}\n', '-' * 25)
             if permute_all:
                 add = np.random.uniform(low=-delta, high=delta, size=permute_end_idx-permute_start_idx).astype(R.dtype)
                 R_new[permute_start_idx:permute_end_idx] += add
             else:
-                choice = np.random.choice(np.arange(permute_start_idx, permute_end_idx))
-                R_new[choice] += np.random.uniform(low=-delta, high=delta, size=1).item()
+                add = np.zeros(6)
+                add[target_idxs] = np.random.choice([-delta, delta], len(target_idxs))
+                R_new = R + add
 
             pst_new = get_new_pst(R_new)
             states = [board2sunfish(board, eval_pos(board, R_new)) for board in boards]
             actions_new = parallel(delayed(sunfish_move_mod)(state, pst_new, time_limit, True)
-                                   for state in tqdm(states, desc='Getting new actions'))
+                                   for state in tqdm(states))
 
             acc = sum([a == a_new for a, a_new in list(zip(actions_true, actions_new))]) / n_boards
             change_weights = np.random.rand() < np.exp(acc)/(np.exp(acc) + np.exp(last_acc)) if config_data['version'] == 'v1_native_multi' else acc >= last_acc
@@ -189,4 +191,4 @@ if __name__ == '__main__':
             if plot_every is not None and plot_every and epoch % plot_every == 0:
                 plot_permuted_sunfish_weights(config_data=config_data, out_path=out_path, epoch=epoch, accuracies=accuracies)
 
-            print(f'Current accuracy: {acc}, {last_acc}')
+            print(f'Current accuracy: {acc}, best: {last_acc}')
