@@ -125,15 +125,23 @@ if __name__ == '__main__':
                           n_files=n_files,
                           overwrite=overwrite)
 
-    boards, _ = get_midgame_boards(df,
-                                   n_boards=config_data['n_boards'],
+    boards_mid, _ = get_midgame_boards(df,
+                                   n_boards=config_data['n_boards_mid'],
                                    min_elo=config_data['min_elo'],
                                    max_elo=config_data['max_elo'],
                                    sunfish=False,
                                    n_steps=15)
 
+    boards_end, _ = get_midgame_boards(df,
+                                   n_boards=config_data['n_boards_end'],
+                                   min_elo=config_data['min_elo'],
+                                   max_elo=config_data['max_elo'],
+                                   sunfish=False,
+                                   n_steps=25)
+
     # states_boards = [get_board_after_n(game, 15) for game in games[:n_games]]
-    states = [board2sunfish(board, eval_pos(board)) for board in boards]
+    states = [board2sunfish(board, eval_pos(board)) for board in boards_mid]
+    states += [board2sunfish(board, eval_pos(board)) for board in boards_end]
 
     epochs = config_data['epochs']
     time_limit = config_data['time_limit']
@@ -148,7 +156,7 @@ if __name__ == '__main__':
     decay = config_data['decay']
     decay_step = config_data['decay_step']
     R_noisy_vals = config_data['R_noisy_vals']
-    n_boards = config_data['n_boards']
+    n_boards_total = config_data['n_boards_total']
     target_idxs = config_data['target_idxs']
     R_start = np.array(config_data['R_start'])
 
@@ -174,7 +182,7 @@ if __name__ == '__main__':
             actions_new = parallel(delayed(sunfish_move_mod)(state, pst_new, time_limit, True)
                                    for state in tqdm(states))
 
-            acc = sum([a == a_new for a, a_new in list(zip(actions_true, actions_new))]) / n_boards
+            acc = sum([a == a_new for a, a_new in list(zip(actions_true, actions_new))]) / n_boards_total
             change_weights = np.random.rand() < np.exp(acc)/(np.exp(acc) + np.exp(last_acc)) if config_data['version'] == 'v1_native_multi' else acc >= last_acc
             if change_weights:
                 print(f'Changed weights!')
