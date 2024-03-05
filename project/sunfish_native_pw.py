@@ -64,9 +64,13 @@ def sunfish_move_mod(state, pst, time_limit, only_move=False):
         return sunfish_move(searcher, [state], time_limit=time_limit)[0]
     return sunfish_move(searcher, [state], time_limit=time_limit)
 
-def plot_R(Rs):
+def plot_R(Rs, R_true, target_idxs):
+    colors = ['blue', 'orange', 'green', 'red', 'purple']
     Rs = np.array(Rs)
-    plt.plot(Rs[:, :-1],)
+    targets = R_true[target_idxs]
+    target_colors = [colors[idx] for idx in target_idxs]
+    plt.plot(Rs[:, :-1])
+    plt.hlines(targets, 0, Rs.shape[0], colors=target_colors, linestyle='--')
     plt.title('Piece values by epoch')
     plt.legend(list('PNBRQ'))
     plt.show()
@@ -85,40 +89,58 @@ if __name__ == '__main__':
     for i in range(1000):
         games.append(chess.pgn.read_game(pgn))
 
-    n_games = 500
-    states_boards = [get_board_after_n(game, 15) for game in games[:n_games]]
+    n_games_mid = 400
+    n_games_end = 100
+    n_games_total = n_games_mid + n_games_end
+    states_boards_mid = [get_board_after_n(game, 15) for game in games[:n_games_mid]]
+    states_boards_end = [get_board_after_n(game, 25) for game in games[:n_games_end]]
+    states_boards = states_boards_mid + states_boards_end
     states = [board2sunfish(board, eval_pos(board)) for board in states_boards]
-
-    epochs = 400
+    batch_size = n_games_total // 5
+    state_batches = [states[i:i+batch_size] for i in range(0, n_games_total, batch_size)]
+    epochs = 200
     time_limit = 0.1
     step = 20
-    decay = 0.95
+    decay = 1
     best_accs = [0]
     Rs = []
     with Parallel(n_jobs=-2) as parallel:
         print('Getting true moves\n', '-' * 20)
-        actions_true = parallel(delayed(sunfish_move_mod)(state, pst, time_limit, True)
-                                for state in tqdm(states))
-        R = np.array([100, 280, 100, 100, 929, 60000])
+        # actions_true = parallel(delayed(sunfish_move_mod)(state, pst, time_limit, True)
+        #                         for state in tqdm(states))
+        actions_true = []
+        for batch in state_batches:
+            actions_batch = parallel(delayed(sunfish_move_mod)(state, pst, time_limit, True)
+                                     for state in tqdm(batch))
+            actions_true += actions_batch
+        R_true = np.array([100, 280, 320, 479, 929, 60000])
+        target_idxs = [1, 2] # knight, bishop, queen
+        R = np.array([100, 100, 100, 479, 929, 60000])
         for i in range(epochs):
             print(f'Epoch {i + 1}\n', '-' * 20)
-            R_new = R + np.pad(np.random.choice([-step, step], 2), 2)
+            add = np.zeros(6)
+            add[target_idxs] = np.random.choice([-step, step], len(target_idxs))
+            R_new = R + add
             pst_new = get_new_pst(R_new)
-            states = [board2sunfish(board, eval_pos(board, R_new)) for board in states_boards]
-            actions_new = parallel(delayed(sunfish_move_mod)(state, pst_new, time_limit, True)
-                                   for state in tqdm(states))
+            # actions_new = parallel(delayed(sunfish_move_mod)(state, pst_new, time_limit, True)
+            #                        for state in tqdm(states))
+            actions_new = []
+            for batch in state_batches:
+                actions_batch = parallel(delayed(sunfish_move_mod)(state, pst_new, time_limit, True)
+                                         for state in tqdm(batch))
+                actions_new += actions_batch
 
-            acc = sum([a == a_new for a, a_new in list(zip(actions_true, actions_new))])/n_games
+            acc = sum([a == a_new for a, a_new in list(zip(actions_true, actions_new))])/n_games_total
             if acc >= best_accs[-1]:
                 R = R_new
                 best_accs.append(acc)
             Rs.append(R)
 
             if i % 10 == 0 and i != 0:
-                plot_R(Rs)
+                plot_R(Rs, R_true, target_idxs)
 
             if i % 30 == 0 and i != 0:
                 step *= decay
 
-            print(f'Current accuracy: {acc}')
-    plot_R(Rs)
+            print(f'Current accuracy: {acc}, best: {best_accs[-1]}')
+    plot_R(Rs, R_true, target_idxs)
