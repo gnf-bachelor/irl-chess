@@ -12,7 +12,7 @@
   "epochs": 200,
   "save_every": 1,
   "plot_every": 50,
-  "permute_all": true,
+  "permute_all": false,
   "R_noisy_vals": 100,
   "overwrite": false,
   "quiesce": false,
