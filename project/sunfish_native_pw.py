@@ -166,6 +166,7 @@ if __name__ == '__main__':
             acc = sum([a == a_new for a, a_new in list(zip(actions_true, actions_new))]) / n_boards
             change_weights = np.random.rand() > acc if config_data['version'] == 'v1_native_multi' else acc >= last_acc
             if change_weights:
+                print(f'Changed weights')
                 R = copy.copy(R_new)
                 last_acc = copy.copy(acc)
             Rs.append(R)
@@ -179,5 +180,5 @@ if __name__ == '__main__':
             if plot_every is not None and epoch % plot_every == 0:
                 plot_permuted_sunfish_weights(config_data=config_data, out_path=out_path, epoch=epoch)
 
-            print(f'Current accuracy: {acc}')
+            print(f'Current accuracy: {acc}, {last_acc}')
     plot_R(Rs)
