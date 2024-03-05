@@ -143,6 +143,8 @@ if __name__ == '__main__':
     states = [board2sunfish(board, eval_pos(board)) for board in boards_mid]
     states += [board2sunfish(board, eval_pos(board)) for board in boards_end]
 
+    
+
     epochs = config_data['epochs']
     time_limit = config_data['time_limit']
     delta = config_data['delta']
@@ -156,7 +158,7 @@ if __name__ == '__main__':
     decay = config_data['decay']
     decay_step = config_data['decay_step']
     R_noisy_vals = config_data['R_noisy_vals']
-    n_boards_total = config_data['n_boards_total']
+    n_boards = config_data['n_boards']
     target_idxs = config_data['target_idxs']
     R_start = np.array(config_data['R_start'])
 
@@ -167,7 +169,7 @@ if __name__ == '__main__':
     with Parallel(n_jobs=n_threads) as parallel:
         actions_true = parallel(delayed(sunfish_move_mod)(state, pst, time_limit, True)
                                 for state in tqdm(states, desc='Getting true moves',))
-        for epoch in tqdm(range(epochs), desc='Epoch'):
+        for epoch in range(epochs):
             print(f'Epoch {epoch+1}\n', '-' * 25)
             if permute_all:
                 add = np.random.uniform(low=-delta, high=delta, size=permute_end_idx-permute_start_idx).astype(R.dtype)
@@ -178,11 +180,10 @@ if __name__ == '__main__':
                 R_new = R + add
 
             pst_new = get_new_pst(R_new)
-            states = [board2sunfish(board, eval_pos(board, R_new)) for board in boards]
             actions_new = parallel(delayed(sunfish_move_mod)(state, pst_new, time_limit, True)
                                    for state in tqdm(states))
 
-            acc = sum([a == a_new for a, a_new in list(zip(actions_true, actions_new))]) / n_boards_total
+            acc = sum([a == a_new for a, a_new in list(zip(actions_true, actions_new))]) / n_boards
             change_weights = np.random.rand() < np.exp(acc)/(np.exp(acc) + np.exp(last_acc)) if config_data['version'] == 'v1_native_multi' else acc >= last_acc
             if change_weights:
                 print(f'Changed weights!')
