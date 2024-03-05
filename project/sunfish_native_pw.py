@@ -173,7 +173,7 @@ if __name__ == '__main__':
                                    for state in tqdm(states, desc='Getting new actions'))
 
             acc = sum([a == a_new for a, a_new in list(zip(actions_true, actions_new))]) / n_boards
-            change_weights = np.random.rand() > acc if config_data['version'] == 'v1_native_multi' else acc >= last_acc
+            change_weights = np.random.rand() > acc if config_data['version'] == 'v1_native_multi' else acc > last_acc
             if change_weights:
                 print(f'Changed weights!')
                 R = copy.copy(R_new)
