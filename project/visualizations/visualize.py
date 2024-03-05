@@ -33,3 +33,4 @@ def plot_permuted_sunfish_weights(config_data, out_path, start_weight_idx=0, leg
     plt.legend(legend_names[start_plot_idx:end_plot_idx])
     plt.savefig(join(out_path, f'weights_at{epoch}.png'))
     plt.show()
+    plt.cla()
