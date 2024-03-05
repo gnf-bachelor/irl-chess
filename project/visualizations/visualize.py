@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 
 def plot_permuted_sunfish_weights(config_data, out_path, start_weight_idx=0, legend_names=['P', 'N', 'B', 'R', 'Q', 'K'], epoch=None, accuracies=None):
     start_plot_idx = 0
-    end_plot_idx = 5
+    end_plot_idx = 6
     save_every = config_data['save_every']
     epochs = config_data['epochs']
     target_idxs = config_data['target_idxs']
@@ -51,4 +51,3 @@ def plot_permuted_sunfish_weights(config_data, out_path, start_weight_idx=0, leg
         plt.savefig(join(plot_path, f'accuracies_{epoch}.png'))
         plt.show()
         plt.cla()
-
