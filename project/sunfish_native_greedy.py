@@ -84,13 +84,17 @@ def sunfish_move_mod(state, pst, time_limit, only_move=False):
     return sunfish_move(searcher, [state], time_limit=time_limit)
 
 
-def plot_R(Rs, path=None):
+def plot_Rs(Rs, config_data):
+    colors = ['blue', 'orange', 'green', 'red', 'purple']
+    R_true = np.array(config_data['R_true'])
+    target_idxs = config_data['target_idxs']
     Rs = np.array(Rs)
-    plt.plot(Rs[:, :-1], )
+    targets = R_true[target_idxs]
+    target_colors = [colors[idx] for idx in target_idxs]
+    plt.plot(Rs[:, :-1])
+    plt.hlines(targets, 0, Rs.shape[0]-1, colors=target_colors, linestyle='--')
     plt.title('Piece values by epoch')
     plt.legend(list('PNBRQ'))
-    if path is not None:
-        plt.imsave(join(path, 'weights_over_time.png'))
     plt.show()
 
 
@@ -114,36 +118,18 @@ if __name__ == '__main__':
         os.makedirs(out_path, exist_ok=True)
         copy2(path_config, join(out_path, 'config.json'))
 
-    n_files = config_data['n_files']
-    overwrite = config_data['overwrite']
-    version = config_data['version']
-    websites_filepath = join(os.getcwd(), 'downloads', 'lichess_websites.txt')
-    file_path_data = join(os.getcwd(), 'data', 'raw')
+    pgn = open("data/lichess_db_standard_rated_2014-09.pgn/lichess_db_standard_rated_2014-09.pgn")
+    games = []
+    for i in range(1000):
+        games.append(chess.pgn.read_game(pgn))
 
-    df = load_lichess_dfs(websites_filepath=websites_filepath,
-                          file_path_data=file_path_data,
-                          n_files=n_files,
-                          overwrite=overwrite)
-
-    boards_mid, _ = get_midgame_boards(df,
-                                   n_boards=config_data['n_boards_mid'],
-                                   min_elo=config_data['min_elo'],
-                                   max_elo=config_data['max_elo'],
-                                   sunfish=False,
-                                   n_steps=15)
-
-    boards_end, _ = get_midgame_boards(df,
-                                   n_boards=config_data['n_boards_end'],
-                                   min_elo=config_data['min_elo'],
-                                   max_elo=config_data['max_elo'],
-                                   sunfish=False,
-                                   n_steps=25)
-
-    # states_boards = [get_board_after_n(game, 15) for game in games[:n_games]]
-    states = [board2sunfish(board, eval_pos(board)) for board in boards_mid]
-    states += [board2sunfish(board, eval_pos(board)) for board in boards_end]
-
-    
+    n_games_mid = 200
+    n_games_end = 50
+    n_games_total = n_games_mid + n_games_end
+    states_boards_mid = [get_board_after_n(game, 15) for game in games[:n_games_mid]]
+    states_boards_end = [get_board_after_n(game, 25) for game in games[:n_games_end]]
+    states_boards = states_boards_mid + states_boards_end
+    states = [board2sunfish(board, eval_pos(board)) for board in states_boards]
 
     epochs = config_data['epochs']
     time_limit = config_data['time_limit']
@@ -165,7 +151,8 @@ if __name__ == '__main__':
     last_acc = 0
     accuracies = []
     R_true = np.array([val for val in piece.values()]).astype(float)
-    R = copy.copy(R_start)
+    Rs = []
+    R = R_start
     with Parallel(n_jobs=n_threads) as parallel:
         actions_true = parallel(delayed(sunfish_move_mod)(state, pst, time_limit, True)
                                 for state in tqdm(states, desc='Getting true moves',))
@@ -190,6 +177,7 @@ if __name__ == '__main__':
                 R = copy.copy(R_new)
                 last_acc = copy.copy(acc)
             accuracies.append((acc, last_acc))
+            Rs.append(R)
 
             if epoch % decay_step == 0 and epoch != 0:
                 delta *= decay
@@ -197,7 +185,7 @@ if __name__ == '__main__':
             if save_every is not None and save_every and epoch % save_every == 0:
                 pd.DataFrame(R.reshape((-1, 1)), columns=['Result']).to_csv(join(out_path, f'{epoch}.csv'),
                                                                              index=False)
-            if plot_every is not None and plot_every and epoch % plot_every == 0:
-                plot_permuted_sunfish_weights(config_data=config_data, out_path=out_path, epoch=epoch, accuracies=accuracies)
+            if plot_every is not None and plot_every and epoch % plot_every == 0  and epoch != 0:
+                plot_Rs(Rs, config_data)
 
             print(f'Current accuracy: {acc}, best: {last_acc}')
