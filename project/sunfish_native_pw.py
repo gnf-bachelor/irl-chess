@@ -13,6 +13,15 @@ import pandas as pd
 from tqdm import tqdm
 from joblib import Parallel, delayed
 import matplotlib.pyplot as plt
+
+def vscode_fix():
+    if 'TERM_PROGRAM' in os.environ.keys() and os.environ['TERM_PROGRAM'] == 'vscode':
+        print("Running in VS Code, fixing sys path")
+        import sys
+
+        sys.path.append("./")
+vscode_fix() # I will find a better solution to this soon. 
+
 from project import Searcher, Position, initial, sunfish_move, sunfish_move_to_str, pst, pst_only, piece
 from project.chess_utils.sunfish_utils import board2sunfish, sunfish_move_to_str, render, sunfish2board
 
