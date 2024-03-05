@@ -142,7 +142,7 @@ if __name__ == '__main__':
     n_boards = config_data['n_boards']
 
     last_acc = 0
-    Rs = []
+    accuracies = []
     R = np.array([val for val in piece.values()]).astype(float)
     R_new = copy.copy(R)
     R_new[permute_start_idx:permute_end_idx] = R_noisy_vals
@@ -150,7 +150,7 @@ if __name__ == '__main__':
     with Parallel(n_jobs=n_threads) as parallel:
         actions_true = parallel(delayed(sunfish_move_mod)(state, pst, time_limit, True)
                                 for state in tqdm(states, desc='Getting true moves',))
-        for epoch in tqdm(range(epochs), desc='Epoch'):
+        for epoch in tqdm(range(1, epochs+1), desc='Epoch'):
             if permute_all:
                 add = np.random.uniform(low=-delta, high=delta, size=permute_end_idx-permute_start_idx).astype(R.dtype)
                 R_new[permute_start_idx:permute_end_idx] += add
@@ -166,10 +166,10 @@ if __name__ == '__main__':
             acc = sum([a == a_new for a, a_new in list(zip(actions_true, actions_new))]) / n_boards
             change_weights = np.random.rand() > acc if config_data['version'] == 'v1_native_multi' else acc >= last_acc
             if change_weights:
-                print(f'Changed weights')
+                print(f'Changed weights!')
                 R = copy.copy(R_new)
                 last_acc = copy.copy(acc)
-            Rs.append(R)
+            accuracies.append(acc)
 
             if epoch % decay_step == 0 and epoch != 0:
                 delta *= decay
@@ -178,7 +178,6 @@ if __name__ == '__main__':
                 pd.DataFrame(R_new.reshape((-1, 1)), columns=['Result']).to_csv(join(out_path, f'{epoch}.csv'),
                                                                              index=False)
             if plot_every is not None and epoch % plot_every == 0:
-                plot_permuted_sunfish_weights(config_data=config_data, out_path=out_path, epoch=epoch)
+                plot_permuted_sunfish_weights(config_data=config_data, out_path=out_path, epoch=epoch, accuracies=accuracies)
 
             print(f'Current accuracy: {acc}, {last_acc}')
-    plot_R(Rs)
