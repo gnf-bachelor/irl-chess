@@ -3,6 +3,8 @@ import os
 from os.path import join
 
 import copy
+from shutil import copy2
+
 import chess
 import chess.pgn
 import chess.svg
@@ -95,17 +97,19 @@ if __name__ == '__main__':
         print(os.getcwd())
     from project import get_midgame_boards, piece, load_lichess_dfs, create_sunfish_path, plot_permuted_sunfish_weights
 
-    with open(join(os.getcwd(), 'experiment_configs', 'sunfish_permutation_native', 'config.json'), 'r') as file:
+    path_config = join(os.getcwd(), 'experiment_configs', 'sunfish_permutation_native', 'config.json')
+    with open(path_config, 'r') as file:
         config_data = json.load(file)
+        path_result = join(os.getcwd(), 'models', 'sunfish_permuted_native')
+        out_path = create_sunfish_path(config_data, path_result)
+        os.makedirs(out_path, exist_ok=True)
+        copy2(path_config, join(out_path, 'config.json'))
 
     n_files = config_data['n_files']
     overwrite = config_data['overwrite']
     version = config_data['version']
     websites_filepath = join(os.getcwd(), 'downloads', 'lichess_websites.txt')
     file_path_data = join(os.getcwd(), 'data', 'raw')
-    path_result = join(os.getcwd(), 'models', 'sunfish_permuted_native')
-    out_path = create_sunfish_path(config_data, path_result)
-    os.makedirs(out_path, exist_ok=True)
 
     df = load_lichess_dfs(websites_filepath=websites_filepath,
                           file_path_data=file_path_data,
@@ -148,7 +152,7 @@ if __name__ == '__main__':
                                 for state in tqdm(states, desc='Getting true moves',))
         for epoch in tqdm(range(epochs), desc='Epoch'):
             if permute_all:
-                add = np.random.uniform(low=-delta, high=delta, size=R.shape[0] - 1).astype(R.dtype)
+                add = np.random.uniform(low=-delta, high=delta, size=permute_end_idx-permute_start_idx).astype(R.dtype)
                 R_new[permute_start_idx:permute_end_idx] += add
             else:
                 choice = np.random.choice(np.arange(permute_start_idx, permute_end_idx))
