@@ -38,11 +38,13 @@ def plot_permuted_sunfish_weights(config_data, out_path, start_weight_idx=0, leg
     plt.cla()
 
     if accuracies is not None:
-        plt.plot(np.arange(1, epochs+1), accuracies)
+        accuracies = np.array(accuracies)
+        plt.plot(np.arange(len(accuracies)), accuracies[:, 0])
+        plt.plot(np.arange(len(accuracies)), accuracies[:, 1])
         plt.title('Accuracies over time')
         plt.xlabel('Epochs')
         plt.ylabel('Accuracy')
-        plt.legend('Accuracy')
+        plt.legend(['Accuracy', 'Accuracy Prev'])
         plt.savefig(join(plot_path, f'accuracies_{epoch}.png'))
         plt.show()
         plt.cla()
