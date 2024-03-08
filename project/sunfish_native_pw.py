@@ -1,6 +1,5 @@
 import os
 from os.path import join
-print(f'Cwd: {os.getcwd()}')
 import copy
 import chess
 import chess.pgn
@@ -84,9 +83,11 @@ def plot_R(Rs, R_true, target_idxs):
 #     actions.append(move)
 
 if __name__ == '__main__':
+    print(f'Cwd: {os.getcwd()}')
     if os.getcwd().split('\\')[-1] != 'irl-chess':
         os.chdir('../')
 
+    print(f'Cwd: {os.getcwd()}')
     with open(join(os.getcwd(), 'experiment_configs', 'sunfish_native_greedy', 'config.json'), 'r') as file:
         config_data = json.load(file)
 
