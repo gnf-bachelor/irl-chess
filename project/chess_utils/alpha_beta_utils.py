@@ -35,6 +35,17 @@ class PriorityQueueWithFIFO(PriorityQueue):
         self.update_best_moves(eval, board, move_queue, maximize)
         # Return evaluation of worst move in priority queue. Highest for white and lowest for black. 
         return (1 if maximize else -1)*self.queue[0][0]   
+    
+    def to_ordered_list(self, maximize, k = None):
+        # Extract the k best moves from the priority queue
+        if k is None: k = self.maxsize-1
+        k_best_moves = []
+        while not self.empty():
+            eval, (board, move_queue) = self.get()
+            k_best_moves.append(((1 if maximize else -1)*eval, board, move_queue))
+        k_best_moves.reverse() # Order from best to worst
+        if len(k_best_moves) != k: print(f"Warning: only {len(k_best_moves)} available and not {k} from this position")
+        return k_best_moves
 
 def move_generator(board: chess.Board, depth: int) -> Iterator[chess.Move]:
     # Skip captures on the second pass since we already considered them.
@@ -131,14 +142,7 @@ def alpha_beta_search_k(board: chess.Board,
                 if beta <= alpha:
                     break  # Alpha cut-off
 
-    # Extract the k best moves from the priority queue
-    k_best_moves = []
-    while not best_moves.empty():
-        eval, (board, move_queue) = best_moves.get()
-        k_best_moves.append(((1 if maximize else -1)*eval, board, move_queue))
-    k_best_moves.reverse() # Order from best to worst
-    if len(k_best_moves) != k: print(f"Warning: only {len(k_best_moves)} available and not {k} from this position")
-    return k_best_moves
+    return best_moves.to_ordered_list(maximize, k)
 
 def quiescence_search(board: chess.Board,
                       depth,
@@ -214,11 +218,17 @@ def quiescence_search(board: chess.Board,
                 if beta <= alpha:
                     break  # Beta cut-off
 
-    # Extract the k best moves from the priority queue
-    k_best_moves = []
-    while not best_moves.empty():
-        eval, (board, move_queue) = best_moves.get()
-        k_best_moves.append(((1 if maximize else -1)*eval, board, move_queue))
-    k_best_moves.reverse() # Order from best to worst
-    if len(k_best_moves) != k: print(f"Warning: only {len(k_best_moves)} available and not {k} from this position")
-    return k_best_moves
+    return best_moves.to_ordered_list()
+
+def alpha_beta_search(board: chess.Board,
+                      depth,
+                      alpha=-np.inf,
+                      beta=np.inf,
+                      maximize=True,
+                      R: np.array = np.zeros(1),
+                      pst: bool = False,
+                      evaluation_function=evaluate_board,
+                      quiesce: bool = False) -> list[tuple[float, chess.Board, deque]]: 
+    
+    return alpha_beta_search_k(board, depth, k = 1, alpha=alpha, beta=beta, maximize=maximize, R= R,
+                      pst=pst, evaluation_function=evaluation_function, quiesce=quiesce)[0]
