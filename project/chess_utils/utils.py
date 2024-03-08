@@ -15,8 +15,7 @@ from copy import copy
 from project.chess_utils.sunfish_utils import board2sunfish, eval_pos
 from project.chess_utils.sunfish import piece, pst, pst_only
 from project.visualizations.visualize import plot_permuted_sunfish_weights
-from project.chess_utils.alpha_beta_utils import PriorityQueueWithFIFO, move_generator, no_moves_eval, \
-      alpha_beta_search_k, alpha_beta_search
+from project.chess_utils.alpha_beta_utils import evaluate_board, alpha_beta_search, alpha_beta_search_k, list_first_moves
 from scipy.special import softmax
 
 def vscode_fix():
@@ -40,38 +39,6 @@ def set_board(moves: list[str]):
     for move in moves:
         board.push_san(move)
     return board
-
-# Evaluates the piece positions according to sunfish
-def eval_pst_only(board):
-    s = str(board()).replace(' ', '').replace('\n', '')
-    eval = 0
-    for i, char in enumerate(s):
-        if char == '.':
-            continue
-        else:
-            eval += pst_only[char][i]
-    return eval
-
-def evaluate_board(board, R, pst = False, white=True):
-    """
-    positive if (WhitePieces + white perspective), 
-    negative if (Not WhitePieces + white perspective), 
-
-    :param board:
-    :param R:
-    :param pst: Whether to include piece square tables or not. Currently not implemented.
-    :param white: True if viewing from White's perspective. Should be always be left as true since black is trying to minimize.  
-    :return:
-    """
-    eval = 0
-    for WhitePieces in (True, False):
-        keys = {val if WhitePieces else val.lower(): 0 for val in piece.keys()}
-        for char in board.fen().split(" ", 1)[0]: # Do not include turn and castling information. The "b" for black turn is counted as a black rook. Strip the end of the string.
-            if char in keys:
-                keys[char] += 1
-        pos = np.array([val for val in keys.values()])
-        eval += (pos @ R) * (1 if WhitePieces else -1) # Add if 
-    return eval * (1 if white else -1) + (eval_pst_only(board) if pst else 0)
 
 # Deprecated I would believe. 
 def get_best_move(board, R, depth=3, timer=False, evaluation_function=evaluate_board, white=True, san=False):
@@ -398,6 +365,7 @@ def policy_walk_v0_multi(R, boards, moves, config_data, out_path):
     """
     delta = config_data['delta']
     depth = config_data['search_depth']
+    k = config_data['search_depth']
     epochs = config_data['epochs']
     save_every = config_data['save_every']
     permute_all = config_data['permute_all']
@@ -409,12 +377,13 @@ def policy_walk_v0_multi(R, boards, moves, config_data, out_path):
 
 
     # Multiprocessesing
-    def step(board, move, R, R_, depth):
+    def step(board, move, R, R_, depth, k):
         reward_sign = 1 if board.turn else -1 # White seeks to maximize and black to minimize, so the reward for black is the flipped evaluation.
         # Finally we calculate the Q-value of the old policy on the state without the original move
-        _, board_old_, move_queue_old = alpha_beta_search(board=board, R=R, depth=depth, maximize=board.turn, quiesce=quiesce)
-        _, board_old_, move_queue_new = alpha_beta_search(board=board, R=R_, depth=depth, maximize=board.turn, quiesce=quiesce)
-        return move == move_queue_old.popleft(), move == move_queue_new.popleft()
+        k_best_moves_old = alpha_beta_search_k(board=board, R=R, depth=depth, k=k, maximize=board.turn, quiesce=quiesce)
+        k_best_moves_new = alpha_beta_search_k(board=board, R=R_, depth=depth, k=k, maximize=board.turn, quiesce=quiesce)
+
+        return move in list_first_moves(k_best_moves_old), move in list_first_moves(k_best_moves_new)
 
     for epoch in tqdm(range(epochs), desc='Iterating over epochs'):
         i = 0
@@ -427,7 +396,7 @@ def policy_walk_v0_multi(R, boards, moves, config_data, out_path):
             choice = np.random.choice(np.arange(permute_start_idx, permute_end_idx))
             R_[choice] += np.random.uniform(low=-delta, high=delta, size=1).item()
 
-        result = Parallel(n_jobs=n_threads)(delayed(step)(board, moves, R, R_, depth)
+        result = Parallel(n_jobs=n_threads)(delayed(step)(board, moves, R, R_, depth, k)
                                             for board, moves in tqdm(zip(boards, moves), total=len(boards),
                                                               desc='Policy walking over reward functions'))
 

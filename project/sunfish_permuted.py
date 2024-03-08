@@ -11,7 +11,12 @@ from os.path import join
 import pickle
 import matplotlib.pyplot as plt
 
-from project.chess_utils.utils import alpha_beta_search
+def vscode_fix():
+    if 'TERM_PROGRAM' in os.environ.keys() and os.environ['TERM_PROGRAM'] == 'vscode':
+        print("Running in VS Code, fixing sys path")
+        import sys
+        
+        sys.path.append("./")
 
 
 def run_sun(df,
@@ -35,6 +40,7 @@ def run_sun(df,
     delta = config_data['delta']
     n_boards = config_data['n_boards']
     depth = config_data['search_depth']
+    k = config_data['k']
     epochs = config_data['epochs']
     save_every = config_data['save_every']
     permute_all = config_data['permute_all']
@@ -83,7 +89,7 @@ def get_sunfish_moves(R_sunfish, boards, depth, out_path, overwrite=False, quies
     """
 
     def step(board, R, depth, quiesce):
-        Q, _, moves = alpha_beta_search(board, R=R, depth=depth, maximize=board.turn, quiesce=quiesce)
+        Q, _, moves = alpha_beta_search_k(board, k = 1, R=R, depth=depth, maximize=board.turn, quiesce=quiesce)[0]
         return moves.popleft()
 
     sunfish_moves_path = os.path.join(out_path, 'sunfish_moves.pkl')
@@ -129,10 +135,8 @@ if __name__ == '__main__':
         print(os.getcwd())
         os.chdir('../')
 
-    if 'TERM_PROGRAM' in os.environ.keys() and os.environ['TERM_PROGRAM'] == 'vscode':
-        print("Running in VS Code, fixing sys path")
-        import sys
-        sys.path.append("./")
+    vscode_fix() # I will find a better solution for this
+    from project.chess_utils.alpha_beta_utils import alpha_beta_search_k
 
     from project import get_midgame_boards, piece, load_lichess_dfs
 
@@ -146,8 +150,7 @@ if __name__ == '__main__':
         from project import policy_walk_v0_multi as policy_walk
     elif version == 'v1_multi':
         from project import policy_walk_multi as policy_walk
-    elif version == 'v1_default':
-        from project import policy_walk as policy_walk
+
     websites_filepath = join(os.getcwd(), 'downloads', 'lichess_websites.txt')
     file_path_data = join(os.getcwd(), 'data', 'raw')
 

@@ -7,7 +7,7 @@ import chess
 import numpy as np
 from tqdm import tqdm
 from queue import PriorityQueue
-from project import evaluate_board
+from project.chess_utils.sunfish import piece, pst, pst_only
 
 class PriorityQueueWithFIFO(PriorityQueue):
     def __init__(self, maxsize: int = 0):
@@ -36,7 +36,7 @@ class PriorityQueueWithFIFO(PriorityQueue):
         # Return evaluation of worst move in priority queue. Highest for white and lowest for black. 
         return (1 if maximize else -1)*self.queue[0][0]   
     
-    def to_ordered_list(self, maximize, k = None):
+    def to_ordered_list(self, maximize, k = None, verbose = False):
         # Extract the k best moves from the priority queue
         if k is None: k = self.maxsize-1
         k_best_moves = []
@@ -44,8 +44,40 @@ class PriorityQueueWithFIFO(PriorityQueue):
             eval, (board, move_queue) = self.get()
             k_best_moves.append(((1 if maximize else -1)*eval, board, move_queue))
         k_best_moves.reverse() # Order from best to worst
-        if len(k_best_moves) != k: print(f"Warning: only {len(k_best_moves)} available and not {k} from this position")
+        if verbose and len(k_best_moves) != k: print(f"Warning: only {len(k_best_moves)} available and not {k} from this position")
         return k_best_moves
+
+# Evaluates the piece positions according to sunfish
+def eval_pst_only(board):
+    s = str(board()).replace(' ', '').replace('\n', '')
+    eval = 0
+    for i, char in enumerate(s):
+        if char == '.':
+            continue
+        else:
+            eval += pst_only[char][i]
+    return eval
+
+def evaluate_board(board, R, pst = False, white=True):
+    """
+    positive if (WhitePieces + white perspective), 
+    negative if (Not WhitePieces + white perspective), 
+
+    :param board:
+    :param R:
+    :param pst: Whether to include piece square tables or not. Currently not implemented.
+    :param white: True if viewing from White's perspective. Should be always be left as true since black is trying to minimize.  
+    :return:
+    """
+    eval = 0
+    for WhitePieces in (True, False):
+        keys = {val if WhitePieces else val.lower(): 0 for val in piece.keys()}
+        for char in board.fen().split(" ", 1)[0]: # Do not include turn and castling information. The "b" for black turn is counted as a black rook. Strip the end of the string.
+            if char in keys:
+                keys[char] += 1
+        pos = np.array([val for val in keys.values()])
+        eval += (pos @ R) * (1 if WhitePieces else -1) # Add if 
+    return eval * (1 if white else -1) + (eval_pst_only(board) if pst else 0)
 
 def move_generator(board: chess.Board, depth: int) -> Iterator[chess.Move]:
     # Skip captures on the second pass since we already considered them.
@@ -218,7 +250,7 @@ def quiescence_search(board: chess.Board,
                 if beta <= alpha:
                     break  # Beta cut-off
 
-    return best_moves.to_ordered_list()
+    return best_moves.to_ordered_list(maximize, k)
 
 def alpha_beta_search(board: chess.Board,
                       depth,
@@ -232,3 +264,6 @@ def alpha_beta_search(board: chess.Board,
     
     return alpha_beta_search_k(board, depth, k = 1, alpha=alpha, beta=beta, maximize=maximize, R= R,
                       pst=pst, evaluation_function=evaluation_function, quiesce=quiesce)[0]
+
+def list_first_moves(k_best_moves: list[tuple[float, chess.Board, deque]]):
+    return [moves.popleft() for max_eval, board_last, moves in k_best_moves]
