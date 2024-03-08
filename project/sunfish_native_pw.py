@@ -83,7 +83,7 @@ def plot_R(Rs, R_true, target_idxs):
 #     actions.append(move)
 
 if __name__ == '__main__':
-    print(f'Cwd: {os.getcwd()}')
+    print(f'Cwd: {os.environ['HOST_NAME']}')
     if os.getcwd().split('\\')[-1] != 'irl-chess':
         os.chdir('../')
 
