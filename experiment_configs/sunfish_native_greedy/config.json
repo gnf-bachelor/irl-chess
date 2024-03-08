@@ -1,0 +1,13 @@
+{
+  "delta": 20.0,
+  "n_boards_mid": 2000,
+  "n_boards_end": 500,
+  "epochs": 200,
+  "save_every": 10,
+  "time_limit": 0.1,
+  "decay": 1,
+  "target_idxs": [1,2],
+  "R_true": [100, 280, 320, 479, 929, 60000],
+  "decay_every": 30,
+  "plot_every": 10
+}

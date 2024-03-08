@@ -1,11 +1,13 @@
 import os
 from os.path import join
+print(f'Cwd: {os.getcwd()}')
 import copy
 import chess
 import chess.pgn
 import chess.svg
 import numpy as np
 from tqdm import tqdm
+import json
 from joblib import Parallel, delayed
 import matplotlib.pyplot as plt
 from project import Searcher, Position, initial, sunfish_move, sunfish_move_to_str, pst, pst_only, piece
@@ -64,6 +66,7 @@ def sunfish_move_mod(state, pst, time_limit, only_move=False):
         return sunfish_move(searcher, [state], time_limit=time_limit)[0]
     return sunfish_move(searcher, [state], time_limit=time_limit)
 
+
 def plot_R(Rs, R_true, target_idxs):
     colors = ['blue', 'orange', 'green', 'red', 'purple']
     Rs = np.array(Rs)
@@ -84,63 +87,64 @@ if __name__ == '__main__':
     if os.getcwd().split('\\')[-1] != 'irl-chess':
         os.chdir('../')
 
+    with open(join(os.getcwd(), 'experiment_configs', 'sunfish_native_greedy', 'config.json'), 'r') as file:
+        config_data = json.load(file)
+
+    delta = config_data['delta']
+    n_boards_mid = config_data['n_boards_mid']
+    n_boards_end = config_data['n_boards_end']
+    n_boards_total = n_boards_mid + n_boards_end
+    epochs = config_data['epochs']
+    save_every = config_data['save_every']
+    time_limit = config_data['time_limit']
+    decay = config_data['decay']
+    target_idxs = config_data['target_idxs']
+    R_true = np.array(config_data['R_true'])
+    decay_every = config_data['decay_every']
+    plot_every = config_data['plot_every']
+
     pgn = open("data/lichess_db_standard_rated_2014-09.pgn/lichess_db_standard_rated_2014-09.pgn")
     games = []
-    for i in range(1000):
+    for i in tqdm(range(10000), 'Getting games'):
         games.append(chess.pgn.read_game(pgn))
 
-    n_games_mid = 400
-    n_games_end = 100
-    n_games_total = n_games_mid + n_games_end
-    states_boards_mid = [get_board_after_n(game, 15) for game in games[:n_games_mid]]
-    states_boards_end = [get_board_after_n(game, 25) for game in games[:n_games_end]]
+    states_boards_mid = [get_board_after_n(game, 15) for game in games[:n_boards_mid]]
+    states_boards_end = [get_board_after_n(game, 25) for game in games[:n_boards_end]]
     states_boards = states_boards_mid + states_boards_end
     states = [board2sunfish(board, eval_pos(board)) for board in states_boards]
-    batch_size = n_games_total // 5
-    state_batches = [states[i:i+batch_size] for i in range(0, n_games_total, batch_size)]
-    epochs = 200
-    time_limit = 0.1
-    step = 20
-    decay = 1
+
+    R = copy.copy(R_true)
+    R[target_idxs] = 500
     best_accs = [0]
     Rs = []
     with Parallel(n_jobs=-2) as parallel:
         print('Getting true moves\n', '-' * 20)
-        # actions_true = parallel(delayed(sunfish_move_mod)(state, pst, time_limit, True)
-        #                         for state in tqdm(states))
-        actions_true = []
-        for batch in state_batches:
-            actions_batch = parallel(delayed(sunfish_move_mod)(state, pst, time_limit, True)
-                                     for state in tqdm(batch))
-            actions_true += actions_batch
-        R_true = np.array([100, 280, 320, 479, 929, 60000])
-        target_idxs = [1, 2] # knight, bishop, queen
-        R = np.array([100, 100, 100, 479, 929, 60000])
+        actions_true = parallel(delayed(sunfish_move_mod)(state, pst, time_limit, True)
+                                for state in tqdm(states))
+
         for i in range(epochs):
             print(f'Epoch {i + 1}\n', '-' * 20)
             add = np.zeros(6)
-            add[target_idxs] = np.random.choice([-step, step], len(target_idxs))
+            add[target_idxs] = np.random.choice([-delta, delta], len(target_idxs))
             R_new = R + add
             pst_new = get_new_pst(R_new)
-            # actions_new = parallel(delayed(sunfish_move_mod)(state, pst_new, time_limit, True)
-            #                        for state in tqdm(states))
-            actions_new = []
-            for batch in state_batches:
-                actions_batch = parallel(delayed(sunfish_move_mod)(state, pst_new, time_limit, True)
-                                         for state in tqdm(batch))
-                actions_new += actions_batch
+            actions_new = parallel(delayed(sunfish_move_mod)(state, pst_new, time_limit, True)
+                                   for state in tqdm(states))
 
-            acc = sum([a == a_new for a, a_new in list(zip(actions_true, actions_new))])/n_games_total
+            acc = sum([a == a_new for a, a_new in list(zip(actions_true, actions_new))])/n_boards_total
             if acc >= best_accs[-1]:
                 R = R_new
                 best_accs.append(acc)
             Rs.append(R)
 
-            if i % 10 == 0 and i != 0:
+            if i % plot_every == 0 and i != 0:
                 plot_R(Rs, R_true, target_idxs)
 
-            if i % 30 == 0 and i != 0:
-                step *= decay
+            if i % decay_every == 0 and i != 0:
+                delta *= decay
+
+            if i % save_every == 0 and i != 0:
+                pass
 
             print(f'Current accuracy: {acc}, best: {best_accs[-1]}')
     plot_R(Rs, R_true, target_idxs)
