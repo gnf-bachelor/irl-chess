@@ -66,27 +66,23 @@ def sunfish_move_mod(state, pst, time_limit, only_move=False):
     return sunfish_move(searcher, [state], time_limit=time_limit)
 
 
-def plot_R(Rs, R_true, target_idxs):
-    colors = ['blue', 'orange', 'green', 'red', 'purple']
+def plot_R(Rs, R_true, target_idxs, save_path, epoch, save=True):
+    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
     Rs = np.array(Rs)
     targets = R_true[target_idxs]
     target_colors = [colors[idx] for idx in target_idxs]
     plt.plot(Rs[:, :-1])
-    plt.hlines(targets, 0, Rs.shape[0], colors=target_colors, linestyle='--')
+    plt.hlines(targets, 0, Rs.shape[0]-1, colors=target_colors, linestyle='--')
     plt.title('Piece values by epoch')
     plt.legend(list('PNBRQ'))
+    if save:
+        plt.savefig(os.path.join(save_path, f'plots/weights_over_time_{epoch}.png'))
     plt.show()
-
-# actions = []
-# for state in tqdm(states):
-#     move = sunfish_move_mod(state, pst_new,time_limit,True)
-#     actions.append(move)
 
 if __name__ == '__main__':
     if os.getcwd()[-9:] != 'irl-chess':
         os.chdir('../')
 
-    print(f'Cwd: {os.getcwd()}')
     with open(join(os.getcwd(), 'experiment_configs', 'sunfish_native_greedy', 'config.json'), 'r') as file:
         config_data = json.load(file)
 
@@ -105,7 +101,7 @@ if __name__ == '__main__':
 
     pgn = open("data/lichess_db_standard_rated_2014-09.pgn/lichess_db_standard_rated_2014-09.pgn")
     games = []
-    for i in tqdm(range(10000), 'Getting games'):
+    for i in tqdm(range(n_boards_total*3), 'Getting games'):
         games.append(chess.pgn.read_game(pgn))
 
     states_boards_mid = [get_board_after_n(game, 15) for game in games[:n_boards_mid]]
@@ -113,17 +109,21 @@ if __name__ == '__main__':
     states_boards = states_boards_mid + states_boards_end
     states = [board2sunfish(board, eval_pos(board)) for board in states_boards]
 
-    R = copy.copy(R_true)
-    R[target_idxs] = 500
+    save_path = os.path.join(*config_data['save_path'])
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+        os.makedirs(os.path.join(save_path, 'plots'))
+
+    R = np.array(config_data['R_start'])
     best_accs = [0]
-    Rs = []
+    Rs = [R]
     with Parallel(n_jobs=-2) as parallel:
         print('Getting true moves\n', '-' * 20)
         actions_true = parallel(delayed(sunfish_move_mod)(state, pst, time_limit, True)
                                 for state in tqdm(states))
 
-        for i in range(epochs):
-            print(f'Epoch {i + 1}\n', '-' * 20)
+        for epoch in range(epochs):
+            print(f'Epoch {epoch + 1}\n', '-' * 20)
             add = np.zeros(6)
             add[target_idxs] = np.random.choice([-delta, delta], len(target_idxs))
             R_new = R + add
@@ -137,14 +137,15 @@ if __name__ == '__main__':
                 best_accs.append(acc)
             Rs.append(R)
 
-            if i % plot_every == 0 and i != 0:
-                plot_R(Rs, R_true, target_idxs)
+            if epoch % plot_every == 0 and epoch != 0:
+                plot_R(Rs, R_true, target_idxs, save_path, epoch)
 
-            if i % decay_every == 0 and i != 0:
+            if epoch % decay_every == 0 and epoch != 0:
                 delta *= decay
 
-            if i % save_every == 0 and i != 0:
+            if epoch % save_every == 0 and epoch != 0:
                 pass
 
             print(f'Current accuracy: {acc}, best: {best_accs[-1]}')
-    plot_R(Rs, R_true, target_idxs)
+    plot_R(Rs, R_true, target_idxs, save_path, epoch)
+    np.save(os.path.join(save_path, 'weights_over_time.npy'), Rs)
