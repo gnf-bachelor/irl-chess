@@ -5,14 +5,19 @@ import pandas as pd
 from os.path import join
 from matplotlib import pyplot as plt
 
+def char_to_idxs(plot_char: list[str]):
+    char_to_idxs = {"P" : 0, "N" : 1, "B" : 2, "R" : 3, "Q" : 4, "K" : 5}
+    return [char_to_idxs[char] for char in plot_char]
+
+def idxs_to_char(idx_list: list[int]):
+    idx_to_char = {0: "P", 1: "N", 2: "B", 3: "R", 4: "Q", 5: "K"}
+    return [idx_to_char[idx] for idx in idx_list]
 
 def plot_permuted_sunfish_weights(config_data, out_path, start_weight_idx=0, legend_names=['P', 'N', 'B', 'R', 'Q', 'K'], epoch=None, accuracies=None):
-    start_plot_idx = 0
-    end_plot_idx = 5
+    plot_char = char_to_idxs(config_data['plot_char'])
     save_every = config_data['save_every']
     epochs = config_data['epochs']
-    target_idxs = config_data['target_idxs']
-    R_true = config_data['R_true']
+    R_true = np.array(config_data.get('R_true', [100, 280, 320, 479, 929, 60000]))
 
     plot_path = os.path.join(out_path, 'plots')
     os.makedirs(plot_path, exist_ok=True)
@@ -28,14 +33,14 @@ def plot_permuted_sunfish_weights(config_data, out_path, start_weight_idx=0, leg
                 epoch = i
             break
     weights = np.array(weights)
-    X = np.repeat(np.arange(start_weight_idx, weights.shape[0], save_every), end_plot_idx - start_plot_idx).reshape((-1, end_plot_idx - start_plot_idx))
+    X = np.repeat(np.arange(start_weight_idx, weights.shape[0], save_every), len(plot_char)).reshape((-1, len(plot_char)))
 
-    plt.plot(X, np.array(weights)[:, start_plot_idx:end_plot_idx])
-    plt.hlines(R_true[:end_plot_idx],0, epoch, linestyles='--')
+    plt.plot(X, np.array(weights)[:, plot_char])
+    plt.hlines(R_true[plot_char], 0, epoch, linestyles='--')
     plt.title('Sunfish weights over time')
     plt.xlabel('Epochs')
     plt.ylabel('Weight values')
-    plt.legend(legend_names[start_plot_idx:end_plot_idx])
+    plt.legend([legend_names[idx] for idx in plot_char])
     plt.savefig(join(plot_path, f'weights_{epoch}.png'))
     plt.show()
     plt.cla()

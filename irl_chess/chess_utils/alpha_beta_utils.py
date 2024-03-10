@@ -7,7 +7,8 @@ import chess
 import numpy as np
 from tqdm import tqdm
 from queue import PriorityQueue
-from project.chess_utils.sunfish import piece, pst, pst_only
+from irl_chess.chess_utils.sunfish import piece, pst, pst_only
+from irl_chess.chess_utils.sunfish_utils import eval_pos
 
 class PriorityQueueWithFIFO(PriorityQueue):
     def __init__(self, maxsize: int = 0):
@@ -18,7 +19,7 @@ class PriorityQueueWithFIFO(PriorityQueue):
     def put(self, priority_item):
         self.size += 1
         priority, data = priority_item
-        tie_breaker = next(self.counter) # Potentially make this negative for LIFO behavior. 
+        tie_breaker = - next(self.counter) # Negative for LIFO behavior. 
         super().put((priority, tie_breaker, data))
 
     def get(self):
@@ -69,6 +70,9 @@ def evaluate_board(board, R, pst = False, white=True):
     :param white: True if viewing from White's perspective. Should be always be left as true since black is trying to minimize.  
     :return:
     """
+    if pst: # I am unsure which function is faster. This one of the eval_pos when using pst and without. We could test it.  
+        #print("I am quite certain there is a bug in how the following function flips the board to evaluate the position")
+        return eval_pos(board, R=R)
     eval = 0
     for WhitePieces in (True, False):
         keys = {val if WhitePieces else val.lower(): 0 for val in piece.keys()}
@@ -213,7 +217,8 @@ def quiescence_search(board: chess.Board,
         
         # Static evaluation. Alternative to taking a piece for Quiesce. 
         static_eval, board_best, move_queue_best = no_moves_eval(board, R, pst, evaluation_function)
-        if static_eval >= beta: return [(beta, board_best, move_queue_best)]
+        if static_eval >= beta: return [(beta, board_best, move_queue_best)] # Position is too good for white for black to allow. 
+                # Or at best equal to something already explored. This means it should never be included in our final returned moves.
         atLeastEval = best_moves.process_move(static_eval, board_best, move_queue_best, maximize) 
         if best_moves.size == k: alpha = atLeastEval
 
@@ -235,7 +240,8 @@ def quiescence_search(board: chess.Board,
         
         # Static evaluation. Alternative to taking a piece for Quiesce. 
         static_eval, board_best, move_queue_best = no_moves_eval(board, R, pst, evaluation_function)
-        if static_eval <= alpha: return [(alpha, board_best, move_queue_best)]
+        if static_eval <= alpha: return [(alpha, board_best, move_queue_best)] # Position is too good for black for white to allow. 
+                # Or at best equal to something already explored. This means it should never be included in our final returned moves.
         atLeastEval = best_moves.process_move(static_eval, board_best, move_queue_best, maximize) 
         if best_moves.size == k: beta = atLeastEval
 
@@ -265,5 +271,9 @@ def alpha_beta_search(board: chess.Board,
     return alpha_beta_search_k(board, depth, k = 1, alpha=alpha, beta=beta, maximize=maximize, R= R,
                       pst=pst, evaluation_function=evaluation_function, quiesce=quiesce)[0]
 
-def list_first_moves(k_best_moves: list[tuple[float, chess.Board, deque]]):
-    return [moves.popleft() for max_eval, board_last, moves in k_best_moves]
+def list_first_moves(k_best_moves: list[tuple[float, chess.Board, deque]], with_eval = False):
+    assert all([len(moves) > 0 for eval, board_last, moves in k_best_moves]), "Some of the move tractories contain no moves. The preceeding function was probably run with depth 0."
+    if not with_eval:
+        return [deepcopy(moves).popleft() for eval, board_last, moves in k_best_moves]
+    else: 
+        return [(eval, deepcopy(moves).popleft()) for eval, board_last, moves in k_best_moves]

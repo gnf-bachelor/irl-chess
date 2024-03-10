@@ -12,10 +12,10 @@ import numpy as np
 from tqdm import tqdm
 from time import time
 from copy import copy
-from project.chess_utils.sunfish_utils import board2sunfish, eval_pos
-from project.chess_utils.sunfish import piece, pst, pst_only
-from project.visualizations.visualize import plot_permuted_sunfish_weights
-from project.chess_utils.alpha_beta_utils import evaluate_board, alpha_beta_search, alpha_beta_search_k, list_first_moves
+from irl_chess.chess_utils.sunfish_utils import board2sunfish, eval_pos
+from irl_chess.chess_utils.sunfish import piece, pst, pst_only
+from irl_chess.visualizations.visualize import plot_permuted_sunfish_weights, char_to_idxs
+from irl_chess.chess_utils.alpha_beta_utils import evaluate_board, alpha_beta_search, alpha_beta_search_k, list_first_moves
 from scipy.special import softmax
 
 def vscode_fix():
@@ -369,8 +369,7 @@ def policy_walk_v0_multi(R, boards, moves, config_data, out_path):
     epochs = config_data['epochs']
     save_every = config_data['save_every']
     permute_all = config_data['permute_all']
-    permute_start_idx = config_data['permute_start_idx']
-    permute_end_idx = config_data['permute_end_idx']
+    permute_idxs = char_to_idxs(config_data['permute_char'])
     quiesce = config_data['quiesce']
     n_threads = config_data['n_threads']
     plot_every = config_data['plot_every']
@@ -380,8 +379,8 @@ def policy_walk_v0_multi(R, boards, moves, config_data, out_path):
     def step(board, move, R, R_, depth, k):
         reward_sign = 1 if board.turn else -1 # White seeks to maximize and black to minimize, so the reward for black is the flipped evaluation.
         # Finally we calculate the Q-value of the old policy on the state without the original move
-        k_best_moves_old = alpha_beta_search_k(board=board, R=R, depth=depth, k=k, maximize=board.turn, quiesce=quiesce)
-        k_best_moves_new = alpha_beta_search_k(board=board, R=R_, depth=depth, k=k, maximize=board.turn, quiesce=quiesce)
+        k_best_moves_old = alpha_beta_search_k(board=board, R=R, depth=depth, k=k, maximize=board.turn, quiesce=quiesce, pst=True)
+        k_best_moves_new = alpha_beta_search_k(board=board, R=R_, depth=depth, k=k, maximize=board.turn, quiesce=quiesce, pst=True)
 
         return move in list_first_moves(k_best_moves_old), move in list_first_moves(k_best_moves_new)
 
@@ -391,9 +390,9 @@ def policy_walk_v0_multi(R, boards, moves, config_data, out_path):
         R_ = copy(R)
         if permute_all:
             add = np.random.uniform(low=-delta, high=delta, size=R.shape[0] - 1).astype(R.dtype)
-            R_[permute_start_idx:permute_end_idx] += add
+            R_[permute_idxs] += add
         else:
-            choice = np.random.choice(np.arange(permute_start_idx, permute_end_idx))
+            choice = np.random.choice(permute_idxs)
             R_[choice] += np.random.uniform(low=-delta, high=delta, size=1).item()
 
         result = Parallel(n_jobs=n_threads)(delayed(step)(board, moves, R, R_, depth, k)

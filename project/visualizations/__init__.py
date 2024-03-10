@@ -1,1 +1,0 @@
-from project.visualizations.visualize import plot_permuted_sunfish_weights

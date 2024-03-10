@@ -10,13 +10,9 @@ from tqdm import tqdm
 from os.path import join
 import pickle
 import matplotlib.pyplot as plt
-
-def vscode_fix():
-    if 'TERM_PROGRAM' in os.environ.keys() and os.environ['TERM_PROGRAM'] == 'vscode':
-        print("Running in VS Code, fixing sys path")
-        import sys
-        
-        sys.path.append("./")
+from irl_chess.chess_utils.alpha_beta_utils import alpha_beta_search_k
+from irl_chess import get_midgame_boards, piece, load_lichess_dfs
+from irl_chess.visualizations import char_to_idxs, idxs_to_char
 
 
 def run_sun(df,
@@ -46,8 +42,7 @@ def run_sun(df,
     permute_all = config_data['permute_all']
     R_noisy_vals = config_data['R_noisy_vals']
     overwrite = config_data['overwrite']
-    permute_start_idx = config_data['permute_start_idx']
-    permute_end_idx = config_data['permute_end_idx']
+    permute_idxs = char_to_idxs(config_data['permute_char'])
     quiesce = config_data['quiesce']
     n_threads = config_data['n_threads']
     plot_every = config_data['plot_every']
@@ -57,7 +52,7 @@ def run_sun(df,
         path_result = join(os.getcwd(), 'models', 'sunfish_permuted')
     out_path = create_sunfish_path(config_data, path_result=path_result)
     R_noisy = copy(R_sunfish)
-    R_noisy[permute_start_idx:permute_end_idx] = R_noisy_vals  # Keep the pawn constant
+    R_noisy[permute_idxs] = R_noisy_vals  # Keep the pawn constant
     # R_noisy[1:] += np.random.normal(loc=0, scale=sd_noise, size=R_sunfish.shape[0] - 1)
 
     boards, _ = get_midgame_boards(df, n_boards, min_elo=min_elo, max_elo=max_elo, sunfish=False)
@@ -72,7 +67,7 @@ def run_sun(df,
                                               overwrite=overwrite, quiesce=quiesce, n_threads=n_threads)
     R_ = policy_walk(R_noisy, boards, moves_sunfish, config_data=config_data, out_path=out_path)
 
-    from project import plot_permuted_sunfish_weights
+    from irl_chess import plot_permuted_sunfish_weights
     plot_permuted_sunfish_weights(config_data=config_data, out_path=out_path)
 
     return R_
@@ -119,14 +114,12 @@ def create_sunfish_path(config_data, path_result):
     epochs = config_data['epochs']
     permute_all = config_data['permute_all']
     R_noisy_vals = config_data['R_noisy_vals']
-    permute_start_idx = config_data['permute_start_idx']
-    permute_end_idx = config_data['permute_end_idx']
     quiesce = config_data['quiesce']
     version = config_data['version']
     decay_step = config_data['decay_step']
 
     out_path = join(path_result,
-                    f'{permute_all}-{min_elo}-{max_elo}-{search_depth}-{n_boards}-{delta}-{R_noisy_vals}-{permute_start_idx}-{max(permute_end_idx, 0)}-{quiesce}-{version}-{decay_step}')
+                    f"{permute_all}-{min_elo}-{max_elo}-{search_depth}-{n_boards}-{delta}-{R_noisy_vals}-{config_data['permute_char']}-{quiesce}-{version}-{decay_step}")
     return out_path
 
 
@@ -135,11 +128,6 @@ if __name__ == '__main__':
         print(os.getcwd())
         os.chdir('../')
 
-    vscode_fix() # I will find a better solution for this
-    from project.chess_utils.alpha_beta_utils import alpha_beta_search_k
-
-    from project import get_midgame_boards, piece, load_lichess_dfs
-
     with open(join(os.getcwd(), 'experiment_configs', 'sunfish_permutation', 'config.json'), 'r') as file:
         config_data = json.load(file)
     n_files = config_data['n_files']
@@ -147,9 +135,9 @@ if __name__ == '__main__':
     version = config_data['version']
 
     if version == 'v0_multi':
-        from project import policy_walk_v0_multi as policy_walk
+        from irl_chess import policy_walk_v0_multi as policy_walk
     elif version == 'v1_multi':
-        from project import policy_walk_multi as policy_walk
+        from irl_chess import policy_walk_multi as policy_walk
 
     websites_filepath = join(os.getcwd(), 'downloads', 'lichess_websites.txt')
     file_path_data = join(os.getcwd(), 'data', 'raw')

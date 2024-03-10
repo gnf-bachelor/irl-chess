@@ -2,7 +2,7 @@ import chess
 import numpy as np
 from tqdm import tqdm
 
-from project.chess_utils.sunfish import Position, Move, Searcher, render, pst, piece
+from irl_chess.chess_utils.sunfish import Position, Move, Searcher, render, pst, piece
 from time import time
 
 def sunfish_move(searcher: Searcher, hist: list[Position], time_limit:float=1., ) -> tuple[Move, dict]:

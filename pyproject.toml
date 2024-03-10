@@ -3,11 +3,14 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "chess_irl"
-version = "0.0.1"
-description = "A short description of the project."
+name = "irl_chess"
+version = "0.1.0"
+description = """
+A forray into inverse requirement learning applications in chess to infer the reward function of players, 
+ascertaining an empirical estimate of their intention when it is unclear even to themselves.
+"""
 authors = [
-  { name = "Fab", email = "your@email.com" },
+  { name = "Gabriel Agerholm Ruge", email = "gabrielruge@gmail.com" },
 ]
 
 readme = "README.md"
@@ -15,7 +18,7 @@ requires-python = ">=3.10"
 dynamic = ["dependencies", "optional-dependencies"]
 
 [tool.setuptools]
-packages = ["chess_irl"]
+packages = ["irl_chess"]
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}

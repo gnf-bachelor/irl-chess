@@ -5,7 +5,7 @@ import chess.pgn
 import numpy as np
 from tqdm import tqdm
 from joblib import Parallel, delayed
-from project import Searcher, Position, initial, sunfish_move, sunfish_move_to_str, alpha_beta_search, get_best_move
+from irl_chess import Searcher, Position, initial, sunfish_move, sunfish_move_to_str, alpha_beta_search, get_best_move
 
 if os.getcwd().split('\\')[-1] != 'irl-chess':
     os.chdir('../')
