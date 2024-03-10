@@ -14,4 +14,4 @@
 
 module load python3/3.10.13
 source venv/bin/activate 
-python3 -m project.plot_sunfish_native
+python3 -m irl_chess.plot_sunfish_native

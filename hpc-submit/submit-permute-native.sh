@@ -14,4 +14,4 @@
 
 module load python3/3.10.13
 source venv/bin/activate 
-python3 -m project.sunfish_native_pw
+python3 -m irl_chess.sunfish_native_pw
