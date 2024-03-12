@@ -9,6 +9,7 @@ from tqdm import tqdm
 import json
 from joblib import Parallel, delayed
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 from project import pst
 from project.chess_utils.sunfish_utils import board2sunfish, eval_pos, get_new_pst, sunfish_move_mod
 from project.chess_utils.utils import get_board_after_n
@@ -21,20 +22,23 @@ def plot_BO_2d(opt):
     acq_img = opt.acquisition.acquisition_function(pgrid.reshape(2, -1).T)
     acq_img = (-acq_img - np.min(-acq_img)) / (np.max(-acq_img - np.min(-acq_img)))
     acq_img = acq_img.reshape(pgrid[0].shape[:2])
-    mod_img = opt.model.predict(pgrid.reshape(2, -1).T)
+    mod_img = -opt.model.predict(pgrid.reshape(2, -1).T)[0]
     mod_img = mod_img.reshape(pgrid[0].shape[:2])
+
     fig, (ax1, ax2) = plt.subplots(1,2)
     ax1.imshow(acq_img.T, origin='lower')
-    ax1.colorbar()
-    ax1.xlabel('piece_one')
-    ax1.ylabel('piece_two')
-    ax1.title('Acquisition function')
-    ax2.imshow(acq_img.T, origin='lower')
-    ax2.colorbar()
-    ax2.xlabel('piece_one')
-    ax2.ylabel('piece_two')
-    ax2.title('Model')
+    ax1.set_xlabel('piece_one')
+    ax1.set_ylabel('piece_two')
+    ax1.set_title('Acquisition function')
+    ax2.imshow(mod_img.T, origin='lower')
+    ax2.set_xlabel('piece_one')
+    ax2.set_ylabel('piece_two')
+    ax2.set_title('Model')
+    ax2.scatter(*opt.X.T, c=np.arange(len(opt.X)), cmap='Reds', marker='x')
     plt.show()
+
+    accs = -opt.Y.reshape(-1)
+    top_acc = np.maximum.accumulate(accs)
 
 if __name__ == '__main__':
     if os.getcwd()[-9:] != 'irl-chess':
