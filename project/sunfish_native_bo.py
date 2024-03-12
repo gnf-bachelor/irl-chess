@@ -86,9 +86,10 @@ if __name__ == '__main__':
 
     # RUN
     domain = []
+    possible_values = tuple(np.arange(0, 1000, 10, dtype=int))
     for idx in target_idxs:
         piece_name = 'PNBRQK'[idx]
-        domain.append({'name': f'{piece_name} value', 'type': 'continuous', 'domain': (0, 1000)})
+        domain.append({'name': f'{piece_name} value', 'type': 'discrete', 'domain': possible_values})
 
     R_start = np.array(config_data['R_start'])
     with Parallel(n_jobs=n_jobs) as parallel:
