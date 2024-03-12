@@ -9,12 +9,11 @@ from tqdm import tqdm
 import json
 from joblib import Parallel, delayed
 import matplotlib.pyplot as plt
-import matplotlib as mpl
 from project import pst
 from project.chess_utils.sunfish_utils import board2sunfish, eval_pos, get_new_pst, sunfish_move_mod
 from project.chess_utils.utils import get_board_after_n
 
-def plot_BO_2d(opt):
+def plot_BO_2d(opt, R_true, target_idxs):
     piece_one = np.linspace(0,1000,1000)
     piece_two = np.linspace(0, 1000, 1000)
     pgrid = np.array(np.meshgrid(piece_one, piece_two, indexing='ij'))
@@ -34,11 +33,19 @@ def plot_BO_2d(opt):
     ax2.set_xlabel('piece_one')
     ax2.set_ylabel('piece_two')
     ax2.set_title('Model')
-    ax2.scatter(*opt.X.T, c=np.arange(len(opt.X)), cmap='Reds', marker='x')
+    p1_true, p2_true = R_true[target_idxs]
+    ax2.vlines([p1_true], 0, p2_true, color='red', linestyles='--')
+    ax2.hlines([p2_true], 0, p1_true, color='red', linestyles='--')
+    ax2.scatter(*opt.X.T, color='red', marker='x')
     plt.show()
 
     accs = -opt.Y.reshape(-1)
     top_acc = np.maximum.accumulate(accs)
+    plt.plot(top_acc)
+    plt.title('Top accuracies over time')
+    plt.xlabel('Iteration')
+    plt.ylabel('Accuracy')
+    plt.show()
 
 if __name__ == '__main__':
     if os.getcwd()[-9:] != 'irl-chess':
@@ -99,8 +106,7 @@ if __name__ == '__main__':
             print(f'Acc: {acc}')
             return -acc
 
-
         opt = GPyOpt.methods.BayesianOptimization(f=objective_function, domain=domain, acquisition_type='EI')
-        opt.acquisition.exploration_weight = 0.5
-        opt.run_optimization(max_iter=20)
-        plot_BO_2d(opt)
+        opt.acquisition.exploration_weight = 0.1
+        opt.run_optimization(max_iter=50)
+        plot_BO_2d(opt, R_true, target_idxs)

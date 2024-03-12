@@ -1,7 +1,7 @@
 {
   "delta": 20.0,
-  "n_boards_mid": 200,
-  "n_boards_end": 50,
+  "n_boards_mid": 500,
+  "n_boards_end": 200,
   "epochs": 200,
   "save_every": 10,
   "time_limit": 0.1,
