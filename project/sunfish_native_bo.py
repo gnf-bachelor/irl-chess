@@ -8,12 +8,28 @@ import numpy as np
 from tqdm import tqdm
 import json
 from joblib import Parallel, delayed
+import matplotlib.pyplot as plt
 from project import pst
 from project.chess_utils.sunfish_utils import board2sunfish, eval_pos, get_new_pst, sunfish_move_mod
-from project.chess_utils.utils import get_board_after_n, plot_R
+from project.chess_utils.utils import get_board_after_n
 
-def plot_BO(opt):
-
+def plot_BO_2d(opt, target_idxs):
+    piece_one = np.linspace(0,1000,1)
+    piece_two = np.linspace(0, 1000, 1)
+    pgrid = np.array(np.meshgrid(piece_one, piece_two, [1], [0], [1], [0], indexing='ij'))
+    print(pgrid.reshape(2, -1).T.shape)
+    # we then unfold the 4D array and simply pass it to the acqusition function
+    acq_img = opt.acquisition.acquisition_function(pgrid.reshape(2, -1).T)
+    # it is typical to scale this between 0 and 1:
+    acq_img = (-acq_img - np.min(-acq_img)) / (np.max(-acq_img - np.min(-acq_img)))
+    # then fold it back into an image and plot
+    acq_img = acq_img.reshape(pgrid[0].shape[:2])
+    plt.figure()
+    plt.imshow(acq_img.T, origin='lower', extent=[n_feat[0], n_feat[-1], max_d[0], max_d[-1]])
+    plt.colorbar()
+    plt.xlabel('n_features')
+    plt.ylabel('max_depth')
+    plt.title('Acquisition function');
     return
 
 if __name__ == '__main__':

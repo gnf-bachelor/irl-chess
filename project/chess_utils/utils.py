@@ -11,6 +11,7 @@ import numpy as np
 from tqdm import tqdm
 from time import time
 from copy import copy
+import matplotlib.pyplot as plt
 from project.chess_utils.sunfish_utils import board2sunfish
 from project.chess_utils.sunfish import piece, pst, pst_only
 from scipy.special import softmax
