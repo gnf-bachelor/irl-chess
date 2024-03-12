@@ -1,21 +1,9 @@
 {
-  "n_files": 6,
-  "min_elo": 1200,
-  "max_elo": 2000,
   "delta": 50.0,
   "decay": 0.95,
   "decay_step": 30,
-  "n_boards": 10000,
   "time_limit": 0.2,
-  "permute_char": ["N", "B", "R", "Q"],
-  "plot_char": ["P", "N", "B", "R", "Q"],
-  "epochs": 200,
-  "save_every": 1,
-  "plot_every": 50,
   "permute_all": false,
   "R_noisy_vals": 100,
-  "overwrite": false,
-  "quiesce": false,
-  "n_threads": -1,
-  "version": "v1_native_multi"
+  "quiesce": false
 }
