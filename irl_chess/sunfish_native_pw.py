@@ -185,15 +185,15 @@ def base_result_string(base_config_data):
     return f"{time_control}-{min_elo}-{max_elo}-{n_midgame}_to_{n_endgame}-{n_boards}-{permute_char}"    
 
 
-def create_result_path(base_config_data, model_config_data, model_result_string, path_result=None, copy_configs=True):
+def create_result_path(base_config_data, model_config_data, model_result_string, path_result=None, copy_configs_flag=True):
     model = base_config_data['model']
 
-    path = path_result if path_result is not None else join(os.getcwd(), 'models', 'base_config_data["model"]')
+    path = path_result if path_result is not None else join(os.getcwd(), 'models', base_config_data["model"])
     out_path = join(path,
                     f"{base_result_string(base_config_data)}---\
                         {model_result_string(model_config_data)}")
     os.makedirs(out_path, exist_ok=True)
-    if copy_configs: copy_configs(out_path)
+    if copy_configs_flag: copy_configs(out_path)
     return out_path
 
 
