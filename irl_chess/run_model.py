@@ -11,7 +11,8 @@ if __name__ == '__main__':
     match config_data['model']: # Load the model specified in the "base_config" file. Make sure the "model" field is set 
                                 # correctly and that a model_result_string function is defined to properly store the results.
         case "model1":
-            model = print("hi")
+            from irl_chess.sunfish_native_pw import run_sunfish_native as model, \
+                                          sunfish_native_result_string as model_result_string
         case "model1":
             print("hi")
 
@@ -22,7 +23,6 @@ if __name__ == '__main__':
 
     sunfish_boards = get_states(websites_filepath=websites_filepath,
                                 file_path_data=file_path_data,
-                                config_data=config_data)
+                                config_data=config_data) # Boards in the sunfish format.
     
-
-    run_sunfish_native(sunfish_boards=sunfish_boards, config_data=config_data, out_path=out_path)
+    model(sunfish_boards=sunfish_boards, config_data=config_data, out_path=out_path)
