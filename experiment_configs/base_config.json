@@ -10,7 +10,7 @@
     "epochs": 500,
     "n_threads": -2,
     "save_every": 1,
-    "plot_every": 50,
+    "plot_every": 5,
     "plot_char": ["P", "N", "B", "R", "Q"],
     "permute_char": ["N", "B", "R", "Q"],
     "model": "sunfish_permutation_native"
