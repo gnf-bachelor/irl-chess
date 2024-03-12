@@ -134,7 +134,7 @@ def base_result_string(base_config_data):
     n_midgame =     base_config_data['n_midgame']
     n_endgame =     base_config_data['n_endgame']
     n_boards =      base_config_data['n_boards']
-    permute_char =  base_config_data['permute_char']
+    permute_char =  ''.join(base_config_data['permute_char'])
     return f"{time_control}-{min_elo}-{max_elo}-{n_midgame}_to_{n_endgame}-{n_boards}-{permute_char}"    
 
 def create_result_path(base_config_data, model_config_data, model_result_string, path_result = None, copy_configs = True):
@@ -163,8 +163,7 @@ if __name__ == '__main__':
     config_data = union_dicts(base_config_data, model_config_data)
 
     out_path = create_result_path(base_config_data, model_config_data, model_result_string, path_result = None)
-    base_config_data
-    
+
     n_files = config_data['n_files']
     overwrite = config_data['overwrite']
     version = config_data['version']
