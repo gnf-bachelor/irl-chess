@@ -10,11 +10,11 @@ if __name__ == '__main__':
 
     match config_data['model']: # Load the model specified in the "base_config" file. Make sure the "model" field is set 
                                 # correctly and that a model_result_string function is defined to properly store the results.
-        case "model1":
+        case "sunfish_permutation_native":
             from irl_chess.sunfish_native_pw import run_sunfish_native as model, \
                                           sunfish_native_result_string as model_result_string
-        case "model1":
-            print("hi")
+        case _ :
+            raise Exception(f"No model found with the name {config_data['model']}")
 
     out_path = create_result_path(base_config_data, model_config_data, model_result_string, path_result=None)
 
