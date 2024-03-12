@@ -1,6 +1,8 @@
 {
   "delta": 50.0,
   "time_limit": 0.1,
+  "optimisation_verbosity": false,
   "R_true": [100, 280, 320, 479, 929, 60000],
-  "R_start": [100, 100, 100, 100, 100, 60000]
+  "R_start": [100, 100, 100, 100, 100, 60000],
+  "move_function": "sunfish_move"
 }

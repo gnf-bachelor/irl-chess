@@ -13,6 +13,10 @@ if __name__ == '__main__':
         case "sunfish_permutation_native":
             from irl_chess.sunfish_native_pw import run_sunfish_native as model, \
                                           sunfish_native_result_string as model_result_string
+        case "bayesian_optimisation":
+            from irl_chess.bayesian_optimisation import run_bayesian_optimisation as model, \
+                                          bayesian_model_result_string as model_result_string
+
         case _ :
             raise Exception(f"No model found with the name {config_data['model']}")
 
