@@ -147,7 +147,7 @@ def download_lichess_pgn(websites_filepath, file_path_data, n_files=np.inf, over
     """
     os.makedirs(file_path_data, exist_ok=True)
     start = time.time()
-    filepaths_csv = []
+    filepaths_out = []
     with open(websites_filepath, 'r') as filename:
         urls = filename.readlines()
         urls = [url.strip() for url in urls]
@@ -156,20 +156,20 @@ def download_lichess_pgn(websites_filepath, file_path_data, n_files=np.inf, over
         start_file = time.time()
         destination = join(file_path_data, url.split("/")[-1])
         print(f'\n\n-------------------  {i}/{len(urls)}  -------------------\n\n')
-        filepath_out = destination[:-4]
-        if overwrite or not os.path.exists(filepath_out):
-            os.makedirs(os.path.dirname(filepath_out), exist_ok=True)
+        filepath_txt = destination[:-4]
+        if overwrite or not os.path.exists(filepath_txt):
+            os.makedirs(os.path.dirname(filepath_txt), exist_ok=True)
             if download_file(url, destination):
-                decompress_zstd(destination, extract_path=filepath_out)
-        filepath_csv = txt_to_csv(filepath_out, overwrite=overwrite)
-        filepaths_csv.append(filepath_csv)
+                decompress_zstd(destination, extract_path=filepath_txt)
+        # filepath_csv = txt_to_csv(filepath_txt, overwrite=overwrite)
+        filepaths_out.append(filepath_txt)
         print(f'Time taken: {time.time() - start_file:.2f} seconds for file')
         print(f'Time taken: {time.time() - start:.2f} seconds in total')
 
         if i == n_files:
             break
 
-    return filepaths_csv
+    return filepaths_out
 
 
 def load_lichess_dfs(websites_filepath, file_path_data, n_files, overwrite=False):

@@ -8,9 +8,10 @@
     "n_endgame": 30,
     "n_boards": 300,
     "epochs": 500,
+    "n_threads": -1,
     "save_every": 1,
     "plot_every": 50,
     "plot_char": ["P", "N", "B", "R", "Q"],
     "permute_char": ["N", "B", "R", "Q"],
-    "model": "model_placeholder"
-  }
+    "model": "sunfish_permutation_native"
+}
