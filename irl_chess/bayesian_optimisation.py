@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 from irl_chess.chess_utils import get_new_pst
 from irl_chess.sunfish_native_pw import sunfish_move, process_epoch
 from irl_chess.visualizations import plot_BO_2d
+from irl_chess.misc_utils import reformat_list
 
 # if __name__ == '__main__':
 #     if os.getcwd()[-9:] != 'irl-chess':
@@ -86,8 +87,8 @@ def run_bayesian_optimisation(states, config_data, out_path):
 def bayesian_model_result_string(config_data):
     delta = config_data['delta']
     time_limit = config_data['time_limit']
-    R_true = '_'.join(model_config_data['R_true'])
-    R_start = '_'.join(model_config_data['R_start'])
+    R_true = reformat_list(model_config_data['R_true'], '_')
+    R_start = reformat_list(model_config_data['R_start'], '_')
     move_function = model_config_data['move_function']
     return f"{delta}--{time_limit}--{R_start}-{R_true}--{move_function}"
 
