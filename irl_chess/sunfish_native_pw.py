@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 
 from irl_chess import Searcher, Position, initial, sunfish_move, sunfish_move_to_str, pst, pst_only, piece
 from irl_chess.chess_utils.sunfish_utils import board2sunfish, sunfish_move_to_str, render, sunfish2board
-from irl_chess.visualizations import char_to_idxs
+from irl_chess.visualizations import char_to_idxs, plot_permuted_sunfish_weights
 
 
 def get_board_after_n(game, n):
@@ -197,40 +197,18 @@ def create_result_path(base_config_data, model_config_data, model_result_string,
     return out_path
 
 
-def model_result_string(model_config_data):
-    return None
-
-
-if __name__ == '__main__':
-    print(os.getcwd())
-    if os.path.basename(os.getcwd()) != 'irl-chess':
-        os.chdir('../')
-        print(os.getcwd())
-    from irl_chess import piece, plot_permuted_sunfish_weights, download_lichess_pgn
-
-    base_config_data, model_config_data = load_config()
-    config_data = union_dicts(base_config_data, model_config_data)
-
-    out_path = create_result_path(base_config_data, model_config_data, model_result_string, path_result=None)
-
-    websites_filepath = join(os.getcwd(), 'downloads', 'lichess_websites.txt')
-    file_path_data = join(os.getcwd(), 'data', 'raw')
-
-    sunfish_boards = get_states(websites_filepath=websites_filepath,
-                                file_path_data=file_path_data,
-                                config_data=config_data)
-
+def run_sunfish_native(sunfish_boards, config_data, out_path):
     permute_all = config_data['permute_all']
     permute_idxs = char_to_idxs(config_data['permute_char'])
 
-    last_acc = 0
-    accuracies = []
-    R = np.array([val for val in piece.values()]).astype(float)
-    R_new = copy.copy(R)
-    R_new[permute_idxs] = config_data['R_noisy_vals']
+    R = np.array(config_data['R_true'])
+    R_new = np.array([config_data['R_start']])
     delta = config_data['delta']
 
-    with Parallel(n_jobs=config_data['n_threads']) as parallel:
+    last_acc = 0
+    accuracies = []
+
+    with (Parallel(n_jobs=config_data['n_threads']) as parallel):
         actions_true = parallel(delayed(sunfish_move_mod)(state, pst, config_data['time_limit'], True)
                                 for state in tqdm(sunfish_boards, desc='Getting true moves', ))
         for epoch in tqdm(range(config_data['epochs']), desc='Epoch'):
@@ -241,30 +219,56 @@ if __name__ == '__main__':
                 choice = np.random.choice(permute_idxs)
                 R_new[choice] += np.random.uniform(low=-delta, high=delta, size=1).item()
 
-            pst_new = get_new_pst(R_new)
+            pst_new = get_new_pst(R_new)    # Sunfish uses only pst table for calculations
             actions_new = parallel(delayed(sunfish_move_mod)(state, pst_new, config_data['time_limit'], True)
                                    for state in tqdm(sunfish_boards, desc='Getting new actions'))
 
             acc = sum([a == a_new for a, a_new in list(zip(actions_true, actions_new))]) / config_data['n_boards']
-            change_weights = np.random.rand() < np.exp(acc) / (np.exp(acc) + np.exp(last_acc)) if config_data[
-                                                                                                      'version'] == 'v1_native_multi' else acc >= last_acc
+            change_weights = np.random.rand() < np.exp(acc) / (np.exp(acc) + np.exp(last_acc)) if config_data['version'] == 'v1_native_multi' else acc >= last_acc
             if change_weights:
                 R = copy.copy(R_new)
                 last_acc = copy.copy(acc)
+
             accuracies.append((acc, last_acc))
 
             if epoch % config_data['decay_step'] == 0 and epoch != 0:
                 delta *= config_data['decay']
 
-            if config_data['save_every'] is not None and config_data['save_every'] and epoch % config_data[
-                'save_every'] == 0:
-                pd.DataFrame(R.reshape((-1, 1)), columns=['Result']).to_csv(join(out_path, f'{epoch}.csv'),
-                                                                            index=False)
-            if config_data['plot_every'] is not None and config_data['plot_every'] and epoch % config_data[
-                'plot_every'] == 0:
-                plot_permuted_sunfish_weights(config_data=config_data,
-                                              out_path=out_path,
-                                              epoch=epoch,
-                                              accuracies=accuracies)
+            process_epoch(R, epoch, config_data, out_path) #, accuracies=accuracies)
 
             print(f'Current accuracy: {acc}, {last_acc}')
+
+
+def process_epoch(R, epoch, config_data, out_path, **kwargs):
+    if config_data['save_every'] and epoch % config_data['save_every'] == 0:
+        pd.DataFrame(R.reshape((-1, 1)), columns=['Result']).to_csv(join(out_path, f'{epoch}.csv'),
+                                                                    index=False)
+    if config_data['plot_every'] and epoch % config_data['plot_every'] == 0:
+        plot_permuted_sunfish_weights(config_data=config_data,
+                                      out_path=out_path,
+                                      epoch=epoch,
+                                      kwargs=kwargs)
+
+
+def model_result_string(model_config_data):
+    return None
+
+
+if __name__ == '__main__':
+    print(os.getcwd())
+    if os.path.basename(os.getcwd()) != 'irl-chess':
+        os.chdir('../')
+        print(os.getcwd())
+    from irl_chess import piece, plot_permuted_sunfish_weights, download_lichess_pgn, sunfish_weights
+
+    base_config_data, model_config_data = load_config()
+    config_data = union_dicts(base_config_data, model_config_data)
+    out_path = create_result_path(base_config_data, model_config_data, model_result_string, path_result=None)
+
+    websites_filepath = join(os.getcwd(), 'downloads', 'lichess_websites.txt')
+    file_path_data = join(os.getcwd(), 'data', 'raw')
+
+    sunfish_boards = get_states(websites_filepath=websites_filepath,
+                                file_path_data=file_path_data,
+                                config_data=config_data)
+    run_sunfish_native(sunfish_boards=sunfish_boards, config_data=config_data, out_path=out_path)

@@ -23,6 +23,7 @@ version = "sunfish 2023"
 # Though probably we could do better...
 # For one thing, they could easily all fit into int8.
 piece = {"P": 100, "N": 280, "B": 320, "R": 479, "Q": 929, "K": 60000}
+sunfish_weights = np.array([val for val in piece.values()]).astype(float)
 pst = {
     'P': (   0,   0,   0,   0,   0,   0,   0,   0,
             78,  83,  86,  73, 102,  82,  85,  90,

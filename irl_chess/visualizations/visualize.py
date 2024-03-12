@@ -13,7 +13,9 @@ def idxs_to_char(idx_list: list[int]):
     idx_to_char = {0: "P", 1: "N", 2: "B", 3: "R", 4: "Q", 5: "K"}
     return [idx_to_char[idx] for idx in idx_list]
 
-def plot_permuted_sunfish_weights(config_data, out_path, start_weight_idx=0, legend_names=['P', 'N', 'B', 'R', 'Q', 'K'], epoch=None, accuracies=None):
+def plot_permuted_sunfish_weights(config_data, out_path, start_weight_idx=0, legend_names=['P', 'N', 'B', 'R', 'Q', 'K'], epoch=None, **kwargs):
+    accuracies = kwargs['accuracies']
+
     plot_char = char_to_idxs(config_data['plot_char'])
     save_every = config_data['save_every']
     epochs = config_data['epochs']
