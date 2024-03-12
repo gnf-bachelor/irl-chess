@@ -149,7 +149,7 @@ def union_dicts(dict1, dict2):
 
 def assert_cwd():
     assert os.path.basename(os.getcwd()) == 'irl-chess', f"This file {__file__} is not being run from the appopriate\
-        directory {"irl-chess"} but instead {os.getcwd()}"
+        directory {'irl-chess'} but instead {os.getcwd()}"
 
 
 def load_config():
