@@ -92,21 +92,79 @@ def plot_R(Rs, path=None):
 #     move = sunfish_move_mod(state, pst_new,time_limit,True)
 #     actions.append(move)
 
+# ========================== The start of many run_model specific functions =============================  
+
+def union_dicts(dict1, dict2):
+    # Check for common keys
+    common_keys = set(dict1.keys()) & set(dict2.keys())
+    if common_keys:
+        raise ValueError(f"Error: Dictionaries have common keys: {common_keys}")
+
+    # If no common keys, perform the union
+    return {**dict1, **dict2}
+
+def assert_cwd():
+    assert os.path.basename(os.getcwd()) == 'irl-chess', f"This file {__file__} is not being run from the appopriate\
+        directory {"irl-chess"} but instead {os.getcwd()}"
+    
+def load_config():
+    assert_cwd()
+    path_config = join(os.getcwd(), 'experiment_configs', 'base_config.json')
+    with open(path_config, 'r') as file:
+        base_config_data = json.load(file)
+    path_model_config = join(os.path.dirname(path_config), base_config_data["model"], 'config.json')
+    with open(path_model_config, 'r') as file:
+        model_config_data = json.load(file)
+    return base_config_data, model_config_data
+
+def copy_configs(out_path):
+    assert_cwd()
+    path_config = join(os.getcwd(), 'experiment_configs', 'base_config.json')
+    path_model_config = join(os.path.dirname(path_config), base_config_data["model"], 'config.json')
+    out_path_config = join(out_path, 'configs')
+    os.makedirs(out_path_config, exist_ok=True)
+    copy2(path_config, join(out_path_config, 'base_config.json'))
+    copy2(path_model_config, join(out_path_config, 'model_config.json'))
+    return
+
+def base_result_string(base_config_data):
+    time_control =  base_config_data['time_control']
+    min_elo =       base_config_data['min_elo']
+    max_elo =       base_config_data['max_elo']
+    n_midgame =     base_config_data['n_midgame']
+    n_endgame =     base_config_data['n_endgame']
+    n_boards =      base_config_data['n_boards']
+    permute_char =  base_config_data['permute_char']
+    return f"{time_control}-{min_elo}-{max_elo}-{n_midgame}_to_{n_endgame}-{n_boards}-{permute_char}"    
+
+def create_result_path(base_config_data, model_config_data, model_result_string, path_result = None, copy_configs = True):
+    model =         base_config_data['model']
+
+    path = path_result if path_result is not None else join(os.getcwd(), 'models', 'base_config_data["model"]')
+    out_path = join(path,
+                    f"{base_result_string(base_config_data)}---\
+                        {model_result_string(model_config_data)}")
+    os.makedirs(out_path, exist_ok=True)
+    if copy_configs: copy_configs(out_path)
+    return out_path
+
+def model_result_string(model_config_data):
+    pass
+
 if __name__ == '__main__':
     print(os.getcwd())
-    if os.getcwd()[-len('irl-chess'):] != 'irl-chess':
+    if os.path.basename(os.getcwd()) != 'irl-chess':
         os.chdir('../')
         print(os.getcwd())
-    from irl_chess import get_midgame_boards, piece, load_lichess_dfs, create_sunfish_path, plot_permuted_sunfish_weights
+        assert_cwd()
+    from irl_chess import get_midgame_boards, piece, load_lichess_dfs, create_result_path, plot_permuted_sunfish_weights
 
-    path_config = join(os.getcwd(), 'experiment_configs', 'sunfish_permutation_native', 'config.json')
-    with open(path_config, 'r') as file:
-        config_data = json.load(file)
-        path_result = join(os.getcwd(), 'models', 'sunfish_permuted_native')
-        out_path = create_sunfish_path(config_data, path_result)
-        os.makedirs(out_path, exist_ok=True)
-        copy2(path_config, join(out_path, 'config.json'))
+    base_config_data, model_config_data = load_config()
+    config_data = union_dicts(base_config_data, model_config_data)
 
+    out_path = create_result_path(base_config_data, model_config_data, model_result_string, path_result = None)
+    base_config_data
+    
     n_files = config_data['n_files']
     overwrite = config_data['overwrite']
     version = config_data['version']

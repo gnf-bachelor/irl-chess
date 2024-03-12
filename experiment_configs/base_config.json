@@ -1,0 +1,16 @@
+{
+    "overwrite": false,
+    "n_files": 6,
+    "time_control": false,
+    "min_elo": 1200,
+    "max_elo": 2000,
+    "n_midgame": 15,
+    "n_endgame": 30,
+    "n_boards": 300,
+    "epochs": 500,
+    "save_every": 1,
+    "plot_every": 50,
+    "plot_char": ["P", "N", "B", "R", "Q"],
+    "permute_char": ["N", "B", "R", "Q"],
+    "model": "model_placeholder"
+  }
