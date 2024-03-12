@@ -4,6 +4,7 @@ from os.path import join
 
 import copy
 from shutil import copy2
+from time import time
 
 import chess
 import chess.pgn
@@ -14,7 +15,7 @@ from tqdm import tqdm
 from joblib import Parallel, delayed
 import matplotlib.pyplot as plt
 
-from irl_chess import Searcher, Position, initial, sunfish_move, sunfish_move_to_str, pst, pst_only, piece
+from irl_chess import Searcher, Position, initial, sunfish_move_to_str, pst, pst_only, piece
 from irl_chess.chess_utils.sunfish_utils import board2sunfish, sunfish_move_to_str, render, sunfish2board
 from irl_chess.visualizations import char_to_idxs, plot_permuted_sunfish_weights
 
@@ -70,11 +71,31 @@ def get_new_pst(R):
     return pst_new
 
 
-def sunfish_move_mod(state, pst, time_limit, only_move=False):
+def sunfish_move(state, pst, time_limit, move_only=False):
+    """
+    Given a state, p-square table and time limit,
+    return the sunfish move.
+    :param state:
+    :param pst:
+    :param time_limit:
+    :return:
+    """
     searcher = Searcher(pst)
-    if only_move:
-        return sunfish_move(searcher, [state], time_limit=time_limit)[0]
-    return sunfish_move(searcher, [state], time_limit=time_limit)
+    start = time()
+    hist = [state]
+    best_move = None
+
+    for depth, gamma, score, move in searcher.search(hist):
+        if score >= gamma:
+            best_move = move
+        if time() - start > time_limit:
+            break
+    assert best_move is not None, ('No best move found, this probably means an invalid position was passed to the '
+                                   'searcher')
+
+    if move_only:
+        return best_move
+    return best_move, searcher.tp_move, searcher.tp_score
 
 
 def plot_R(Rs, path=None):
@@ -98,12 +119,13 @@ def is_valid_game(game, config_data):
     try:
         elo_check_white = config_data['min_elo'] < int(game.headers['WhiteElo']) < config_data['max_elo']
         elo_check_black = config_data['min_elo'] < int(game.headers['BlackElo']) < config_data['max_elo']
-        length_check = len([el for el in game.mainline_moves()]) < config_data['n_endgame']
+        # Add 1 to length check to ensure there is a valid move in the position returned
+        length_check = len([el for el in game.mainline_moves()]) + 1 > config_data['n_endgame']
+        return elo_check_white and elo_check_black and length_check
     except KeyError:
         return False
     except ValueError:
         return False
-    return elo_check_white and elo_check_black and length_check
 
 
 def get_states(websites_filepath, file_path_data, config_data):
@@ -197,19 +219,19 @@ def create_result_path(base_config_data, model_config_data, model_result_string,
     return out_path
 
 
-def run_sunfish_native(sunfish_boards, config_data, out_path):
+def run_sunfish_native(sunfish_boards, config_data, out_path, move_function):
     permute_all = config_data['permute_all']
     permute_idxs = char_to_idxs(config_data['permute_char'])
 
     R = np.array(config_data['R_true'])
-    R_new = np.array([config_data['R_start']])
+    R_new = np.array(config_data['R_start'])
     delta = config_data['delta']
 
     last_acc = 0
     accuracies = []
 
     with (Parallel(n_jobs=config_data['n_threads']) as parallel):
-        actions_true = parallel(delayed(sunfish_move_mod)(state, pst, config_data['time_limit'], True)
+        actions_true = parallel(delayed(move_function)(state, pst, config_data['time_limit'], True)
                                 for state in tqdm(sunfish_boards, desc='Getting true moves', ))
         for epoch in tqdm(range(config_data['epochs']), desc='Epoch'):
             if permute_all:
@@ -220,7 +242,7 @@ def run_sunfish_native(sunfish_boards, config_data, out_path):
                 R_new[choice] += np.random.uniform(low=-delta, high=delta, size=1).item()
 
             pst_new = get_new_pst(R_new)    # Sunfish uses only pst table for calculations
-            actions_new = parallel(delayed(sunfish_move_mod)(state, pst_new, config_data['time_limit'], True)
+            actions_new = parallel(delayed(move_function)(state, pst_new, config_data['time_limit'], True)
                                    for state in tqdm(sunfish_boards, desc='Getting new actions'))
 
             acc = sum([a == a_new for a, a_new in list(zip(actions_true, actions_new))]) / config_data['n_boards']
@@ -234,7 +256,7 @@ def run_sunfish_native(sunfish_boards, config_data, out_path):
             if epoch % config_data['decay_step'] == 0 and epoch != 0:
                 delta *= config_data['decay']
 
-            process_epoch(R, epoch, config_data, out_path) #, accuracies=accuracies)
+            process_epoch(R, epoch, config_data, out_path)  #, accuracies=accuracies)
 
             print(f'Current accuracy: {acc}, {last_acc}')
 
@@ -271,4 +293,4 @@ if __name__ == '__main__':
     sunfish_boards = get_states(websites_filepath=websites_filepath,
                                 file_path_data=file_path_data,
                                 config_data=config_data)
-    run_sunfish_native(sunfish_boards=sunfish_boards, config_data=config_data, out_path=out_path)
+    run_sunfish_native(sunfish_boards=sunfish_boards, config_data=config_data, out_path=out_path, move_function=sunfish_move)
