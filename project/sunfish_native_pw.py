@@ -48,7 +48,7 @@ if __name__ == '__main__':
     R = np.array(config_data['R_start'])
     best_accs = [0]
     Rs = [R]
-    with Parallel(n_jobs=-2) as parallel:
+    with Parallel(n_jobs=24) as parallel:
         print('Getting true moves\n', '-' * 20)
         actions_true = parallel(delayed(sunfish_move_mod)(state, pst, time_limit, True)
                                 for state in tqdm(states))

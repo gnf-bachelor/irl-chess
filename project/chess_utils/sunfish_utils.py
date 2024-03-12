@@ -2,7 +2,7 @@ import chess
 import numpy as np
 import copy
 from tqdm import tqdm
-from project.chess_utils.sunfish import piece
+from project.chess_utils.sunfish import piece, pst_only
 from project.chess_utils.sunfish import Position, Move, Searcher, render, pst
 from time import time
 

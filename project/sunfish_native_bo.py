@@ -1,7 +1,9 @@
 import os
 from os.path import join
 import chess.pgn
+import copy
 import chess.svg
+import GPyOpt
 import numpy as np
 from tqdm import tqdm
 import json
@@ -14,7 +16,8 @@ if __name__ == '__main__':
     if os.getcwd()[-9:] != 'irl-chess':
         os.chdir('../')
 
-    with open(join(os.getcwd(), 'experiment_configs', 'sunfish_native_greedy', 'config.json'), 'r') as file:
+    # SETUP
+    with open(join(os.getcwd(), 'experiment_configs', 'sunfish_native_greedy_local', 'config.json'), 'r') as file:
         config_data = json.load(file)
 
     delta = config_data['delta']
@@ -29,6 +32,7 @@ if __name__ == '__main__':
     R_true = np.array(config_data['R_true'])
     decay_every = config_data['decay_every']
     plot_every = config_data['plot_every']
+    n_jobs = config_data['n_jobs']
 
     pgn = open("data/lichess_db_standard_rated_2014-09.pgn/lichess_db_standard_rated_2014-09.pgn")
     games = []
@@ -45,38 +49,29 @@ if __name__ == '__main__':
         os.makedirs(save_path)
         os.makedirs(os.path.join(save_path, 'plots'))
 
-    R = np.array(config_data['R_start'])
-    best_accs = [0]
-    Rs = [R]
-    with Parallel(n_jobs=-2) as parallel:
+    # RUN
+    domain = []
+    for idx in target_idxs:
+        piece_name = 'PNBRQK'[idx]
+        domain.append({'name': f'{piece_name} value', 'type': 'continuous', 'domain': (0, 1000)})
+
+    R_start = np.array(config_data['R_start'])
+    with Parallel(n_jobs=n_jobs) as parallel:
         print('Getting true moves\n', '-' * 20)
         actions_true = parallel(delayed(sunfish_move_mod)(state, pst, time_limit, True)
                                 for state in tqdm(states))
-
-        for epoch in range(epochs):
-            print(f'Epoch {epoch + 1}\n', '-' * 20)
-            add = np.zeros(6)
-            add[target_idxs] = np.random.choice([-delta, delta], len(target_idxs))
-            R_new = R + add
+        def objective_function(x):
+            R_new = copy.copy(R_start)
+            R_new[target_idxs] = x[0]
+            print(f'R_new: {R_new}')
             pst_new = get_new_pst(R_new)
             actions_new = parallel(delayed(sunfish_move_mod)(state, pst_new, time_limit, True)
                                    for state in tqdm(states))
+            acc = sum([a == a_new for a, a_new in list(zip(actions_true, actions_new))]) / n_boards_total
+            print(f'Acc: {acc}')
+            return -acc
 
-            acc = sum([a == a_new for a, a_new in list(zip(actions_true, actions_new))])/n_boards_total
-            if acc >= best_accs[-1]:
-                R = R_new
-                best_accs.append(acc)
-            Rs.append(R)
 
-            if epoch % plot_every == 0 and epoch != 0:
-                plot_R(Rs, R_true, target_idxs, save_path, epoch)
-
-            if epoch % decay_every == 0 and epoch != 0:
-                delta *= decay
-
-            if epoch % save_every == 0 and epoch != 0:
-                pass
-
-            print(f'Current accuracy: {acc}, best: {best_accs[-1]}')
-    plot_R(Rs, R_true, target_idxs, save_path, epoch)
-    np.save(os.path.join(save_path, 'weights_over_time.npy'), Rs)
+        opt = GPyOpt.methods.BayesianOptimization(f=objective_function, domain=domain, acquisition_type='EI')
+        opt.acquisition.exploration_weight = 0.5
+        opt.run_optimization(max_iter=epochs)

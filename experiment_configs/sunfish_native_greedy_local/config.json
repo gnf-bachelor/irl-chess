@@ -11,5 +11,6 @@
   "R_start": [100, 100, 100, 479, 929, 60000],
   "decay_every": 30,
   "plot_every": 50,
-  "save_path": ["models","sunfish_native"]
+  "save_path": ["models","sunfish_native"],
+  "n_jobs": 4
 }
