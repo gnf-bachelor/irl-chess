@@ -117,7 +117,6 @@ def create_sunfish_path(config_data, path_result):
     quiesce = config_data['quiesce']
     version = config_data['version']
     decay_step = config_data['decay_step']
-
     out_path = join(path_result,
                     f"{permute_all}-{min_elo}-{max_elo}-{search_depth}-{n_boards}-{delta}-{R_noisy_vals}-{config_data['permute_char']}-{quiesce}-{version}-{decay_step}")
     return out_path

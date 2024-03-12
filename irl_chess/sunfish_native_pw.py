@@ -135,21 +135,83 @@ def get_states(websites_filepath, file_path_data, config_data):
     return sunfish_boards
 
 
+# ========================== The start of many run_model specific functions =============================
+
+def union_dicts(dict1, dict2):
+    # Check for common keys
+    common_keys = set(dict1.keys()) & set(dict2.keys())
+    if common_keys:
+        raise ValueError(f"Error: Dictionaries have common keys: {common_keys}")
+
+    # If no common keys, perform the union
+    return {**dict1, **dict2}
+
+
+def assert_cwd():
+    assert os.path.basename(os.getcwd()) == 'irl-chess', f"This file {__file__} is not being run from the appopriate\
+        directory {"irl-chess"} but instead {os.getcwd()}"
+
+
+def load_config():
+    assert_cwd()
+    path_config = join(os.getcwd(), 'experiment_configs', 'base_config.json')
+    with open(path_config, 'r') as file:
+        base_config_data = json.load(file)
+    path_model_config = join(os.path.dirname(path_config), base_config_data["model"], 'config.json')
+    with open(path_model_config, 'r') as file:
+        model_config_data = json.load(file)
+    return base_config_data, model_config_data
+
+
+def copy_configs(out_path):
+    assert_cwd()
+    path_config = join(os.getcwd(), 'experiment_configs', 'base_config.json')
+    path_model_config = join(os.path.dirname(path_config), base_config_data["model"], 'config.json')
+    out_path_config = join(out_path, 'configs')
+    os.makedirs(out_path_config, exist_ok=True)
+    copy2(path_config, join(out_path_config, 'base_config.json'))
+    copy2(path_model_config, join(out_path_config, 'model_config.json'))
+    return
+
+
+def base_result_string(base_config_data):
+    time_control = base_config_data['time_control']
+    min_elo = base_config_data['min_elo']
+    max_elo = base_config_data['max_elo']
+    n_midgame = base_config_data['n_midgame']
+    n_endgame = base_config_data['n_endgame']
+    n_boards = base_config_data['n_boards']
+    permute_char = base_config_data['permute_char']
+    return f"{time_control}-{min_elo}-{max_elo}-{n_midgame}_to_{n_endgame}-{n_boards}-{permute_char}"
+
+
+def create_result_path(base_config_data, model_config_data, model_result_string, path_result=None, copy_configs=True):
+    model = base_config_data['model']
+
+    path = path_result if path_result is not None else join(os.getcwd(), 'models', 'base_config_data["model"]')
+    out_path = join(path,
+                    f"{base_result_string(base_config_data)}---\
+                        {model_result_string(model_config_data)}")
+    os.makedirs(out_path, exist_ok=True)
+    if copy_configs: copy_configs(out_path)
+    return out_path
+
+
+def model_result_string(model_config_data):
+    return None
+
+
 if __name__ == '__main__':
     print(os.getcwd())
-    if os.getcwd()[-len('irl-chess'):] != 'irl-chess':
+    if os.path.basename(os.getcwd()) != 'irl-chess':
         os.chdir('../')
         print(os.getcwd())
-    from irl_chess import piece, create_sunfish_path, \
-        plot_permuted_sunfish_weights, download_lichess_pgn
+    from irl_chess import piece, plot_permuted_sunfish_weights, download_lichess_pgn
 
-    path_config = join(os.getcwd(), 'experiment_configs', 'sunfish_permutation_native', 'config.json')
-    with open(path_config, 'r') as file:
-        config_data = json.load(file)
-        path_result = join(os.getcwd(), 'models', 'sunfish_permuted_native')
-        out_path = create_sunfish_path(config_data, path_result)
-        os.makedirs(out_path, exist_ok=True)
-        copy2(path_config, join(out_path, 'config.json'))
+    base_config_data, model_config_data = load_config()
+    config_data = union_dicts(base_config_data, model_config_data)
+
+    out_path = create_result_path(base_config_data, model_config_data, model_result_string, path_result=None)
 
     websites_filepath = join(os.getcwd(), 'downloads', 'lichess_websites.txt')
     file_path_data = join(os.getcwd(), 'data', 'raw')
@@ -158,25 +220,14 @@ if __name__ == '__main__':
                                 file_path_data=file_path_data,
                                 config_data=config_data)
 
-    epochs = config_data['epochs']
-    time_limit = config_data['time_limit']
-    save_every = config_data['save_every']
     permute_all = config_data['permute_all']
     permute_idxs = char_to_idxs(config_data['permute_char'])
-
-    quiesce = config_data['quiesce']
-    n_threads = config_data['n_threads']
-    plot_every = config_data['plot_every']
-    decay = config_data['decay']
-    decay_step = config_data['decay_step']
-    R_noisy_vals = config_data['R_noisy_vals']
-    n_boards = config_data['n_boards']
 
     last_acc = 0
     accuracies = []
     R = np.array([val for val in piece.values()]).astype(float)
     R_new = copy.copy(R)
-    R_new[permute_idxs] = R_noisy_vals
+    R_new[permute_idxs] = config_data['R_noisy_vals']
     delta = config_data['delta']
 
     with Parallel(n_jobs=config_data['n_threads']) as parallel:
@@ -203,12 +254,14 @@ if __name__ == '__main__':
             accuracies.append((acc, last_acc))
 
             if epoch % config_data['decay_step'] == 0 and epoch != 0:
-                delta *= decay
+                delta *= config_data['decay']
 
-            if config_data['save_every'] is not None and config_data['save_every'] and epoch % config_data['save_every'] == 0:
+            if config_data['save_every'] is not None and config_data['save_every'] and epoch % config_data[
+                'save_every'] == 0:
                 pd.DataFrame(R.reshape((-1, 1)), columns=['Result']).to_csv(join(out_path, f'{epoch}.csv'),
                                                                             index=False)
-            if config_data['plot_every'] is not None and config_data['plot_every'] and epoch % config_data['plot_every'] == 0:
+            if config_data['plot_every'] is not None and config_data['plot_every'] and epoch % config_data[
+                'plot_every'] == 0:
                 plot_permuted_sunfish_weights(config_data=config_data,
                                               out_path=out_path,
                                               epoch=epoch,
