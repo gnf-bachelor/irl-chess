@@ -9,6 +9,6 @@
     "R_true": [100, 280, 320, 479, 929, 60000],
     "R_start": [100, 100, 100, 479, 929, 60000],
     "quiesce": false,
-    "n_threads": 1,
+    "n_threads": -1,
     "version": "v0_multi"
 }
