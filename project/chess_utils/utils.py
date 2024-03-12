@@ -254,6 +254,34 @@ def get_midgame_boards(df,
             break
     return boards, moves
 
+def get_board_after_n(game, n):
+    board = game.board()
+    for i, move in enumerate(game.mainline_moves()):
+        board.push(move)
+        if i == n:
+            break
+    return board
+
+def get_board_last(tp_move, init_pos):
+    pos_ = init_pos
+    while pos_ in tp_move.keys():
+        move = tp_move[pos_]
+        pos_ = pos_.move(move)
+    return pos_
+
+def plot_R(Rs, R_true, target_idxs, save_path, epoch, save=True):
+    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+    Rs = np.array(Rs)
+    targets = R_true[target_idxs]
+    target_colors = [colors[idx] for idx in target_idxs]
+    plt.plot(Rs[:, :-1])
+    plt.hlines(targets, 0, Rs.shape[0]-1, colors=target_colors, linestyle='--')
+    plt.title('Piece values by epoch')
+    plt.legend(list('PNBRQ'))
+    if save:
+        plt.savefig(os.path.join(save_path, f'plots/weights_over_time_{epoch}.png'))
+    plt.show()
+
 
 def depth_first_search(starting_board: chess.Board,
                        true_move: str,

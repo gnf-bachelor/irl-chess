@@ -1,9 +1,48 @@
 import chess
 import numpy as np
+import copy
 from tqdm import tqdm
-
+from project.chess_utils.sunfish import piece
 from project.chess_utils.sunfish import Position, Move, Searcher, render, pst
 from time import time
+
+# Assuming white, R is array of piece values
+def eval_pos(board, R=None):
+    pos = board2sunfish(board, 0)
+    pieces = 'PNBRQK'
+    if R is not None:
+        piece_dict = {p: R[i] for i, p in enumerate(pieces)}
+    else:
+        piece_dict = piece
+    eval = 0
+    for row in range(20,100,10):
+        for square in range(1 + row,9 + row):
+            p = pos.board[square]
+            if p == '.':
+                continue
+            if p.islower():
+                p = p.upper()
+                eval -= piece_dict[p] + pst[p][119-square]
+            else:
+                eval += piece_dict[p] + pst[p][square]
+    return eval
+
+def get_new_pst(R):
+    assert len(R) == 6
+    pieces = 'PNBRQK'
+    piece_new = {p: val for p, val in list(zip(pieces, R))}
+    pst_new = copy.deepcopy(pst_only)
+    for k, table in pst_only.items():
+        padrow = lambda row: (0,) + tuple(x + piece_new[k] for x in row) + (0,)
+        pst_new[k] = sum((padrow(table[i * 8: i * 8 + 8]) for i in range(8)), ())
+        pst_new[k] = (0,) * 20 + pst_new[k] + (0,) * 20
+    return pst_new
+
+def sunfish_move_mod(state, pst, time_limit, only_move=False):
+    searcher = Searcher(pst)
+    if only_move:
+        return sunfish_move(searcher, [state], time_limit=time_limit)[0]
+    return sunfish_move(searcher, [state], time_limit=time_limit)
 
 def sunfish_move(searcher: Searcher, hist: list[Position], time_limit:float=1., ) -> tuple[Move, dict]:
     """
