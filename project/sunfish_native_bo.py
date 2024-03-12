@@ -12,6 +12,10 @@ from project import pst
 from project.chess_utils.sunfish_utils import board2sunfish, eval_pos, get_new_pst, sunfish_move_mod
 from project.chess_utils.utils import get_board_after_n, plot_R
 
+def plot_BO(opt):
+
+    return
+
 if __name__ == '__main__':
     if os.getcwd()[-9:] != 'irl-chess':
         os.chdir('../')
@@ -74,4 +78,4 @@ if __name__ == '__main__':
 
         opt = GPyOpt.methods.BayesianOptimization(f=objective_function, domain=domain, acquisition_type='EI')
         opt.acquisition.exploration_weight = 0.5
-        opt.run_optimization(max_iter=epochs)
+        opt.run_optimization(max_iter=20)
