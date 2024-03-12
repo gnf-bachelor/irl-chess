@@ -13,24 +13,28 @@ from project import pst
 from project.chess_utils.sunfish_utils import board2sunfish, eval_pos, get_new_pst, sunfish_move_mod
 from project.chess_utils.utils import get_board_after_n
 
-def plot_BO_2d(opt, target_idxs):
-    piece_one = np.linspace(0,1000,1)
-    piece_two = np.linspace(0, 1000, 1)
-    pgrid = np.array(np.meshgrid(piece_one, piece_two, [1], [0], [1], [0], indexing='ij'))
-    print(pgrid.reshape(2, -1).T.shape)
+def plot_BO_2d(opt):
+    piece_one = np.linspace(0,1000,1000)
+    piece_two = np.linspace(0, 1000, 1000)
+    pgrid = np.array(np.meshgrid(piece_one, piece_two, indexing='ij'))
     # we then unfold the 4D array and simply pass it to the acqusition function
     acq_img = opt.acquisition.acquisition_function(pgrid.reshape(2, -1).T)
-    # it is typical to scale this between 0 and 1:
     acq_img = (-acq_img - np.min(-acq_img)) / (np.max(-acq_img - np.min(-acq_img)))
-    # then fold it back into an image and plot
     acq_img = acq_img.reshape(pgrid[0].shape[:2])
-    plt.figure()
-    plt.imshow(acq_img.T, origin='lower', extent=[n_feat[0], n_feat[-1], max_d[0], max_d[-1]])
-    plt.colorbar()
-    plt.xlabel('n_features')
-    plt.ylabel('max_depth')
-    plt.title('Acquisition function');
-    return
+    mod_img = opt.model.predict(pgrid.reshape(2, -1).T)
+    mod_img = mod_img.reshape(pgrid[0].shape[:2])
+    fig, (ax1, ax2) = plt.subplots(1,2)
+    ax1.imshow(acq_img.T, origin='lower')
+    ax1.colorbar()
+    ax1.xlabel('piece_one')
+    ax1.ylabel('piece_two')
+    ax1.title('Acquisition function')
+    ax2.imshow(acq_img.T, origin='lower')
+    ax2.colorbar()
+    ax2.xlabel('piece_one')
+    ax2.ylabel('piece_two')
+    ax2.title('Model')
+    plt.show()
 
 if __name__ == '__main__':
     if os.getcwd()[-9:] != 'irl-chess':
@@ -95,3 +99,4 @@ if __name__ == '__main__':
         opt = GPyOpt.methods.BayesianOptimization(f=objective_function, domain=domain, acquisition_type='EI')
         opt.acquisition.exploration_weight = 0.5
         opt.run_optimization(max_iter=20)
+        plot_BO_2d(opt)

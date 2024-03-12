@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 from project.chess_utils.sunfish_utils import board2sunfish
 from project.chess_utils.sunfish import piece, pst, pst_only
 from scipy.special import softmax
+import os
 
 material_dict = {
     chess.PAWN: 1,
