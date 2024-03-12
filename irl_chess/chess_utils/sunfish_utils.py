@@ -102,6 +102,7 @@ def sunfish2board(pos: Position):
     return board
 
 
+# Assuming white, R is array of piece values
 def eval_pos(board, R=None):
     pos = board2sunfish(board, 0)
     pieces = 'PNBRQK'
@@ -110,14 +111,14 @@ def eval_pos(board, R=None):
     else:
         piece_dict = piece
     eval = 0
-    for row in range(20,100,10):
-        for square in range(1 + row,9 + row):
+    for row in range(20, 100, 10):
+        for square in range(1 + row, 9 + row):
             p = pos.board[square]
             if p == '.':
                 continue
             if p.islower():
                 p = p.upper()
-                eval -= piece_dict[p] + pst[p][119-square]
+                eval -= piece_dict[p] + pst[p][119 - square]
             else:
                 eval += piece_dict[p] + pst[p][square]
     return eval
