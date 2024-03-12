@@ -91,7 +91,7 @@ def sunfish_native_result_string(model_config_data):
     R_true = '_'.join(model_config_data['R_true']) 
     R_start = '_'.join(model_config_data['R_start'])
     move_function = model_config_data['move_function']
-    return f"{delta}-{decay}-{decay_step}-{permute_all}-{time_limit}--{R_start}->{R_true}--{move_function}" 
+    return f"{delta}-{decay}-{decay_step}-{permute_all}-{time_limit}--{R_start}-{R_true}--{move_function}" 
 
 def run_sunfish_native(sunfish_boards, config_data, out_path):
     if config_data['move_function'] == "sunfish_move":
