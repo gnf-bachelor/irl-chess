@@ -62,8 +62,8 @@ def base_result_string(base_config_data):
 def create_result_path(base_config_data, model_config_data, model_result_string, path_result=None, copy_configs_flag=True):
     path = path_result if path_result is not None else join(os.getcwd(), 'models', base_config_data['model'])
     out_path = join(path,
-                    f"{base_result_string(base_config_data)}---\
-                        {model_result_string(model_config_data)}")
+                    f"{base_result_string(base_config_data)}---{model_result_string(model_config_data)}")
+                        
     os.makedirs(out_path, exist_ok=True)
     if copy_configs_flag: copy_configs(out_path, model_name=base_config_data['model'])
     return out_path

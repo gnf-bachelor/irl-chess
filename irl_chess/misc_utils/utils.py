@@ -6,3 +6,6 @@ def union_dicts(dict1, dict2):
 
     # If no common keys, perform the union
     return {**dict1, **dict2}
+
+def reformat_list(lst, inbetween_char = ''):
+    return inbetween_char.join(map(str, lst))

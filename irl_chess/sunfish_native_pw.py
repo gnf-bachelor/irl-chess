@@ -19,6 +19,7 @@ from irl_chess import Searcher, Position, initial, sunfish_move_to_str, pst, pst
 from irl_chess.chess_utils.sunfish_utils import board2sunfish, sunfish_move_to_str, render, sunfish2board
 from irl_chess.visualizations import char_to_idxs, plot_R_weights
 
+from irl_chess.misc_utils.utils import reformat_list
 from irl_chess.misc_utils.load_save_utils import process_epoch
 from irl_chess.chess_utils.sunfish_utils import get_new_pst
 
@@ -77,8 +78,8 @@ def sunfish_native_result_string(model_config_data):
     decay_step = model_config_data['decay_step']
     time_limit = model_config_data['time_limit']
     permute_all = model_config_data['permute_all']
-    R_true = '_'.join(model_config_data['R_true']) 
-    R_start = '_'.join(model_config_data['R_start'])
+    R_true = reformat_list(model_config_data['R_true'], '_')
+    R_start = reformat_list(model_config_data['R_start'], '_')
     move_function = model_config_data['move_function']
     return f"{delta}-{decay}-{decay_step}-{permute_all}-{time_limit}--{R_start}-{R_true}--{move_function}" 
 
