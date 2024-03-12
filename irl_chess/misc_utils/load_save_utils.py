@@ -11,7 +11,7 @@ from tqdm import tqdm
 
 from irl_chess.data.make_dataset import download_lichess_pgn
 from irl_chess.chess_utils.sunfish_utils import board2sunfish, eval_pos
-from irl_chess.visualizations import char_to_idxs, plot_permuted_sunfish_weights
+from irl_chess.visualizations import char_to_idxs, plot_R_weights
 
 # ================= Load configs and prepare output =================
 
@@ -126,10 +126,10 @@ def process_epoch(R, epoch, config_data, out_path, **kwargs):
         pd.DataFrame(R.reshape((-1, 1)), columns=['Result']).to_csv(join(out_path, f'{epoch}.csv'),
                                                                     index=False)
     if config_data['plot_every'] and epoch % config_data['plot_every'] == 0:
-        plot_permuted_sunfish_weights(config_data=config_data,
-                                      out_path=out_path,
-                                      epoch=epoch,
-                                      kwargs=kwargs)
+        plot_R_weights(config_data=config_data,
+                       out_path=out_path,
+                       epoch=epoch,
+                       kwargs=kwargs)
 
 def model_result_string(model_config_data):
     return None

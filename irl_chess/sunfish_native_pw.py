@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 
 from irl_chess import Searcher, Position, initial, sunfish_move_to_str, pst, pst_only, piece
 from irl_chess.chess_utils.sunfish_utils import board2sunfish, sunfish_move_to_str, render, sunfish2board
-from irl_chess.visualizations import char_to_idxs, plot_permuted_sunfish_weights
+from irl_chess.visualizations import char_to_idxs, plot_R_weights
 
 from irl_chess.misc_utils.load_save_utils import process_epoch
 from irl_chess.chess_utils.sunfish_utils import get_new_pst

@@ -67,8 +67,8 @@ def run_sun(df,
                                               overwrite=overwrite, quiesce=quiesce, n_threads=n_threads)
     R_ = policy_walk(R_noisy, boards, moves_sunfish, config_data=config_data, out_path=out_path)
 
-    from irl_chess import plot_permuted_sunfish_weights
-    plot_permuted_sunfish_weights(config_data=config_data, out_path=out_path)
+    from irl_chess import plot_R_weights
+    plot_R_weights(config_data=config_data, out_path=out_path)
 
     return R_
 

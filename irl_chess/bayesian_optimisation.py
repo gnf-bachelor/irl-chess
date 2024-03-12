@@ -13,54 +13,6 @@ from irl_chess.chess_utils import get_new_pst
 from irl_chess.sunfish_native_pw import sunfish_move
 
 
-def plot_BO_2d(opt, R_true, target_idxs):
-    """
-
-    :param opt:
-    :param R_true:
-    :param target_idxs:
-    :return:
-    """
-    if len(target_idxs) > 2:
-        print('Only the first to target indexes are plotted!')
-    piece_one = np.linspace(0,1000,1000)
-    piece_two = np.linspace(0, 1000, 1000)
-    pgrid = np.array(np.meshgrid(piece_one, piece_two, indexing='ij'))
-    # we then unfold the 4D array and simply pass it to the acqusition function
-    acq_img = opt.acquisition.acquisition_function(pgrid.reshape(2, -1).T)
-    acq_img = (-acq_img - np.min(-acq_img)) / (np.max(-acq_img - np.min(-acq_img)))
-    acq_img = acq_img.reshape(pgrid[0].shape[:2])
-    mod_img = -opt.model.predict(pgrid.reshape(2, -1).T)[0]
-    mod_img = mod_img.reshape(pgrid[0].shape[:2])
-
-    fig, (ax1, ax2) = plt.subplots(1,2)
-    ax1.imshow(acq_img.T, origin='lower')
-    ax1.set_xlabel('piece_one')
-    ax1.set_ylabel('piece_two')
-    ax1.set_title('Acquisition function')
-    ax2.imshow(mod_img.T, origin='lower')
-    ax2.set_xlabel('piece_one')
-    ax2.set_ylabel('piece_two')
-    ax2.set_title('Model')
-    p1_true, p2_true = R_true[target_idxs[:2]]
-    ax2.vlines([p1_true], 0, p2_true, color='red', linestyles='--')
-    ax2.hlines([p2_true], 0, p1_true, color='red', linestyles='--')
-    ax2.scatter(*opt.X.T, color='red', marker='x')
-    # save
-    plt.show()
-    plt.cla()
-
-    accs = -opt.Y.reshape(-1)
-    top_acc = np.maximum.accumulate(accs)
-    plt.plot(top_acc)
-    plt.title('Top accuracies over time')
-    plt.xlabel('Iteration')
-    plt.ylabel('Accuracy')
-    # save
-    plt.show()
-    plt.cla()
-
-
 # if __name__ == '__main__':
 #     if os.getcwd()[-9:] != 'irl-chess':
 #         os.chdir('../')
@@ -99,7 +51,6 @@ def plot_BO_2d(opt, R_true, target_idxs):
 #         os.makedirs(os.path.join(save_path, 'plots'))
 
 def run_bayesian_optimisation(states, config_data, out_path):
-    from irl_chess
     # RUN
     R_true = np.array(config_data['R_true'])
     target_idxs = char_to_idxs(config_data['permute_char'])
@@ -112,14 +63,14 @@ def run_bayesian_optimisation(states, config_data, out_path):
     R_start = np.array(config_data['R_start'])
     with Parallel(n_jobs=config_data['n_threads']) as parallel:
         print('Getting true moves\n', '-' * 20)
-        actions_true = parallel(delayed(sunfish_move_mod)(state, pst, config_data['time_limit'], True)
+        actions_true = parallel(delayed(sunfish_move)(state, pst, config_data['time_limit'], True)
                                 for state in tqdm(states))
         def objective_function(x):
             R_new = copy.copy(R_start)
             R_new[target_idxs] = x[0]
             print(f'R_new: {R_new}')
             pst_new = get_new_pst(R_new)
-            actions_new = parallel(delayed(sunfish_move_mod)(state, pst_new, config_data['time_limit'], True)
+            actions_new = parallel(delayed(sunfish_move)(state, pst_new, config_data['time_limit'], True)
                                    for state in tqdm(states))
             acc = sum([a == a_new for a, a_new in list(zip(actions_true, actions_new))]) / len(states)
             print(f'Acc: {acc}')

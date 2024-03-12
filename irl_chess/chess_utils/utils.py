@@ -14,7 +14,7 @@ from time import time
 from copy import copy
 from irl_chess.chess_utils.sunfish_utils import board2sunfish, eval_pos
 from irl_chess.chess_utils.sunfish import piece, pst, pst_only
-from irl_chess.visualizations.visualize import plot_permuted_sunfish_weights, char_to_idxs
+from irl_chess.visualizations.visualize import plot_R_weights, char_to_idxs
 from irl_chess.chess_utils.alpha_beta_utils import evaluate_board, alpha_beta_search, alpha_beta_search_k, list_first_moves
 from scipy.special import softmax
 
@@ -253,7 +253,7 @@ def policy_walk(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, pe
         if save_every is not None and epoch % save_every == 0:
             pd.DataFrame(R_.reshape((-1, 1)), columns=['Result']).to_csv(join(save_path, f'{epoch}.csv'), index=False)
         if plot_every is not None and epoch % plot_every == 0:
-            plot_permuted_sunfish_weights(epochs=epochs, save_every=save_every, out_path=save_path, )
+            plot_R_weights(epochs=epochs, save_every=save_every, out_path=save_path, )
 
     return R
 
@@ -343,7 +343,7 @@ def policy_walk_multi(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e
         if save_every is not None and epoch % save_every == 0:
             pd.DataFrame(R_.reshape((-1, 1)), columns=['Result']).to_csv(join(save_path, f'{epoch}.csv'), index=False)
         if plot_every is not None and epoch % plot_every == 0:
-            plot_permuted_sunfish_weights(epochs=epochs, save_every=save_every, out_path=save_path, )
+            plot_R_weights(epochs=epochs, save_every=save_every, out_path=save_path, )
 
     return R
 
@@ -407,7 +407,7 @@ def policy_walk_v0_multi(R, boards, moves, config_data, out_path):
         if save_every is not None and epoch % save_every == 0:
             pd.DataFrame(R_.reshape((-1, 1)), columns=['Result']).to_csv(join(out_path, f'{epoch}.csv'), index=False)
         if plot_every is not None and epoch % plot_every == 0:
-            plot_permuted_sunfish_weights(config_data=config_data, out_path=out_path, )
+            plot_R_weights(config_data=config_data, out_path=out_path, )
 
     return R
 

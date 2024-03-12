@@ -11,7 +11,7 @@ def vscode_fix(): # How do I make this function available everywhere? It is real
 if __name__ == '__main__':
     vscode_fix()
 
-    from irl_chess import plot_permuted_sunfish_weights, create_sunfish_path
+    from irl_chess import plot_R_weights, create_sunfish_path
 
     with open(join(os.getcwd(), 'experiment_configs', 'sunfish_permutation_native', 'config.json'), 'r') as file:
         config_data = json.load(file)
@@ -23,4 +23,4 @@ if __name__ == '__main__':
     path_result = join(os.getcwd(), 'models', 'sunfish_permuted_native')
     out_path = create_sunfish_path(config_data, path_result)
 
-    plot_permuted_sunfish_weights(config_data, out_path)
+    plot_R_weights(config_data, out_path)

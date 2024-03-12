@@ -100,7 +100,7 @@ if __name__ == '__main__':
     if os.getcwd()[-len('irl-chess'):] != 'irl-chess':
         os.chdir('../')
         print(os.getcwd())
-    from irl_chess import get_midgame_boards, piece, load_lichess_dfs, create_sunfish_path, plot_permuted_sunfish_weights
+    from irl_chess import get_midgame_boards, piece, load_lichess_dfs, create_sunfish_path, plot_R_weights
 
     path_config = join(os.getcwd(), 'experiment_configs', 'sunfish_native_greedy', 'config.json')
     with open(path_config, 'r') as file:
