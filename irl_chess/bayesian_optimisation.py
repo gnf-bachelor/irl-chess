@@ -10,8 +10,8 @@ import json
 from joblib import Parallel, delayed
 import matplotlib.pyplot as plt
 from irl_chess.chess_utils import get_new_pst
-from irl_chess.sunfish_native_pw import sunfish_move
-
+from irl_chess.sunfish_native_pw import sunfish_move, process_epoch
+from irl_chess.visualizations import plot_BO_2d
 
 # if __name__ == '__main__':
 #     if os.getcwd()[-9:] != 'irl-chess':
@@ -62,9 +62,8 @@ def run_bayesian_optimisation(states, config_data, out_path):
 
     R_start = np.array(config_data['R_start'])
     with Parallel(n_jobs=config_data['n_threads']) as parallel:
-        print('Getting true moves\n', '-' * 20)
         actions_true = parallel(delayed(sunfish_move)(state, pst, config_data['time_limit'], True)
-                                for state in tqdm(states))
+                                for state in tqdm(states, desc='Getting true moves'))
         def objective_function(x):
             R_new = copy.copy(R_start)
             R_new[target_idxs] = x[0]
@@ -78,9 +77,10 @@ def run_bayesian_optimisation(states, config_data, out_path):
 
         opt = GPyOpt.methods.BayesianOptimization(f=objective_function, domain=domain, acquisition_type='EI')
         opt.acquisition.exploration_weight = 0.1
-        opt.run_optimization(max_iter=50)
-
-        plot_BO_2d(opt, R_true, target_idxs)
+        opt.run_optimization(max_iter=config_data['epochs'])
+        plot_path = join(out_path, 'plot')
+        os.makedirs(plot_path, exist_ok=True)
+        plot_BO_2d(opt, R_true, target_idxs, epoch=config_data['epochs'], plot_path=plot_path)
 
 
 def bayesian_model_result_string(config_data):

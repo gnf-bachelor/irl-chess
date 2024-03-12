@@ -13,7 +13,7 @@ def idxs_to_char(idx_list: list[int]):
     idx_to_char = {0: "P", 1: "N", 2: "B", 3: "R", 4: "Q", 5: "K"}
     return [idx_to_char[idx] for idx in idx_list]
 
-def plot_BO_2d(opt, R_true, target_idxs):
+def plot_BO_2d(opt, R_true, target_idxs, plot_path=None, epoch=None):
     """
 
     :param opt:
@@ -47,6 +47,8 @@ def plot_BO_2d(opt, R_true, target_idxs):
     ax2.hlines([p2_true], 0, p1_true, color='red', linestyles='--')
     ax2.scatter(*opt.X.T, color='red', marker='x')
     # save
+    if plot_path is not None and epoch is not None:
+        plt.savefig(join(plot_path, f'acquisition_{epoch}.png'))
     plt.show()
     plt.cla()
 
@@ -57,6 +59,8 @@ def plot_BO_2d(opt, R_true, target_idxs):
     plt.xlabel('Iteration')
     plt.ylabel('Accuracy')
     # save
+    if plot_path is not None and epoch is not None:
+        plt.savefig(join(plot_path, f'accuracy_{epoch}.png'))
     plt.show()
     plt.cla()
 
@@ -107,4 +111,4 @@ def plot_R_weights(config_data, out_path, start_weight_idx=0, legend_names=['P',
         plt.cla()
 
     if bayesian_args is not None:
-        plot_BO_2d(*bayesian_args)
+        plot_BO_2d(*bayesian_args, epoch=epoch, plot_path=plot_path)

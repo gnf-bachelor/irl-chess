@@ -102,26 +102,6 @@ def get_sunfish_moves(R_sunfish, boards, depth, out_path, overwrite=False, quies
     return boards, moves_sunfish
 
 
-def create_sunfish_path(config_data, path_result):
-    min_elo = config_data['min_elo']
-    max_elo = config_data['max_elo']
-    delta = config_data['delta']
-    n_boards = config_data['n_boards']
-    try:
-        search_depth = config_data['search_depth']
-    except KeyError:
-        search_depth = config_data['time_limit']
-    epochs = config_data['epochs']
-    permute_all = config_data['permute_all']
-    R_noisy_vals = config_data['R_noisy_vals']
-    quiesce = config_data['quiesce']
-    version = config_data['version']
-    decay_step = config_data['decay_step']
-    out_path = join(path_result,
-                    f"{permute_all}-{min_elo}-{max_elo}-{search_depth}-{n_boards}-{delta}-{R_noisy_vals}-{config_data['permute_char']}-{quiesce}-{version}-{decay_step}")
-    return out_path
-
-
 if __name__ == '__main__':
     if os.getcwd()[-len('irl-chess'):] != 'irl-chess':
         print(os.getcwd())
