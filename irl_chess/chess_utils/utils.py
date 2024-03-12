@@ -18,6 +18,7 @@ from irl_chess.visualizations.visualize import plot_permuted_sunfish_weights, ch
 from irl_chess.chess_utils.alpha_beta_utils import evaluate_board, alpha_beta_search, alpha_beta_search_k, list_first_moves
 from scipy.special import softmax
 
+# Thankfully this function is no longer necessary as the package is pip installable. 
 def vscode_fix():
     if 'TERM_PROGRAM' in os.environ.keys() and os.environ['TERM_PROGRAM'] == 'vscode':
         print("Running in VS Code, fixing sys path")
