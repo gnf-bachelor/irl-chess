@@ -98,12 +98,13 @@ def is_valid_game(game, config_data):
     try:
         elo_check_white = config_data['min_elo'] < int(game.headers['WhiteElo']) < config_data['max_elo']
         elo_check_black = config_data['min_elo'] < int(game.headers['BlackElo']) < config_data['max_elo']
-        length_check = len([el for el in game.mainline_moves()]) < config_data['n_endgame']
+        # Add 1 to length check to ensure there is a valid move in the position returned
+        length_check = len([el for el in game.mainline_moves()]) + 1 > config_data['n_endgame']
+        return elo_check_white and elo_check_black and length_check
     except KeyError:
         return False
     except ValueError:
         return False
-    return elo_check_white and elo_check_black and length_check
 
 
 def get_states(websites_filepath, file_path_data, config_data):

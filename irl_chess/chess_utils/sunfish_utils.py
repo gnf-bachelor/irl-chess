@@ -12,20 +12,22 @@ def sunfish_move(searcher: Searcher, hist: list[Position], time_limit:float=1., 
     in the given time was found to have the best score.
     Also returns a dictionary with the info from the
     search. If there is no best move found it (this
-    should in theory be impossible) it crashes.
+    should in theory be impossible) it will continue
+    forever.
     """
     start = time()
     best_move = None
     for depth, gamma, score, move in searcher.search(hist):
         if score >= gamma:
             best_move = move
-        if best_move and time() - start > time_limit:
+        if time() - start > time_limit:
             break
 
     info = {'depth': depth,
             'gamma': gamma,
             'score': score,
             'nodes': searcher.nodes}
+    assert best_move is not None, 'No best move found, this probably means an invalid position was passed to the searcher'
     return best_move, info, searcher.tp_move, searcher.tp_score
 
 
