@@ -20,6 +20,7 @@ from irl_chess.chess_utils.sunfish_utils import board2sunfish, sunfish_move_to_s
 from irl_chess.visualizations import char_to_idxs, plot_permuted_sunfish_weights
 
 from irl_chess.misc_utils.load_save_utils import process_epoch
+from irl_chess.chess_utils.sunfish_utils import get_new_pst
 
 # Assuming white, R is array of piece values
 def eval_pos(board, R=None):
@@ -41,18 +42,6 @@ def eval_pos(board, R=None):
             else:
                 eval += piece_dict[p] + pst[p][square]
     return eval
-
-
-def get_new_pst(R):
-    assert len(R) == 6
-    pieces = 'PNBRQK'
-    piece_new = {p: val for p, val in list(zip(pieces, R))}
-    pst_new = copy.deepcopy(pst_only)
-    for k, table in pst_only.items():
-        padrow = lambda row: (0,) + tuple(x + piece_new[k] for x in row) + (0,)
-        pst_new[k] = sum((padrow(table[i * 8: i * 8 + 8]) for i in range(8)), ())
-        pst_new[k] = (0,) * 20 + pst_new[k] + (0,) * 20
-    return pst_new
 
 
 def sunfish_move(state, pst, time_limit, move_only=False):

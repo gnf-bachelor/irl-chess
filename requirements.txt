@@ -12,3 +12,4 @@ pyzstd
 pytorch-lightning
 scipy
 joblib
+GPyOpt

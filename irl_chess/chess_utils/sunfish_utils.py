@@ -1,9 +1,11 @@
 import chess
 import numpy as np
 from tqdm import tqdm
+import copy
 
 from irl_chess.chess_utils.sunfish import Position, Move, Searcher, render, pst, piece
-from time import time
+from irl_chess.chess_utils.sunfish import pst_only
+
 
 def sunfish_move_to_str(move: Move, is_black:bool=False):
     i, j = move.i, move.j
@@ -82,6 +84,18 @@ def board2sunfish(board, score):
                         119 - kp if kp else 0)
 
     return Position(board_string, score, wc, bc, ep, kp)
+
+
+def get_new_pst(R):
+    assert len(R) == 6
+    pieces = 'PNBRQK'
+    piece_new = {p: val for p, val in list(zip(pieces, R))}
+    pst_new = copy.deepcopy(pst_only)
+    for k, table in pst_only.items():
+        padrow = lambda row: (0,) + tuple(x + piece_new[k] for x in row) + (0,)
+        pst_new[k] = sum((padrow(table[i * 8: i * 8 + 8]) for i in range(8)), ())
+        pst_new[k] = (0,) * 20 + pst_new[k] + (0,) * 20
+    return pst_new
 
 def sunfish2board(pos: Position):
     pos_string = pos.board[21:-20].replace(' \n', '/')
