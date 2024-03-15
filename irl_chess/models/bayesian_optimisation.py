@@ -28,18 +28,22 @@ def run_bayesian_optimisation(sunfish_boards, config_data, out_path):
 
     R_start = np.array(config_data['R_start'])
     with (Parallel(n_jobs=config_data['n_threads']) as parallel):
-        # actions_true = parallel(delayed(sunfish_move)(state, pst, config_data['time_limit'], True)
-        #                         for state in tqdm(sunfish_boards, desc='Getting true moves'))
-        actions_true = [sunfish_move(state, pst, config_data['time_limit'], True) for state in tqdm(sunfish_boards, desc='Getting true moves')]
+        if config_data['run_parallel']:
+            actions_true = parallel(delayed(sunfish_move)(state, pst, config_data['time_limit'], True)
+                                    for state in tqdm(sunfish_boards, desc='Getting true moves'))
+        else:
+            actions_true = [sunfish_move(state, pst, config_data['time_limit'], True) for state in tqdm(sunfish_boards, desc='Getting true moves')]
 
         def objective_function(x):
             R_new = copy.copy(R_start)
             R_new[target_idxs] = x[0]
             print(f'R_new: {R_new}')
             pst_new = get_new_pst(R_new)
-            # actions_new = parallel(delayed(sunfish_move)(state, pst_new, config_data['time_limit'], True)
-            #                        for state in tqdm(sunfish_boards, desc='Getting new moves'))
-            actions_new = [sunfish_move(state, pst_new, config_data['time_limit'], True) for state in tqdm(sunfish_boards, desc='Getting new moves')]
+            if config_data['run_parallel']:
+                actions_new = parallel(delayed(sunfish_move)(state, pst_new, config_data['time_limit'], True)
+                                       for state in tqdm(sunfish_boards, desc='Getting new moves'))
+            else:
+                actions_new = [sunfish_move(state, pst_new, config_data['time_limit'], True) for state in tqdm(sunfish_boards, desc='Getting new moves')]
 
             acc = sum([a == a_new for a, a_new in list(zip(actions_true, actions_new))]) / len(sunfish_boards)
             print(f'Acc: {acc}')
