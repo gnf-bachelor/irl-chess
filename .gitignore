@@ -185,4 +185,9 @@ downloads/api_tokens
 models/sunfish_permuted
 *.err
 *.out
-models
+
+# exclude everything. This folder is where results will be saved after running run_model
+results/* 
+
+# exception to the rule
+!results/.gitkeep 

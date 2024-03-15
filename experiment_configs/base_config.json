@@ -2,16 +2,16 @@
     "overwrite": false,
     "n_files": 6,
     "time_control": false,
-    "min_elo": 1200,
-    "max_elo": 2000,
+    "min_elo": 1300,
+    "max_elo": 1500,
     "n_midgame": 15,
     "n_endgame": 30,
     "n_boards": 10,
     "epochs": 30,
     "n_threads": -4,
     "save_every": 1,
-    "plot_every": 2,
+    "plot_every": 10,
     "plot_char": ["P", "N", "B", "R", "Q"],
     "permute_char": ["N", "B", "R", "Q"],
-    "model": "bayesian_optimisation"
+    "model": "sunfish_GRW"
 }

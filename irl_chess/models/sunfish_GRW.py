@@ -1,23 +1,17 @@
-import json
-import os
-from os.path import join
 
 import copy
-from shutil import copy2
 from time import time
 
 import chess
 import chess.pgn
 import chess.svg
 import numpy as np
-import pandas as pd
 from tqdm import tqdm
 from joblib import Parallel, delayed
-import matplotlib.pyplot as plt
 
-from irl_chess import Searcher, Position, initial, sunfish_move_to_str, pst, pst_only, piece
-from irl_chess.chess_utils.sunfish_utils import board2sunfish, sunfish_move_to_str, render, sunfish2board
-from irl_chess.visualizations import char_to_idxs, plot_R_weights
+from irl_chess import Searcher, pst, piece
+from irl_chess.chess_utils.sunfish_utils import board2sunfish
+from irl_chess.visualizations import char_to_idxs
 
 from irl_chess.misc_utils.utils import reformat_list
 from irl_chess.misc_utils.load_save_utils import process_epoch
@@ -45,7 +39,7 @@ def eval_pos(board, R=None):
     return eval
 
 
-def sunfish_move(state, pst, time_limit, move_only=False):
+def sunfish_move(state, pst, time_limit, move_only=False, run_at_least = 5):
     """
     Given a state, p-square table and time limit,
     return the sunfish move.
@@ -58,11 +52,12 @@ def sunfish_move(state, pst, time_limit, move_only=False):
     start = time()
     hist = [state]
     best_move = None
-
+    count = 0
     for depth, gamma, score, move in searcher.search(hist):
+        count += 1
         if score >= gamma:
             best_move = move
-        if time() - start > time_limit:
+        if time() - start > time_limit and (count >= run_at_least):
             break
     assert best_move is not None, ('No best move found, this probably means an invalid position was passed to the '
                                    'searcher')
@@ -83,7 +78,7 @@ def sunfish_native_result_string(model_config_data):
     move_function = model_config_data['move_function']
     return f"{delta}-{decay}-{decay_step}-{permute_all}-{time_limit}--{R_start}-{R_true}--{move_function}" 
 
-def run_sunfish_native(sunfish_boards, config_data, out_path):
+def run_sunfish_GRW(sunfish_boards, config_data, out_path):
     if config_data['move_function'] == "sunfish_move":
         move_function = sunfish_move
     else:

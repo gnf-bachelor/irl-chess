@@ -10,7 +10,7 @@ from tqdm import tqdm
 from joblib import Parallel, delayed
 
 from irl_chess.chess_utils import get_new_pst
-from irl_chess.sunfish_native_pw import sunfish_move, pst
+from irl_chess.models.sunfish_GRW import sunfish_move, pst
 from irl_chess.visualizations import plot_BO_2d, char_to_idxs
 from irl_chess.misc_utils import reformat_list
 

@@ -1,7 +1,7 @@
 import os
 from os.path import join
 from irl_chess.misc_utils.utils import union_dicts
-from irl_chess.misc_utils.load_save_utils import fix_cwd, load_config, create_result_path, get_states
+from irl_chess.misc_utils.load_save_utils import fix_cwd, load_config, create_result_path, get_states, init_start_epoch
 
 if __name__ == '__main__':
     fix_cwd()
@@ -10,14 +10,12 @@ if __name__ == '__main__':
 
     match config_data['model']: # Load the model specified in the "base_config" file. Make sure the "model" field is set 
                                 # correctly and that a model_result_string function is defined to properly store the results.
-        case "sunfish_permutation_native":
-            from irl_chess.sunfish_native_pw import run_sunfish_native as model, \
+        case "sunfish_GRW": # Sunfish Greedy Random Walk
+            from irl_chess.models.sunfish_GRW import run_sunfish_GRW as model, \
                                           sunfish_native_result_string as model_result_string
-        case ("bay"
-              "esian_optimisation"):
+        case "bayesian_optimisation":
             from irl_chess.models.bayesian_optimisation import run_bayesian_optimisation as model, \
                                           bayesian_model_result_string as model_result_string
-
         case _:
             raise Exception(f"No model found with the name {config_data['model']}")
 

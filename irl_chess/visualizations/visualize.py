@@ -82,14 +82,13 @@ def plot_R_weights(config_data, out_path, start_weight_idx=0, legend_names=['P',
     bayesian_args = kwargs['bayesian_args'] if 'bayesian_args' in kwargs else None
     plot_char = char_to_idxs(config_data['plot_char'])
     save_every = config_data['save_every']
-    epochs = config_data['epochs']
     R_true = np.array(config_data.get('R_true', [100, 280, 320, 479, 929, 60000]))
 
     plot_path = os.path.join(out_path, 'plots')
     os.makedirs(plot_path, exist_ok=True)
 
     weights = []
-    for i in range(start_weight_idx, epochs, save_every):
+    for i in range(start_weight_idx, epoch+1, save_every):
         path = os.path.join(out_path, f'{i}.csv')
         if os.path.exists(path):
             df = pd.read_csv(path, index_col=None)
@@ -99,11 +98,12 @@ def plot_R_weights(config_data, out_path, start_weight_idx=0, legend_names=['P',
                 epoch = i
             break
     weights = np.array(weights)
+    assert weights.shape[0] == epoch+1, f"Error: weights.shape[0]: {weights.shape[0]} is not equal to epoch: {epoch}"
     X = np.repeat(np.arange(start_weight_idx, weights.shape[0], save_every), len(plot_char)).reshape(
         (-1, len(plot_char)))
 
-    plt.plot(X, np.array(weights)[:, plot_char])
-    plt.hlines(R_true[plot_char], 0, epoch, linestyles='--')
+    plt.plot(X, weights[:, plot_char])
+    plt.hlines(R_true[plot_char], 0, weights.shape[0]-1, linestyles='--')
     plt.title('Sunfish weights over time')
     plt.xlabel('Epochs')
     plt.ylabel('Weight values')

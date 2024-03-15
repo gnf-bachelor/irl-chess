@@ -60,7 +60,7 @@ def base_result_string(base_config_data):
     return f"{time_control}-{min_elo}-{max_elo}-{n_midgame}_to_{n_endgame}-{n_boards}-{permute_char}"    
 
 def create_result_path(base_config_data, model_config_data, model_result_string, path_result=None, copy_configs_flag=True):
-    path = path_result if path_result is not None else join(os.getcwd(), 'models', base_config_data['model'])
+    path = path_result if path_result is not None else join(os.getcwd(), 'results', base_config_data['model'])
     out_path = join(path,
                     f"{base_result_string(base_config_data)}---{model_result_string(model_config_data)}")
                         
@@ -122,6 +122,10 @@ def get_states(websites_filepath, file_path_data, config_data):
 # ================= Processing results =================
 
 def process_epoch(R, epoch, config_data, out_path, **kwargs):
+    # assert not (not config_data['overwrite'] and os.path.exists(join(out_path, f'{epoch}.csv'))), \
+    # "Data already exists but configs are set to not overwrite"
+        # Overwrite is for downloaded data files. .........
+    
     if config_data['save_every'] and epoch % config_data['save_every'] == 0:
         pd.DataFrame(R.reshape((-1, 1)), columns=['Result']).to_csv(join(out_path, f'{epoch}.csv'),
                                                                     index=False)
@@ -131,5 +135,21 @@ def process_epoch(R, epoch, config_data, out_path, **kwargs):
                        epoch=epoch,
                        kwargs=kwargs)
 
+def next_available_epoch(out_path):
+    epoch = 0
+    while True:
+        file_path = join(out_path, f"{epoch}.csv")
+        if not os.path.exists(file_path):
+            return epoch
+        epoch += 1
+
+def init_start_epoch(config_data, out_path):
+    if config_data['overwrite']:
+        config_data['start_epoch'] = 0 
+    else: 
+        config_data['start_epoch'] = next_available_epoch(out_path)
+        print(f"Continuing from weights of last run starting at epoch {config_data['start_epoch']}")
+
 def model_result_string(model_config_data):
-    return None
+    # This function should be implemented by each model to signify how to format the results
+    raise NotImplementedError 
