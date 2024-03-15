@@ -10,7 +10,7 @@ from tqdm import tqdm
 from joblib import Parallel, delayed
 
 from irl_chess import Searcher, pst, piece
-from irl_chess.chess_utils.sunfish_utils import board2sunfish
+from irl_chess.chess_utils.sunfish_utils import board2sunfish, sunfish2board
 from irl_chess.visualizations import char_to_idxs
 
 from irl_chess.misc_utils.utils import reformat_list
@@ -50,15 +50,21 @@ def sunfish_move(state, pst, time_limit, move_only=False, run_at_least = 5):
     """
     searcher = Searcher(pst)
     start = time()
-    hist = [state]
     best_move = None
     count = 0
-    for depth, gamma, score, move in searcher.search(hist):
+    count_gamma = 0
+    for depth, gamma, score, move in searcher.search([state]):
         count += 1
         if score >= gamma:
             best_move = move
+            count_gamma += 1
+            if best_move is None: 
+                print(f"{gamma}, {score}, {best_move}, Ha, we got em!")
+                print(sunfish2board(state))
         if time() - start > time_limit and (count >= run_at_least):
             break
+    if best_move is None:
+        print(f"best move is: {best_move} and count is {count}, {count_gamma}")
     assert best_move is not None, ('No best move found, this probably means an invalid position was passed to the '
                                    'searcher')
 
