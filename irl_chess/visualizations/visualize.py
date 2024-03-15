@@ -22,10 +22,10 @@ def plot_BO_2d(opt, R_true, target_idxs, plot_path=None, epoch=None):
     :return:
     """
     if len(target_idxs) > 2:
-        print('Only the first to target indexes are plotted!')
-    piece_one = np.linspace(0,1000,1000)
-    piece_two = np.linspace(0, 1000, 1000)
-    pgrid = np.array(np.meshgrid(piece_one, piece_two, indexing='ij'))
+        print('Only the first two target indexes are plotted!')
+    linspace = np.linspace(0,1000, 1000)
+
+    pgrid = np.array(np.meshgrid(linspace, linspace, *opt.X[np.argmin(opt.Y)][2:], indexing='ij'))
     # we then unfold the 4D array and simply pass it to the acqusition function
     acq_img = opt.acquisition.acquisition_function(pgrid.reshape(2, -1).T)
     acq_img = (-acq_img - np.min(-acq_img)) / (np.max(-acq_img - np.min(-acq_img)))

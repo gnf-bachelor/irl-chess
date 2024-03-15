@@ -8,9 +8,9 @@
     "n_endgame": 30,
     "n_boards": 10,
     "epochs": 30,
-    "n_threads": -2,
+    "n_threads": -4,
     "save_every": 1,
-    "plot_every": 5,
+    "plot_every": 2,
     "plot_char": ["P", "N", "B", "R", "Q"],
     "permute_char": ["N", "B", "R", "Q"],
     "model": "bayesian_optimisation"
