@@ -25,6 +25,7 @@ def plot_BO_2d(opt, R_true, target_idxs, plot_idxs=None, plot_path=None, epoch=N
     :return:
     """
     piece_names = ['PNBRQK'[idx] for idx in (plot_idxs if plot_idxs is not None else target_idxs)]
+    piece_names_str = '_'.join(piece_names)
 
     if len(target_idxs) > 2:
         if plot_idxs is not None:
@@ -35,9 +36,10 @@ def plot_BO_2d(opt, R_true, target_idxs, plot_idxs=None, plot_path=None, epoch=N
 
     pgrid = np.array(np.meshgrid(linspace, linspace, indexing='ij'))
     # we then unfold the 4D array and simply pass it to the acqusition function
-    pgrid_inp = np.concatenate((pgrid.reshape(2, -1).T,
-                                *[np.array([opt_val]).repeat(n_grid ** 2).reshape((-1, 1)) for opt_val in
-                                  opt.X[np.argmin(opt.Y)][2:]],), axis=-1)
+    pgrid_inp = np.concatenate((pgrid.reshape(2, -1).T, *[np.array([opt.X[np.argmin(opt.Y)][idx]]).repeat(n_grid ** 2).reshape((-1, 1)) for idx in plot_idxs],), axis=-1)
+    # Rearrange so it can be used to reorder the columns
+    plot_idxs = (*plot_idxs, *[i for i in range(len(target_idxs)) if i not in plot_idxs])
+    pgrid_inp = pgrid_inp[:, plot_idxs] if plot_idxs is not None else pgrid_inp
     acq_img = opt.acquisition.acquisition_function(pgrid_inp)
     acq_img = (-acq_img - np.min(-acq_img)) / (np.max(-acq_img - np.min(-acq_img)))
     acq_img = acq_img.reshape(pgrid[0].shape[:2])
@@ -56,10 +58,12 @@ def plot_BO_2d(opt, R_true, target_idxs, plot_idxs=None, plot_path=None, epoch=N
     p1_true, p2_true = R_true[target_idxs[:2]]
     ax2.vlines([p1_true], 0, p2_true, color='red', linestyles='--')
     ax2.hlines([p2_true], 0, p1_true, color='red', linestyles='--')
-    ax2.scatter(*opt.X.T, color='red', marker='x', )
+    ax2.scatter(*opt.X.T, marker='x', )
     # save
+    plot_path_pieces = join(plot_path, piece_names_str)
+    os.makedirs(plot_path_pieces, exist_ok=True)
     if plot_path is not None and epoch is not None:
-        plt.savefig(join(plot_path, f'acquisition_{epoch}.png'))
+        plt.savefig(join(plot_path_pieces, f'acquisition_{epoch}.png'))
     plt.show()
     plt.cla()
 
@@ -71,7 +75,7 @@ def plot_BO_2d(opt, R_true, target_idxs, plot_idxs=None, plot_path=None, epoch=N
     plt.ylabel('Accuracy')
     # save
     if plot_path is not None and epoch is not None:
-        plt.savefig(join(plot_path, f'accuracy_{epoch}.png'))
+        plt.savefig(join(plot_path_pieces, f'accuracy_{epoch}.png'))
     plt.show()
     plt.cla()
 

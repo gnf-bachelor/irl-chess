@@ -4,5 +4,7 @@
   "optimisation_verbosity": false,
   "R_true": [100, 280, 320, 479, 929, 60000],
   "R_start": [100, 100, 100, 100, 100, 60000],
-  "move_function": "sunfish_move"
+  "move_function": "sunfish_move",
+  "plot_pairs": [["N", "B"]],
+  "run_parallel": true
 }
