@@ -44,7 +44,7 @@ def run_bayesian_optimisation(sunfish_boards, config_data, out_path):
             print(f'Acc: {acc}')
             return -acc
 
-        opt = GPyOpt.methods.BayesianOptimization(f=objective_function, domain=domain, acquisition_type='EI')
+        opt = GPyOpt.methods.BayesianOptimization(f=objective_function, domain=domain, acquisition_type='EI', initial_design_numdata=1)
         opt.acquisition.exploration_weight = 0.1
         plot_path = join(out_path, 'plot')
         os.makedirs(plot_path, exist_ok=True)
