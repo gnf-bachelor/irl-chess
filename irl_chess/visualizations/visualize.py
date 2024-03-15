@@ -58,7 +58,7 @@ def plot_BO_2d(opt, R_true, target_idxs, plot_idxs=None, plot_path=None, epoch=N
     p1_true, p2_true = R_true[target_idxs[:2]]
     ax2.vlines([p1_true], 0, p2_true, color='red', linestyles='--')
     ax2.hlines([p2_true], 0, p1_true, color='red', linestyles='--')
-    ax2.scatter(*opt.X.T, c=, marker='x', )
+    ax2.scatter(*opt.X.T, marker='x', )
     # save
     plot_path_pieces = join(plot_path, piece_names_str)
     os.makedirs(plot_path_pieces, exist_ok=True)
