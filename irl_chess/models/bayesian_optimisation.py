@@ -19,6 +19,7 @@ def run_bayesian_optimisation(sunfish_boards, config_data, out_path):
     # RUN
     R_true = np.array(config_data['R_true'])
     target_idxs = char_to_idxs(config_data['permute_char'])
+    plot_idxs_list = [char_to_idxs(pair) for pair in config_data['plot_pairs']]
     domain = []
     possible_values = tuple(np.arange(0, 1000, 10, dtype=int))
     for idx in target_idxs:
@@ -52,7 +53,8 @@ def run_bayesian_optimisation(sunfish_boards, config_data, out_path):
         for epoch in tqdm(range(config_data['epochs']), desc='Optimising'):
             opt.run_optimization(max_iter=1, verbosity=config_data['optimisation_verbosity'])
             if epoch and epoch % config_data['plot_every'] == 0:
-                plot_BO_2d(opt, R_true, target_idxs, plot_path=plot_path, epoch=epoch)
+                for pair in plot_idxs_list:
+                    plot_BO_2d(opt, R_true, target_idxs, plot_path=plot_path, epoch=epoch, plot_idxs=pair)
             if epoch % config_data['save_every'] == 0:
                 df = pd.DataFrame(np.concatenate((opt.X, opt.Y), axis=-1))
                 df.to_csv(join(out_path, f'Results.csv'), index=False)
