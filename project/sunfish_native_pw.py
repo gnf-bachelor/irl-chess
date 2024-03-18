@@ -46,8 +46,12 @@ if __name__ == '__main__':
 
     pgn = open("data/lichess_db_standard_rated_2014-09.pgn/lichess_db_standard_rated_2014-09.pgn")
     games = []
-    for i in tqdm(range(n_boards_total*3), 'Getting games'):
-        games.append(chess.pgn.read_game(pgn))
+    n_games = 0
+    print('Getting games')
+    while len(games) < n_boards_total:
+        game = chess.pgn.read_game(pgn)
+        if len(list(game.mainline_moves())) > 26:
+            games.append(game)
 
     states_boards_mid = [get_board_after_n(game, 15) for game in games[:n_boards_mid]]
     states_boards_end = [get_board_after_n(game, 25) for game in games[:n_boards_end]]
@@ -63,15 +67,17 @@ if __name__ == '__main__':
     R = np.array(config_data['R_start'])
     best_accs = [0]
     Rs = [R]
-    with Pool(n_jobs) as pool:
+    # with Pool(n_jobs) as pool:
+    with Parallel(n_jobs=n_jobs) as parallel:
         print('Getting true moves\n', '-' * 20)
         # actions_true = []
         # for state_batch in state_batches:
         #     actions = parallel(delayed(sunfish_move_mod)(state, pst, time_limit, True)
         #                        for state in tqdm(state_batch))
         #     actions_true += actions
-        actions_true = list(pool.map(partial(sunfish_move_mod, pst=pst, time_limit=time_limit, only_move=True), states))
-
+        #actions_true = list(pool.map(partial(sunfish_move_mod, pst=pst, time_limit=time_limit, only_move=True), states))
+        actions_true = parallel(delayed(sunfish_move_mod)(state, pst, time_limit, True)
+                                for state in tqdm(states))
         for epoch in range(epochs):
             print(f'Epoch {epoch + 1}\n', '-' * 20)
             add = np.zeros(6)
@@ -83,7 +89,9 @@ if __name__ == '__main__':
             #     actions = parallel(delayed(sunfish_move_mod)(state, pst_new, time_limit, True)
             #                        for state in tqdm(state_batch))
             #     actions_new += actions
-            actions_new = list(pool.map(partial(sunfish_move_mod, pst=pst_new, time_limit=time_limit, only_move=True), states))
+            actions_new = parallel(delayed(sunfish_move_mod)(state, pst_new, time_limit, True)
+                                   for state in tqdm(states))
+            #actions_new = list(pool.map(partial(sunfish_move_mod, pst=pst_new, time_limit=time_limit, only_move=True), states))
             acc = sum([a == a_new for a, a_new in list(zip(actions_true, actions_new))])/n_boards_total
 
             if acc >= best_accs[-1]:

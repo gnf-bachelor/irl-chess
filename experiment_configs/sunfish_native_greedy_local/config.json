@@ -1,7 +1,7 @@
 {
   "delta": 20.0,
-  "n_boards_mid": 200,
-  "n_boards_end": 50,
+  "n_boards_mid": 500,
+  "n_boards_end": 0,
   "epochs": 5,
   "save_every": 10,
   "time_limit": 0.1,
@@ -12,6 +12,6 @@
   "decay_every": 30,
   "plot_every": 50,
   "save_path": ["models","sunfish_native"],
-  "n_jobs": 2,
+  "n_jobs": -2,
   "batch_size": 100
 }
