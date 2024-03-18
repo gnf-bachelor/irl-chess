@@ -276,7 +276,8 @@ def plot_R(Rs, R_true, target_idxs, save_path, epoch, save=True):
     Rs = np.array(Rs)
     targets = R_true[target_idxs]
     target_colors = [colors[idx] for idx in target_idxs]
-    plt.plot(Rs[:, :-1])
+    for i, values in enumerate(Rs.T[:-1]):
+        plt.plot(values, color=colors[i])
     plt.hlines(targets, 0, Rs.shape[0]-1, colors=target_colors, linestyle='--')
     plt.title('Piece values by epoch')
     plt.legend(list('PNBRQ'))
