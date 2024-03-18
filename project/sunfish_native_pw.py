@@ -9,6 +9,8 @@ from joblib import Parallel, delayed
 from project import pst
 from project.chess_utils.sunfish_utils import board2sunfish, eval_pos, get_new_pst, sunfish_move_mod
 from project.chess_utils.utils import get_board_after_n, plot_R
+from multiprocessing import Pool
+from functools import partial
 
 def state_batches(states, batch_size):
     n_states = len(states)
@@ -61,13 +63,14 @@ if __name__ == '__main__':
     R = np.array(config_data['R_start'])
     best_accs = [0]
     Rs = [R]
-    with Parallel(n_jobs=n_jobs) as parallel:
+    with Pool(n_jobs) as pool:
         print('Getting true moves\n', '-' * 20)
-        actions_true = []
-        for state_batch in state_batches:
-            actions = parallel(delayed(sunfish_move_mod)(state, pst, time_limit, True)
-                               for state in tqdm(state_batch))
-            actions_true += actions
+        # actions_true = []
+        # for state_batch in state_batches:
+        #     actions = parallel(delayed(sunfish_move_mod)(state, pst, time_limit, True)
+        #                        for state in tqdm(state_batch))
+        #     actions_true += actions
+        actions_true = list(pool.map(partial(sunfish_move_mod, pst=pst, time_limit=time_limit, only_move=True), states))
 
         for epoch in range(epochs):
             print(f'Epoch {epoch + 1}\n', '-' * 20)
@@ -75,13 +78,14 @@ if __name__ == '__main__':
             add[target_idxs] = np.random.choice([-delta, delta], len(target_idxs))
             R_new = R + add
             pst_new = get_new_pst(R_new)
-            actions_new = []
-            for state_batch in state_batches:
-                actions = parallel(delayed(sunfish_move_mod)(state, pst_new, time_limit, True)
-                                   for state in tqdm(state_batch))
-                actions_new += actions
-
+            # actions_new = []
+            # for state_batch in state_batches:
+            #     actions = parallel(delayed(sunfish_move_mod)(state, pst_new, time_limit, True)
+            #                        for state in tqdm(state_batch))
+            #     actions_new += actions
+            actions_new = list(pool.map(partial(sunfish_move_mod, pst=pst_new, time_limit=time_limit, only_move=True), states))
             acc = sum([a == a_new for a, a_new in list(zip(actions_true, actions_new))])/n_boards_total
+
             if acc >= best_accs[-1]:
                 R = R_new
                 best_accs.append(acc)

@@ -38,7 +38,7 @@ def get_new_pst(R):
         pst_new[k] = (0,) * 20 + pst_new[k] + (0,) * 20
     return pst_new
 
-def sunfish_move_mod(state, pst, time_limit, only_move=False):
+def sunfish_move_mod(state, pst=pst, time_limit=0.1, only_move=False):
     searcher = Searcher(pst)
     if only_move:
         return sunfish_move(searcher, [state], time_limit=time_limit)[0]
