@@ -60,7 +60,7 @@ def run_bayesian_optimisation(sunfish_boards, config_data, out_path):
             print(f'Optimizing, iteration {epoch+1} of {epochs}')
             opt.run_optimization(max_iter=1, verbosity=config_data['optimisation_verbosity'])
             if epoch and epoch % config_data['plot_every'] == 0:
-                plot_R_BO(opt, R_true, target_idxs)
+                plot_R_BO(opt, R_true, target_idxs, save_path=plot_path, epoch=epoch)
                 for pair in plot_idxs_list:
                     break
                     plot_BO_2d(opt, R_true, target_idxs, plot_path=plot_path, epoch=epoch, plot_idxs=pair)
