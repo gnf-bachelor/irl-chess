@@ -27,45 +27,30 @@ def plot_BO_2d(opt, R_true, target_idxs, plot_idxs=None, plot_path=None, epoch=N
     piece_names = ['PNBRQK'[idx] for idx in (plot_idxs if plot_idxs is not None else target_idxs)]
     piece_names_str = '_'.join(piece_names)
 
+    plot_path_pieces = join(plot_path, piece_names_str)
+    os.makedirs(plot_path_pieces, exist_ok=True)
+
     if len(target_idxs) > 2:
         if plot_idxs is not None:
             assert len(plot_idxs) == 2, 'there can only be 2 plot_idxs'
-        print('Only the first two target indexes are plotted!')
+            plot_idxs = np.array(plot_idxs) - 1     # Pawn is never included
+            # Now add the rest at the end of the array in order to use it for indexing:
+            plot_idxs = np.array((*plot_idxs, *[i for i in range(len(target_idxs)) if i not in plot_idxs]))
+        else:
+            print('Only the first two target indexes are plotted!')
     n_grid = 1000
-    linspace = np.linspace(0, n_grid, n_grid).reshape((-1, 1))
+    linspace = np.linspace(0, opt.domain[0]['domain'][-1] + 10, n_grid).reshape((-1, 1))
 
     pgrid = np.array(np.meshgrid(linspace, linspace, indexing='ij'))
     # we then unfold the 4D array and simply pass it to the acqusition function
-    pgrid_inp = np.concatenate((pgrid.reshape(2, -1).T, *[np.array([opt.X[np.argmin(opt.Y)][idx]]).repeat(n_grid ** 2).reshape((-1, 1)) for idx in plot_idxs],), axis=-1)
+    pgrid_inp = np.concatenate((pgrid.reshape(2, -1).T, *[np.array([opt.X[np.argmin(opt.Y)][idx]]).repeat(n_grid ** 2).reshape((-1, 1)) for idx in plot_idxs[2:]],), axis=-1)
     # Rearrange so it can be used to reorder the columns
-    plot_idxs = (*plot_idxs, *[i for i in range(len(target_idxs)) if i not in plot_idxs])
     pgrid_inp = pgrid_inp[:, plot_idxs] if plot_idxs is not None else pgrid_inp
     acq_img = opt.acquisition.acquisition_function(pgrid_inp)
     acq_img = (-acq_img - np.min(-acq_img)) / (np.max(-acq_img - np.min(-acq_img)))
     acq_img = acq_img.reshape(pgrid[0].shape[:2])
     mod_img = -opt.model.predict(pgrid_inp)[0]
     mod_img = mod_img.reshape(pgrid[0].shape[:2])
-
-    fig, (ax1, ax2) = plt.subplots(1, 2)
-    ax1.imshow(acq_img.T, origin='lower')
-    ax1.set_xlabel(piece_names[0])
-    ax1.set_ylabel(piece_names[1])
-    ax1.set_title('Acquisition function')
-    ax2.imshow(mod_img.T, origin='lower')
-    ax2.set_xlabel(piece_names[0])
-    ax2.set_ylabel(piece_names[1])
-    ax2.set_title('Model')
-    p1_true, p2_true = R_true[target_idxs[:2]]
-    ax2.vlines([p1_true], 0, p2_true, color='red', linestyles='--')
-    ax2.hlines([p2_true], 0, p1_true, color='red', linestyles='--')
-    ax2.scatter(*opt.X.T, marker='x', )
-    # save
-    plot_path_pieces = join(plot_path, piece_names_str)
-    os.makedirs(plot_path_pieces, exist_ok=True)
-    if plot_path is not None and epoch is not None:
-        plt.savefig(join(plot_path_pieces, f'acquisition_{epoch}.png'))
-    plt.show()
-    plt.cla()
 
     accs = -opt.Y.reshape(-1)
     top_acc = np.maximum.accumulate(accs)
@@ -76,6 +61,25 @@ def plot_BO_2d(opt, R_true, target_idxs, plot_idxs=None, plot_path=None, epoch=N
     # save
     if plot_path is not None and epoch is not None:
         plt.savefig(join(plot_path_pieces, f'accuracy_{epoch}.png'))
+    plt.show()
+
+    fig, (ax1, ax2) = plt.subplots(1, 2)
+    ax1.imshow(acq_img.T, origin='lower')
+    ax1.set_xlabel(piece_names[0])
+    ax1.set_ylabel(piece_names[1])
+    ax1.set_title(f'Acquisition function after {epoch} iterations')
+    ax2.imshow(mod_img.T, origin='lower')
+    ax2.set_xlabel(piece_names[0])
+    ax2.set_ylabel(piece_names[1])
+    ax2.set_title(f'Model after {epoch} iterations')
+    p1_true, p2_true = R_true[plot_idxs[:2] + 1]    # Here the pawn is included
+    ax2.vlines([p1_true], 0, p2_true, color='red', linestyles='--')
+    ax2.hlines([p2_true], 0, p1_true, color='red', linestyles='--')
+    ax2.scatter(*opt.X[:, plot_idxs[:2]].T, color='red', marker='x', )
+    # save
+    if plot_path is not None and epoch is not None:
+        plt.savefig(join(plot_path_pieces, f'acquisition_{epoch}.png'))
+    plt.tight_layout()
     plt.show()
     plt.cla()
 

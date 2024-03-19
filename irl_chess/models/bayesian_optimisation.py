@@ -8,6 +8,7 @@ import pandas as pd
 from os.path import join
 from tqdm import tqdm
 from joblib import Parallel, delayed
+from GPy.kern import Matern52, Exponential
 
 from irl_chess.chess_utils import get_new_pst
 from irl_chess.models.sunfish_GRW import sunfish_move, pst
@@ -49,7 +50,12 @@ def run_bayesian_optimisation(sunfish_boards, config_data, out_path):
             print(f'Acc: {acc}')
             return -acc
 
-        opt = GPyOpt.methods.BayesianOptimization(f=objective_function, domain=domain, acquisition_type='EI', initial_design_numdata=1)
+        kernel = Matern52(input_dim=len(target_idxs), variance=10)
+        opt = GPyOpt.methods.BayesianOptimization(f=objective_function,
+                                                  domain=domain,
+                                                  acquisition_type='EI',
+                                                  initial_design_numdata=1,
+                                                  kernel=kernel)
         opt.acquisition.exploration_weight = 0.1
         plot_path = join(out_path, 'plot')
         os.makedirs(plot_path, exist_ok=True)
@@ -62,7 +68,6 @@ def run_bayesian_optimisation(sunfish_boards, config_data, out_path):
             if epoch % config_data['save_every'] == 0:
                 df = pd.DataFrame(np.concatenate((opt.X, opt.Y), axis=-1))
                 df.to_csv(join(out_path, f'Results.csv'), index=False)
-
 
 
 def bayesian_model_result_string(model_config_data):
