@@ -1,6 +1,6 @@
 #BSUB -J sunfish-bayesian
-#BSUB -o /zhome/de/d/169059/Desktop/irl-chess/hpc-logs/sunfish-bayesian/%J.out
-#BSUB -e /zhome/de/d/169059/Desktop/irl-chess/hpc-logs/sunfish-bayesian/%J.err
+#BSUB -o /zhome/e0/2/169222/Desktop/irl-chess/hpc-logs/sunfish-bayesian/%J.out
+#BSUB -e /zhome/e0/2/169222/Desktop/irl-chess/hpc-logs/sunfish-bayesian/%J.err
 #BSUB -q hpc
 #BSUB -n 24
 #BSUB -R "rusage[mem=1G]"
