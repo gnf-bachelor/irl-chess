@@ -271,7 +271,7 @@ def get_board_last(tp_move, init_pos):
         pos_ = pos_.move(move)
     return pos_
 
-def plot_R(Rs, R_true, target_idxs, save_path, epoch, save=True):
+def plot_R(Rs, R_true, target_idxs, epoch, save_path=False):
     colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
     Rs = np.array(Rs)
     targets = R_true[target_idxs]
@@ -281,7 +281,7 @@ def plot_R(Rs, R_true, target_idxs, save_path, epoch, save=True):
     plt.hlines(targets, 0, Rs.shape[0]-1, colors=target_colors, linestyle='--')
     plt.title('Piece values by epoch')
     plt.legend(list('PNBRQ'))
-    if save:
+    if save_path:
         plt.savefig(os.path.join(save_path, f'plots/weights_over_time_{epoch}.png'))
     plt.show()
 

@@ -47,6 +47,21 @@ def plot_BO_2d(opt, R_true, target_idxs):
     plt.ylabel('Accuracy')
     plt.show()
 
+def plot_R_BO(opt, R_true, target_idxs, epoch=None, save_path=False):
+    target_colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+    x = np.array([R_true[:-1]] * len(opt.Y))
+    x[:, target_idxs] = opt.X
+    c = np.hstack((x, -opt.Y))
+    cumulative_argmax = np.array([c[np.argmax(c[:i + 1, -1])] for i in range(len(c))])
+    plt.plot(cumulative_argmax[:, :-1])
+    plt.hlines(R_true[:-1],0, c.shape[0]-1, colors=target_colors, linestyle='--')
+    plt.suptitle('Bayesian Optimisation')
+    plt.title('Piece values by epoch')
+    plt.legend(list('PNBRQ'), loc='lower right')
+    if save_path:
+        plt.savefig(os.path.join(save_path, f'plots/weights_over_time_{epoch}.png'))
+    plt.show()
+
 if __name__ == '__main__':
     if os.getcwd()[-9:] != 'irl-chess':
         os.chdir('../')
@@ -108,6 +123,7 @@ if __name__ == '__main__':
             return -acc
 
         opt = GPyOpt.methods.BayesianOptimization(f=objective_function, domain=domain, acquisition_type='EI')
-        opt.acquisition.exploration_weight = 0.1
-        opt.run_optimization(max_iter=50)
+        opt.acquisition.exploration_weight = 0.2
+        opt.run_optimization(max_iter=10)
+        plot_R_BO(opt, R_true)
         plot_BO_2d(opt, R_true, target_idxs)

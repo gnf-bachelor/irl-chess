@@ -100,7 +100,7 @@ if __name__ == '__main__':
             Rs.append(R)
 
             if epoch % plot_every == 0 and epoch != 0:
-                plot_R(Rs, R_true, target_idxs, save_path, epoch)
+                plot_R(Rs, R_true, target_idxs, epoch, save_path)
 
             if epoch % decay_every == 0 and epoch != 0:
                 delta *= decay
@@ -109,5 +109,5 @@ if __name__ == '__main__':
                 pass
 
             print(f'Current accuracy: {acc}, best: {best_accs[-1]}')
-    plot_R(Rs, R_true, target_idxs, save_path, epoch)
+    plot_R(Rs, R_true, target_idxs, epoch, save_path)
     np.save(os.path.join(save_path, 'weights_over_time.npy'), Rs)
