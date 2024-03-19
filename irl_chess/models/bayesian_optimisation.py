@@ -29,22 +29,17 @@ def run_bayesian_optimisation(sunfish_boards, config_data, out_path):
 
     R_start = np.array(config_data['R_start'])
     with (Parallel(n_jobs=config_data['n_threads']) as parallel):
-        if config_data['run_parallel']:
-            actions_true = parallel(delayed(sunfish_move)(state, pst, config_data['time_limit'], True)
-                                    for state in tqdm(sunfish_boards, desc='Getting true moves'))
-        else:
-            actions_true = [sunfish_move(state, pst, config_data['time_limit'], True) for state in tqdm(sunfish_boards, desc='Getting true moves')]
+        actions_true = parallel(delayed(sunfish_move)(state, pst, config_data['time_limit'], True)
+                                for state in tqdm(sunfish_boards, desc='Getting true moves'))
 
         def objective_function(x):
             R_new = copy.copy(R_start)
             R_new[target_idxs] = x[0]
             print(f'R_new: {R_new}')
             pst_new = get_new_pst(R_new)
-            if config_data['run_parallel']:
-                actions_new = parallel(delayed(sunfish_move)(state, pst_new, config_data['time_limit'], True)
-                                       for state in tqdm(sunfish_boards, desc='Getting new moves'))
-            else:
-                actions_new = [sunfish_move(state, pst_new, config_data['time_limit'], True) for state in tqdm(sunfish_boards, desc='Getting new moves')]
+            actions_new = parallel(delayed(sunfish_move)(state, pst_new, config_data['time_limit'], True)
+                                   for state in tqdm(sunfish_boards, desc='Getting new moves'))
+
 
             acc = sum([a == a_new for a, a_new in list(zip(actions_true, actions_new))]) / len(sunfish_boards)
             print(f'Acc: {acc}')
@@ -60,7 +55,9 @@ def run_bayesian_optimisation(sunfish_boards, config_data, out_path):
         plot_path = join(out_path, 'plot')
         os.makedirs(plot_path, exist_ok=True)
 
-        for epoch in tqdm(range(config_data['epochs']), desc='Optimising'):
+        epochs = config_data['epochs']
+        for epoch in range(epochs):
+            print(f'Optimizing, iteration {epoch+1} of {epochs}')
             opt.run_optimization(max_iter=1, verbosity=config_data['optimisation_verbosity'])
             if epoch and epoch % config_data['plot_every'] == 0:
                 for pair in plot_idxs_list:
@@ -68,6 +65,7 @@ def run_bayesian_optimisation(sunfish_boards, config_data, out_path):
             if epoch % config_data['save_every'] == 0:
                 df = pd.DataFrame(np.concatenate((opt.X, opt.Y), axis=-1))
                 df.to_csv(join(out_path, f'Results.csv'), index=False)
+            print(f'Max accuracy: {max(-opt.Y.T)}')
 
 
 def bayesian_model_result_string(model_config_data):
