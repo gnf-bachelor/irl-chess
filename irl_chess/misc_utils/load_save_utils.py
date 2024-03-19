@@ -74,7 +74,7 @@ def get_board_after_n(game, n):
     board = game.board()
     for i, move in enumerate(game.mainline_moves()):
         board.push(move)
-        if i == n:
+        if i == (n-1): # Get the board after exactly n moves (iterator starts from 0)
             break
     return board
 
@@ -84,7 +84,7 @@ def is_valid_game(game, config_data):
         elo_check_white = config_data['min_elo'] < int(game.headers['WhiteElo']) < config_data['max_elo']
         elo_check_black = config_data['min_elo'] < int(game.headers['BlackElo']) < config_data['max_elo']
         # Add 1 to length check to ensure there is a valid move in the position returned
-        length_check = len([el for el in game.mainline_moves()]) + 1 > config_data['n_endgame']
+        length_check = len(list(game.mainline_moves())) > config_data['n_endgame'] + 1
         return elo_check_white and elo_check_black and length_check
     except KeyError:
         return False

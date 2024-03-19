@@ -39,7 +39,7 @@ def eval_pos(board, R=None):
     return eval
 
 
-def sunfish_move(state, pst, time_limit, move_only=False, run_at_least = 5):
+def sunfish_move(state, pst, time_limit, move_only=False, run_at_least = 1):
     """
     Given a state, p-square table and time limit,
     return the sunfish move.
@@ -57,17 +57,14 @@ def sunfish_move(state, pst, time_limit, move_only=False, run_at_least = 5):
         count += 1
         if score >= gamma:
             best_move = move
-            count_gamma += 1
-            if best_move is None: 
-                print(f"{gamma}, {score}, {best_move}, Ha, we got em!")
-                print(sunfish2board(state))
-        if time() - start > time_limit and (count >= run_at_least):
+            count_gamma +=1
+        if time() - start > time_limit and count_gamma >= 1 and (count >= run_at_least):
             break
     if best_move is None:
-        print(f"best move is: {best_move} and count is {count}, {count_gamma}")
-    assert best_move is not None, ('No best move found, this probably means an invalid position was passed to the '
-                                   'searcher')
-
+        print(f"best move is: {best_move} and count is {count}")
+        print(state.board)
+    assert best_move is not None, f"No best move found, this probably means an invalid position was passed to the \
+                                   searcher"
     if move_only:
         return best_move
     return best_move, searcher.tp_move, searcher.tp_score
