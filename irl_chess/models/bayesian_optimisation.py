@@ -68,6 +68,7 @@ def run_bayesian_optimisation(sunfish_boards, config_data, out_path):
                 df = pd.DataFrame(np.concatenate((opt.X, opt.Y), axis=-1))
                 df.to_csv(join(out_path, f'Results.csv'), index=False)
             print(f'Max accuracy: {max(-opt.Y.T[0])}')
+        plot_R_BO(opt, R_true, target_idxs, save_path=plot_path, epoch=epoch)
 
 
 def bayesian_model_result_string(model_config_data):

@@ -89,7 +89,8 @@ def plot_R_BO(opt, R_true, target_idxs, epoch=None, save_path=False):
     x[:, target_idxs] = opt.X
     c = np.hstack((x, -opt.Y))
     cumulative_argmax = np.array([c[np.argmax(c[:i + 1, -1])] for i in range(len(c))])
-    plt.plot(cumulative_argmax[:, :-1])
+    for i, values in enumerate(cumulative_argmax[:, :-1]):
+        plt.plot(values, c=target_colors[i])
     plt.hlines(R_true[:-1],0, c.shape[0]-1, colors=target_colors, linestyle='--')
     plt.suptitle('Bayesian Optimisation')
     plt.title('Piece values by epoch')
