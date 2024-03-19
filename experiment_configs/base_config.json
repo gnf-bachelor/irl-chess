@@ -6,12 +6,12 @@
     "max_elo": 1800,
     "n_midgame": 15,
     "n_endgame": 30,
-    "n_boards": 100,
+    "n_boards": 1000,
     "epochs": 30,
     "n_threads": -4,
     "save_every": 1,
-    "plot_every": 1000,
+    "plot_every": 10,
     "plot_char": ["P", "N", "B", "R", "Q"],
-    "permute_char": ["N", "B"],
+    "permute_char": ["N", "B", "R", "Q"],
     "model": "bayesian_optimisation"
 }

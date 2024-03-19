@@ -12,7 +12,7 @@ from GPy.kern import Matern52, Exponential
 
 from irl_chess.chess_utils import get_new_pst
 from irl_chess.models.sunfish_GRW import sunfish_move, pst
-from irl_chess.visualizations import plot_BO_2d, char_to_idxs
+from irl_chess.visualizations import plot_BO_2d, char_to_idxs, plot_R_BO
 from irl_chess.misc_utils import reformat_list
 
 
@@ -60,12 +60,14 @@ def run_bayesian_optimisation(sunfish_boards, config_data, out_path):
             print(f'Optimizing, iteration {epoch+1} of {epochs}')
             opt.run_optimization(max_iter=1, verbosity=config_data['optimisation_verbosity'])
             if epoch and epoch % config_data['plot_every'] == 0:
+                plot_R_BO(opt, R_true, target_idxs)
                 for pair in plot_idxs_list:
+                    break
                     plot_BO_2d(opt, R_true, target_idxs, plot_path=plot_path, epoch=epoch, plot_idxs=pair)
             if epoch % config_data['save_every'] == 0:
                 df = pd.DataFrame(np.concatenate((opt.X, opt.Y), axis=-1))
                 df.to_csv(join(out_path, f'Results.csv'), index=False)
-            print(f'Max accuracy: {max(-opt.Y.T)}')
+            print(f'Max accuracy: {max(-opt.Y.T[0])}')
 
 
 def bayesian_model_result_string(model_config_data):
