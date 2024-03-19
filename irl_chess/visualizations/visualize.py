@@ -83,6 +83,21 @@ def plot_BO_2d(opt, R_true, target_idxs, plot_idxs=None, plot_path=None, epoch=N
     plt.show()
     plt.cla()
 
+def plot_R_BO(opt, R_true, target_idxs, epoch=None, save_path=False):
+    target_colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+    x = np.array([R_true[:-1]] * len(opt.Y))
+    x[:, target_idxs] = opt.X
+    c = np.hstack((x, -opt.Y))
+    cumulative_argmax = np.array([c[np.argmax(c[:i + 1, -1])] for i in range(len(c))])
+    plt.plot(cumulative_argmax[:, :-1])
+    plt.hlines(R_true[:-1],0, c.shape[0]-1, colors=target_colors, linestyle='--')
+    plt.suptitle('Bayesian Optimisation')
+    plt.title('Piece values by epoch')
+    plt.legend(list('PNBRQ'), loc='lower right')
+    if save_path:
+        plt.savefig(os.path.join(save_path, f'weights_over_time_{epoch}.png'))
+    plt.show()
+
 
 def plot_R_weights(config_data, out_path, start_weight_idx=0, legend_names=['P', 'N', 'B', 'R', 'Q', 'K'], epoch=None,
                    **kwargs):
