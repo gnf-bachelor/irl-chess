@@ -1,0 +1,17 @@
+{
+    "overwrite": false,
+    "n_files": 1,
+    "time_control": false,
+    "min_elo": 1600,
+    "max_elo": 1800,
+    "n_midgame": 15,
+    "n_endgame": 30,
+    "n_boards": 1000,
+    "epochs": 100,
+    "n_threads": 24,
+    "save_every": 20,
+    "plot_every": 20,
+    "plot_char": ["P", "N", "B", "R", "Q"],
+    "permute_char": ["N", "B", "R", "Q"],
+    "model": "bayesian_optimisation"
+}

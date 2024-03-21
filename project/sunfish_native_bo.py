@@ -113,7 +113,7 @@ if __name__ == '__main__':
                                 for state in tqdm(states))
         def objective_function(x):
             R_new = copy.copy(R_start)
-            R_new[target_idxs] = x[0]
+            R_new[target_idxs] = x
             print(f'R_new: {R_new}')
             pst_new = get_new_pst(R_new)
             actions_new = parallel(delayed(sunfish_move_mod)(state, pst_new, time_limit, True)
@@ -124,6 +124,6 @@ if __name__ == '__main__':
 
         opt = GPyOpt.methods.BayesianOptimization(f=objective_function, domain=domain, acquisition_type='EI')
         opt.acquisition.exploration_weight = 0.2
-        opt.run_optimization(max_iter=10)
-        plot_R_BO(opt, R_true)
+        opt.run_optimization(max_iter=epochs)
+        plot_R_BO(opt, R_true, target_idxs)
         plot_BO_2d(opt, R_true, target_idxs)

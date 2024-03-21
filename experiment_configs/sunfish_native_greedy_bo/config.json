@@ -1,0 +1,17 @@
+{
+  "delta": 10.0,
+  "n_boards_mid": 4000,
+  "n_boards_end": 1000,
+  "epochs": 500,
+  "save_every": 10,
+  "time_limit": 0.2,
+  "decay": 1,
+  "target_idxs": [1,2,3,4],
+  "R_true": [100, 280, 320, 479, 929, 60000],
+  "R_start": [100, 100, 100, 100, 100, 60000],
+  "decay_every": 30,
+  "plot_every": 50,
+  "save_path": ["models","sunfish_native_bo"],
+  "n_jobs": 24,
+  "batch_size": 100
+}
