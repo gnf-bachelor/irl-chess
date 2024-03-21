@@ -34,7 +34,7 @@ def run_bayesian_optimisation(sunfish_boards, config_data, out_path):
 
         def objective_function(x):
             R_new = copy.copy(R_start)
-            R_new[target_idxs] = x[0]
+            R_new[target_idxs] = x
             print(f'R_new: {R_new}')
             pst_new = get_new_pst(R_new)
             actions_new = parallel(delayed(sunfish_move)(state, pst_new, config_data['time_limit'], True)
