@@ -88,8 +88,12 @@ if __name__ == '__main__':
 
     pgn = open("data/lichess_db_standard_rated_2014-09.pgn/lichess_db_standard_rated_2014-09.pgn")
     games = []
-    for i in tqdm(range(n_boards_total*3), 'Getting games'):
-        games.append(chess.pgn.read_game(pgn))
+    n_games = 0
+    print('Getting games')
+    while len(games) < n_boards_total:
+        game = chess.pgn.read_game(pgn)
+        if len(list(game.mainline_moves())) > 26:
+            games.append(game)
 
     states_boards_mid = [get_board_after_n(game, 15) for game in games[:n_boards_mid]]
     states_boards_end = [get_board_after_n(game, 25) for game in games[:n_boards_end]]
