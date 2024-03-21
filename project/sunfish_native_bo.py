@@ -53,21 +53,23 @@ def plot_R_BO(opt, R_true, target_idxs, epoch=None, save_path=False):
     x[:, target_idxs] = opt.X
     c = np.hstack((x, -opt.Y))
     cumulative_argmax = np.array([c[np.argmax(c[:i + 1, -1])] for i in range(len(c))])
-    plt.plot(cumulative_argmax[:, :-1])
+    for i, values in enumerate(cumulative_argmax[:, :-1].T):
+        plt.plot(values, c=target_colors[i])
     plt.hlines(R_true[:-1],0, c.shape[0]-1, colors=target_colors, linestyle='--')
     plt.suptitle('Bayesian Optimisation')
     plt.title('Piece values by epoch')
     plt.legend(list('PNBRQ'), loc='lower right')
     if save_path:
-        plt.savefig(os.path.join(save_path, f'plots/weights_over_time_{epoch}.png'))
+        plt.savefig(os.path.join(save_path, f'weights_over_time_{epoch}.png'))
     plt.show()
+
 
 if __name__ == '__main__':
     if os.getcwd()[-9:] != 'irl-chess':
         os.chdir('../')
 
     # SETUP
-    with open(join(os.getcwd(), 'experiment_configs', 'sunfish_native_greedy_local', 'config.json'), 'r') as file:
+    with open(join(os.getcwd(), 'experiment_configs', 'sunfish_native_bo_local', 'config.json'), 'r') as file:
         config_data = json.load(file)
 
     delta = config_data['delta']
