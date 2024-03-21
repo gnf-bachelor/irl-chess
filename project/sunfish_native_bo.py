@@ -69,7 +69,7 @@ if __name__ == '__main__':
         os.chdir('../')
 
     # SETUP
-    with open(join(os.getcwd(), 'experiment_configs', 'sunfish_native_bo_local', 'config.json'), 'r') as file:
+    with open(join(os.getcwd(), 'experiment_configs', 'sunfish_native_bo', 'config.json'), 'r') as file:
         config_data = json.load(file)
 
     delta = config_data['delta']
