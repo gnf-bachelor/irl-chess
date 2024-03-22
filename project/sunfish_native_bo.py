@@ -60,6 +60,7 @@ def plot_R_BO(opt, R_true, target_idxs, epoch=None, save_path=None):
     plt.title('Piece values by epoch')
     plt.legend(list('PNBRQ'), loc='lower right')
     if save_path is not None:
+        print(f'saving to {save_path}')
         plt.savefig(os.path.join(save_path, f'weights_over_time_{epoch}.png'))
     plt.show()
 
