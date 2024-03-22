@@ -47,7 +47,7 @@ def plot_BO_2d(opt, R_true, target_idxs):
     plt.ylabel('Accuracy')
     plt.show()
 
-def plot_R_BO(opt, R_true, target_idxs, epoch=None, save_path=False):
+def plot_R_BO(opt, R_true, target_idxs, epoch=None, save_path=None):
     target_colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
     x = np.array([R_true[:-1]] * len(opt.Y))
     x[:, target_idxs] = opt.X
@@ -59,7 +59,7 @@ def plot_R_BO(opt, R_true, target_idxs, epoch=None, save_path=False):
     plt.suptitle('Bayesian Optimisation')
     plt.title('Piece values by epoch')
     plt.legend(list('PNBRQ'), loc='lower right')
-    if save_path:
+    if save_path is not None:
         plt.savefig(os.path.join(save_path, f'weights_over_time_{epoch}.png'))
     plt.show()
 
@@ -131,5 +131,5 @@ if __name__ == '__main__':
         opt = GPyOpt.methods.BayesianOptimization(f=objective_function, domain=domain, acquisition_type='EI')
         opt.acquisition.exploration_weight = 0.2
         opt.run_optimization(max_iter=epochs)
-        plot_R_BO(opt, R_true, target_idxs)
+        plot_R_BO(opt, R_true, target_idxs, epoch=epochs, save_path=save_path)
         plot_BO_2d(opt, R_true, target_idxs)
