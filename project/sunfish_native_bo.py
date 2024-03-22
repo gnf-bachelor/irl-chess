@@ -130,6 +130,6 @@ if __name__ == '__main__':
 
         opt = GPyOpt.methods.BayesianOptimization(f=objective_function, domain=domain, acquisition_type='EI')
         opt.acquisition.exploration_weight = 0.2
-        opt.run_optimization(max_iter=epochs)
+        opt.run_optimization(max_iter=epochs, eps=0)
         plot_R_BO(opt, R_true, target_idxs, epoch=epochs, save_path=save_path)
-        plot_BO_2d(opt, R_true, target_idxs)
+        #plot_BO_2d(opt, R_true, target_idxs)
