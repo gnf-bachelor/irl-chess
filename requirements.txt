@@ -13,3 +13,4 @@ pytorch-lightning
 scipy
 joblib
 GPyOpt
+chess

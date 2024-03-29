@@ -24,8 +24,8 @@ if __name__ == '__main__':
     websites_filepath = join(os.getcwd(), 'downloads', 'lichess_websites.txt')
     file_path_data = join(os.getcwd(), 'data', 'raw')
 
-    sunfish_boards = get_states(websites_filepath=websites_filepath,
+    sunfish_boards, player_moves = get_states(websites_filepath=websites_filepath,
                                 file_path_data=file_path_data,
                                 config_data=config_data) # Boards in the sunfish format.
-    
-    model(sunfish_boards=sunfish_boards, config_data=config_data, out_path=out_path)
+
+    model(sunfish_boards=sunfish_boards, player_moves=player_moves, config_data=config_data, out_path=out_path)

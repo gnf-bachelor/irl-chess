@@ -1,4 +1,3 @@
-
 import copy
 from time import time
 
@@ -15,7 +14,8 @@ from irl_chess.visualizations import char_to_idxs
 
 from irl_chess.misc_utils.utils import reformat_list
 from irl_chess.misc_utils.load_save_utils import process_epoch
-from irl_chess.chess_utils.sunfish_utils import get_new_pst
+from irl_chess.chess_utils.sunfish_utils import get_new_pst, str_to_sunfish_move
+
 
 # Assuming white, R is array of piece values
 def eval_pos(board, R=None):
@@ -39,7 +39,7 @@ def eval_pos(board, R=None):
     return eval
 
 
-def sunfish_move(state, pst, time_limit, move_only=False, run_at_least = 1):
+def sunfish_move(state, pst, time_limit, move_only=False, run_at_least=1):
     """
     Given a state, p-square table and time limit,
     return the sunfish move.
@@ -57,7 +57,7 @@ def sunfish_move(state, pst, time_limit, move_only=False, run_at_least = 1):
         count += 1
         if score >= gamma:
             best_move = move
-            count_gamma +=1
+            count_gamma += 1
         if time() - start > time_limit and count_gamma >= 1 and (count >= run_at_least):
             break
     if best_move is None:
@@ -79,14 +79,19 @@ def sunfish_native_result_string(model_config_data):
     R_true = reformat_list(model_config_data['R_true'], '_')
     R_start = reformat_list(model_config_data['R_start'], '_')
     move_function = model_config_data['move_function']
-    return f"{delta}-{decay}-{decay_step}-{permute_all}-{time_limit}--{R_start}-{R_true}--{move_function}" 
+    return f"{delta}-{decay}-{decay_step}-{permute_all}-{time_limit}--{R_start}-{R_true}--{move_function}"
 
-def run_sunfish_GRW(sunfish_boards, config_data, out_path):
+
+def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path, ):
     if config_data['move_function'] == "sunfish_move":
         move_function = sunfish_move
+        use_player_move = False
+    elif config_data['move_function'] == "player_move":
+        move_function = sunfish_move
+        use_player_move = True
     else:
-        raise Exception(f"The move function {config_data['move_function']} is not implemented yet") 
-    
+        raise Exception(f"The move function {config_data['move_function']} is not implemented yet")
+
     permute_all = config_data['permute_all']
     permute_idxs = char_to_idxs(config_data['permute_char'])
 
@@ -98,8 +103,9 @@ def run_sunfish_GRW(sunfish_boards, config_data, out_path):
     accuracies = []
 
     with (Parallel(n_jobs=config_data['n_threads']) as parallel):
-        actions_true = parallel(delayed(move_function)(state, pst, config_data['time_limit'], True)
-                                for state in tqdm(sunfish_boards, desc='Getting true moves', ))
+        actions_true = player_moves if use_player_move else parallel(
+            delayed(move_function)(state, pst, config_data['time_limit'], True)
+            for state in tqdm(sunfish_boards, desc='Getting true moves', ))
         for epoch in tqdm(range(config_data['epochs']), desc='Epoch'):
             if permute_all:
                 add = np.random.uniform(low=-delta, high=delta, size=len(permute_idxs)).astype(R.dtype)
@@ -108,12 +114,13 @@ def run_sunfish_GRW(sunfish_boards, config_data, out_path):
                 choice = np.random.choice(permute_idxs)
                 R_new[choice] += np.random.uniform(low=-delta, high=delta, size=1).item()
 
-            pst_new = get_new_pst(R_new)    # Sunfish uses only pst table for calculations
+            pst_new = get_new_pst(R_new)  # Sunfish uses only pst table for calculations
             actions_new = parallel(delayed(move_function)(state, pst_new, config_data['time_limit'], True)
                                    for state in tqdm(sunfish_boards, desc='Getting new actions'))
 
             acc = sum([a == a_new for a, a_new in list(zip(actions_true, actions_new))]) / config_data['n_boards']
-            change_weights = np.random.rand() < np.exp(acc) / (np.exp(acc) + np.exp(last_acc)) if config_data['version'] == 'v1_native_multi' else acc >= last_acc
+            change_weights = np.random.rand() < np.exp(acc) / (np.exp(acc) + np.exp(last_acc)) if config_data[
+                                                                                                      'version'] == 'v1_native_multi' else acc >= last_acc
             if change_weights:
                 R = copy.copy(R_new)
                 last_acc = copy.copy(acc)
@@ -123,6 +130,6 @@ def run_sunfish_GRW(sunfish_boards, config_data, out_path):
             if epoch % config_data['decay_step'] == 0 and epoch != 0:
                 delta *= config_data['decay']
 
-            process_epoch(R, epoch, config_data, out_path)  #, accuracies=accuracies)
+            process_epoch(R, epoch, config_data, out_path)  # , accuracies=accuracies)
 
             print(f'Current accuracy: {acc}, {last_acc}')
