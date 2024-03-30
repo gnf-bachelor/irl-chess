@@ -122,12 +122,12 @@ def plot_R_weights(config_data, out_path, start_weight_idx=0, legend_names=['P',
                 epoch = i
             break
     weights = np.array(weights)
-    assert weights.shape[0] == epoch+1, f"Error: weights.shape[0]: {weights.shape[0]} is not equal to epoch: {epoch}"
-    X = np.repeat(np.arange(start_weight_idx, weights.shape[0], save_every), len(plot_char)).reshape(
-        (-1, len(plot_char)))
+    # assert weights.shape[0] == epoch+1, f"Error: weights.shape[0]: {weights.shape[0]} is not equal to epoch: {epoch}"
+    X = np.repeat(np.arange(0, weights.shape[0], 1)*save_every + start_weight_idx,
+                  len(plot_char)).reshape((-1, len(plot_char)))
 
     plt.plot(X, weights[:, plot_char])
-    plt.hlines(R_true[plot_char], 0, weights.shape[0]-1, linestyles='--')
+    plt.hlines(R_true[plot_char], 0, X[-1, -1], linestyles='--')
     plt.title('Sunfish weights over time')
     plt.xlabel('Epochs')
     plt.ylabel('Weight values')
