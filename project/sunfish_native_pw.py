@@ -70,12 +70,6 @@ if __name__ == '__main__':
     # with Pool(n_jobs) as pool:
     with Parallel(n_jobs=n_jobs) as parallel:
         print('Getting true moves\n', '-' * 20)
-        # actions_true = []
-        # for state_batch in state_batches:
-        #     actions = parallel(delayed(sunfish_move_mod)(state, pst, time_limit, True)
-        #                        for state in tqdm(state_batch))
-        #     actions_true += actions
-        #actions_true = list(pool.map(partial(sunfish_move_mod, pst=pst, time_limit=time_limit, only_move=True), states))
         actions_true = parallel(delayed(sunfish_move_mod)(state, pst, time_limit, True)
                                 for state in tqdm(states))
         for epoch in range(epochs):
@@ -84,11 +78,6 @@ if __name__ == '__main__':
             add[target_idxs] = np.random.choice([-delta, delta], len(target_idxs))
             R_new = R + add
             pst_new = get_new_pst(R_new)
-            # actions_new = []
-            # for state_batch in state_batches:
-            #     actions = parallel(delayed(sunfish_move_mod)(state, pst_new, time_limit, True)
-            #                        for state in tqdm(state_batch))
-            #     actions_new += actions
             actions_new = parallel(delayed(sunfish_move_mod)(state, pst_new, time_limit, True)
                                    for state in tqdm(states))
             #actions_new = list(pool.map(partial(sunfish_move_mod, pst=pst_new, time_limit=time_limit, only_move=True), states))

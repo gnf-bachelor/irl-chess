@@ -2,7 +2,7 @@
 #BSUB -o sunfish-native%J.out
 #BSUB -e sunfish-native%J.err
 #BSUB -q hpc
-#BSUB -n 16
+#BSUB -n 24
 #BSUB -R "rusage[mem=1G]"
 #BSUB -R "span[hosts=1]"
 #BSUB -W 24:00

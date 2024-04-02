@@ -1,0 +1,11 @@
+{
+  "delta": 50.0,
+  "decay": 0.95,
+  "decay_step": 30,
+  "time_limit": 0.1,
+  "permute_all": false,
+  "R_true": [100, 280, 320, 479, 929, 60000],
+  "R_start": [100, 100, 100, 100, 100, 60000],
+  "move_function": "sunfish_move",
+  "version": "v0_multi"
+}
