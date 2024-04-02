@@ -84,10 +84,8 @@ def sunfish_native_result_string(model_config_data):
 
 def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path, ):
     if config_data['move_function'] == "sunfish_move":
-        move_function = sunfish_move
         use_player_move = False
     elif config_data['move_function'] == "player_move":
-        move_function = sunfish_move
         use_player_move = True
     else:
         raise Exception(f"The move function {config_data['move_function']} is not implemented yet")
@@ -104,7 +102,7 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path, ):
 
     with (Parallel(n_jobs=config_data['n_threads']) as parallel):
         actions_true = player_moves if use_player_move else parallel(
-            delayed(move_function)(state, pst, config_data['time_limit'], True)
+            delayed(sunfish_move)(state, pst, config_data['time_limit'], True)
             for state in tqdm(sunfish_boards, desc='Getting true moves', ))
         for epoch in tqdm(range(config_data['epochs']), desc='Epoch'):
             if permute_all:
@@ -115,7 +113,7 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path, ):
                 R_new[choice] += np.random.uniform(low=-delta, high=delta, size=1).item()
 
             pst_new = get_new_pst(R_new)  # Sunfish uses only pst table for calculations
-            actions_new = parallel(delayed(move_function)(state, pst_new, config_data['time_limit'], True)
+            actions_new = parallel(delayed(sunfish_move)(state, pst_new, config_data['time_limit'], True)
                                    for state in tqdm(sunfish_boards, desc='Getting new actions'))
 
             acc = sum([a == a_new for a, a_new in list(zip(actions_true, actions_new))]) / config_data['n_boards']

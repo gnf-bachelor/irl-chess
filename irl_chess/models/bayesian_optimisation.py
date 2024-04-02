@@ -16,7 +16,13 @@ from irl_chess.visualizations import plot_BO_2d, char_to_idxs, plot_R_BO
 from irl_chess.misc_utils import reformat_list
 
 
-def run_bayesian_optimisation(sunfish_boards, config_data, out_path):
+def run_bayesian_optimisation(sunfish_boards, config_data, out_path, player_moves):
+    if config_data['move_function'] == "sunfish_move":
+        use_player_move = False
+    elif config_data['move_function'] == "player_move":
+        use_player_move = True
+    else:
+        raise Exception(f"The move function {config_data['move_function']} is not implemented yet")
     # RUN
     R_true = np.array(config_data['R_true'])
     target_idxs = char_to_idxs(config_data['permute_char'])
@@ -29,7 +35,7 @@ def run_bayesian_optimisation(sunfish_boards, config_data, out_path):
 
     R_start = np.array(config_data['R_start'])
     with (Parallel(n_jobs=config_data['n_threads']) as parallel):
-        actions_true = parallel(delayed(sunfish_move)(state, pst, config_data['time_limit'], True)
+        actions_true = player_moves if use_player_move else parallel(delayed(sunfish_move)(state, pst, config_data['time_limit'], True)
                                 for state in tqdm(sunfish_boards, desc='Getting true moves'))
 
         def objective_function(x):
