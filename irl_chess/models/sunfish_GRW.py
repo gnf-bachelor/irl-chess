@@ -100,7 +100,9 @@ def run_sunfish_GRW(sunfish_boards, config_data, out_path):
     with (Parallel(n_jobs=config_data['n_threads']) as parallel):
         actions_true = parallel(delayed(move_function)(state, pst, config_data['time_limit'], True)
                                 for state in tqdm(sunfish_boards, desc='Getting true moves', ))
-        for epoch in tqdm(range(config_data['epochs']), desc='Epoch'):
+        n_epochs = config_data['epochs']
+        for epoch in range(n_epochs):
+            print(f'Epoch: {epoch+1}/{n_epochs}')
             if permute_all:
                 add = np.random.uniform(low=-delta, high=delta, size=len(permute_idxs)).astype(R.dtype)
                 R_new[permute_idxs] += add
