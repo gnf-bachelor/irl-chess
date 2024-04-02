@@ -6,13 +6,13 @@
     "max_elo": 1800,
     "n_midgame": 15,
     "n_endgame": 30,
-    "n_boards": 10,
-    "epochs": 500,
+    "n_boards": 10000,
+    "epochs": 300,
     "n_threads": 24,
-    "save_every": 2,
-    "plot_every": 2,
+    "save_every": 20,
+    "plot_every": 20,
     "plot_char": ["P", "N", "B", "R", "Q"],
     "permute_char": ["N", "B", "R", "Q"],
     "model": "sunfish_GRW",
-    "move_function": "player_move"
+    "move_function": "sunfish_move"
 }
