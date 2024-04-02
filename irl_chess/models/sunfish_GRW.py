@@ -78,8 +78,7 @@ def sunfish_native_result_string(model_config_data):
     permute_all = model_config_data['permute_all']
     R_true = reformat_list(model_config_data['R_true'], '_')
     R_start = reformat_list(model_config_data['R_start'], '_')
-    move_function = model_config_data['move_function']
-    return f"{delta}-{decay}-{decay_step}-{permute_all}-{time_limit}--{R_start}-{R_true}--{move_function}"
+    return f"{delta}-{decay}-{decay_step}-{permute_all}-{time_limit}--{R_start}-{R_true}"
 
 
 def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path, ):

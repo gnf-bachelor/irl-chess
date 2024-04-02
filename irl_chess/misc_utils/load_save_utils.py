@@ -61,8 +61,9 @@ def base_result_string(base_config_data):
     n_midgame = base_config_data['n_midgame']
     n_endgame = base_config_data['n_endgame']
     n_boards = base_config_data['n_boards']
+    move_function = base_config_data['move_function']
     permute_char = ''.join(base_config_data['permute_char'])
-    return f"{time_control}-{min_elo}-{max_elo}-{n_midgame}_to_{n_endgame}-{n_boards}-{permute_char}"
+    return f"{time_control}-{min_elo}-{max_elo}-{n_midgame}_to_{n_endgame}-{n_boards}-{permute_char}-{move_function}"
 
 
 def create_result_path(base_config_data, model_config_data, model_result_string, path_result=None,
