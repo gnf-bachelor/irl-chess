@@ -1,5 +1,5 @@
 {
-    "permute_all": false,
+    "permute_all": true,
     "delta": 20.0,
     "decay": "None",
     "decay_step": "None", 

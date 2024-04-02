@@ -98,7 +98,6 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path, ):
 
     last_acc = 0
     accuracies = []
-
     with (Parallel(n_jobs=config_data['n_threads']) as parallel):
         actions_true = player_moves if use_player_move else parallel(
             delayed(sunfish_move)(state, pst, config_data['time_limit'], True)
@@ -106,7 +105,7 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path, ):
         for epoch in tqdm(range(config_data['epochs']), desc='Epoch'):
             if permute_all:
                 add = np.random.uniform(low=-delta, high=delta, size=len(permute_idxs)).astype(R.dtype)
-                R_new[permute_idxs] += add
+                R_new[permute_idxs] = R[permute_idxs] + add
             else:
                 choice = np.random.choice(permute_idxs)
                 R_new[choice] += np.random.uniform(low=-delta, high=delta, size=1).item()
