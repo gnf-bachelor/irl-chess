@@ -132,7 +132,7 @@ def get_states(websites_filepath, file_path_data, config_data):
                     game = chess.pgn.read_game(pgn)
                     if is_valid_game(game, config_data=config_data):
                         board_midgame, move_midgame = get_board_after_n(game, config_data['n_midgame'], )
-                        board_endgame, move_endgame = get_board_after_n(game, config_data['n_midgame'], )
+                        board_endgame, move_endgame = get_board_after_n(game, config_data['n_endgame'], )
                         chess_boards.append(board_midgame)
                         moves.append(move_midgame)
                         chess_boards.append(board_endgame)
