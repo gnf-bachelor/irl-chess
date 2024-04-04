@@ -130,3 +130,4 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path, ):
             process_epoch(R, epoch, config_data, out_path)  # , accuracies=accuracies)
 
             print(f'Current accuracy: {acc}, {last_acc}')
+            print(f'Best R: {R}')
