@@ -1,0 +1,14 @@
+{
+    "permute_all": true,
+    "delta": 20.0,
+    "decay": "None",
+    "decay_step": "None", 
+    "search_depth": 2,
+    "k": 3,
+    "R_noisy_vals": 0, 
+    "R_true": [100, 280, 320, 479, 929, 60000],
+    "R_start": [100, 100, 100, 100, 100, 60000],
+    "quiesce": false,
+    "n_threads": 24,
+    "version": "v0_multi"
+}

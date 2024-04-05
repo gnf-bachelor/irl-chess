@@ -41,12 +41,29 @@ Tue ideer:
     Ideally having minimum working prototype 
 
 1st April:
+    Harmonize and standardize code library
+    Implement more BIRL methods within the framework
+    Complete Berkely Deep RL course
+    Complete reading list and have strong overview of modern IRL methods
+
 
 1st May:
 
 
 6th June:
     Submission deadline    
+
+
+---- Report TODO ----
+    - Write Theory
+        - Introduce RL. Including formal introduction with nomanclature and math.
+        - Introduce IRL.
+            - Discuss various IRL methods. Limitations of visitation frequency. MAP. BIRL. Compare and contrast.
+            - Say many of the same things and in Berkely video
+        - Bayesian Optimization: Gaussian process
+        - Chess Programming. 
+    - Method
+        - Sketch what we aim to do. We will of course change this later. 
 
 ---- Relevant IRL papers reading list ----
 
@@ -62,12 +79,10 @@ Less vital/useful background:
 
 
 ---- Questions for Tue ----
-    - Discuss current performance of algorithm.
     - Discuss trajectory from here. Other approaches?
         - Minimum viable prototype?
         - GAN architecture. Make Network that tries to maximize difference between performance of data and most recent trained policy. 
             - Ideas from Tue of representation and feasibility. 
         - MAP estimation instead of bayesian approach.
-    - Projektplan? 
     - Thoughts on whether model trajectories are optimal enough with respect to any reward function we can reasonably model?
 

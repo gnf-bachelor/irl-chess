@@ -1,8 +1,8 @@
-#BSUB -J sunfish-D35
-#BSUB -o /zhome/de/d/169059/Desktop/irl-chess/hpc-logs/sunfish-D35%J.out
-#BSUB -e /zhome/de/d/169059/Desktop/irl-chess/hpc-logs/sunfish-D35%J.err
+#BSUB -J sunfish-D3
+#BSUB -o /zhome/de/d/169059/Desktop/irl-chess/hpc-logs/sunfish-permute/%J.out
+#BSUB -e /zhome/de/d/169059/Desktop/irl-chess/hpc-logs/sunfish-permute/%J.err
 #BSUB -q hpc
-#BSUB -n 4
+#BSUB -n 24
 #BSUB -R "rusage[mem=1G]"
 #BSUB -R "span[hosts=1]"
 #BSUB -W 24:00
@@ -14,4 +14,4 @@
 
 module load python3/3.10.13
 source venv/bin/activate 
-python3 -m irl_chess.plot_sunfish_permuted
+python3 -m irl_chess.sunfish_native_pw

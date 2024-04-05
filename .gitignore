@@ -183,6 +183,13 @@ lightning_logs
 *.ckpt
 downloads/api_tokens
 models/sunfish_permuted
+models/sunfish_permutation_native
+models/bayesian_optimisation
 *.err
 *.out
 
+# exclude everything. This folder is where results will be saved after running run_model
+results/* 
+
+# exception to the rule
+!results/.gitkeep 
