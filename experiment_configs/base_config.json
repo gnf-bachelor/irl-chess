@@ -14,5 +14,5 @@
     "plot_char": ["P", "N", "B", "R", "Q"],
     "permute_char": ["N", "B", "R", "Q"],
     "model": "sunfish_GRW",
-    "move_function": "sunfish_move"
+    "move_function": "player_move"
 }
