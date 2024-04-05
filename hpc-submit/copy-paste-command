@@ -1,2 +1,2 @@
 git pull
-bsub < hpc-submit/submit-permute-native.sh
+bsub < hpc-submit/submit-run-model.sh
