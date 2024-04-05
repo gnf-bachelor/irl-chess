@@ -1,6 +1,6 @@
 {
     "overwrite": false,
-    "n_files": 1,
+    "n_files": 12,
     "time_control": false,
     "min_elo": 1600,
     "max_elo": 1800,
