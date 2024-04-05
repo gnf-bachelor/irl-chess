@@ -103,6 +103,7 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path, ):
             delayed(sunfish_move)(state, pst, config_data['time_limit'], True)
             for state in tqdm(sunfish_boards, desc='Getting true moves', ))
         for epoch in tqdm(range(config_data['epochs']), desc='Epoch'):
+            print(epoch)
             if permute_all:
                 add = np.random.uniform(low=-delta, high=delta, size=len(permute_idxs)).astype(R.dtype)
                 R_new[permute_idxs] = R[permute_idxs] + add
