@@ -126,8 +126,8 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path, ):
 
             if epoch % config_data['decay_step'] == 0 and epoch != 0:
                 delta *= config_data['decay']
-
-            process_epoch(R, epoch, config_data, out_path)  # , accuracies=accuracies)
+            print(accuracies)
+            process_epoch(R, epoch, config_data, out_path, accuracies=accuracies)
 
             print(f'Current accuracy: {acc}, {last_acc}')
             print(f'Best R: {R}')

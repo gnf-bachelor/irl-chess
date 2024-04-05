@@ -101,7 +101,7 @@ def plot_R_BO(opt, R_true, target_idxs, epoch=None, save_path=False):
 
 
 def plot_R_weights(config_data, out_path, start_weight_idx=0, legend_names=['P', 'N', 'B', 'R', 'Q', 'K'], epoch=None,
-                   **kwargs):
+                   kwargs={}):
     accuracies = kwargs['accuracies'] if 'accuracies' in kwargs else None
     bayesian_args = kwargs['bayesian_args'] if 'bayesian_args' in kwargs else None
     plot_char = char_to_idxs(config_data['plot_char'])
@@ -143,7 +143,7 @@ def plot_R_weights(config_data, out_path, start_weight_idx=0, legend_names=['P',
         plt.title('Accuracies over time')
         plt.xlabel('Epochs')
         plt.ylabel('Accuracy')
-        plt.legend(['Accuracy', 'Accuracy Prev'])
+        plt.legend(['Accuracy', 'Accuracy Max'])
         plt.savefig(join(plot_path, f'accuracies_{epoch}.png'))
         plt.show()
         plt.cla()
