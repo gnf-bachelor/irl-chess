@@ -272,6 +272,7 @@ def get_board_last(tp_move, init_pos):
     return pos_
 
 def plot_R(Rs, R_true, target_idxs, epoch, save_path=False):
+    print('Plotting...')
     colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
     Rs = np.array(Rs)
     targets = R_true[target_idxs]
