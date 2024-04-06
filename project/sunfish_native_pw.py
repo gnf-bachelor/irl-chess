@@ -44,7 +44,7 @@ if __name__ == '__main__':
     n_jobs = config_data['n_jobs']
     batch_size = config_data['batch_size']
 
-    pgn = open("data/lichess_db_standard_rated_2014-09.pgn/lichess_db_standard_rated_2014-09.pgn")
+    pgn = open("data/raw/lichess_db_standard_rated_2013-01.pgn")
     games = []
     n_games = 0
     print('Getting games')
