@@ -91,8 +91,8 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path, ):
 
     permute_idxs = char_to_idxs(config_data['permute_char'])
 
-    Rs = []
     R = np.array(config_data['R_start'])
+    Rs = [R]
     delta = config_data['delta']
 
     last_acc = 0
