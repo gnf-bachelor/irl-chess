@@ -26,7 +26,7 @@ if __name__ == '__main__':
     websites_filepath = join(os.getcwd(), 'downloads', 'lichess_websites.txt')
     file_path_data = join(os.getcwd(), 'data', 'raw')
 
-    sunfish_boards, player_moves = get_states(websites_filepath=websites_filepath,
+    sunfish_boards2, player_moves = get_states(websites_filepath=websites_filepath,
                                 file_path_data=file_path_data,
                                 config_data=config_data) # Boards in the sunfish format.
 
@@ -57,6 +57,6 @@ if __name__ == '__main__':
         states_boards_mid = [get_board_after_n_orig(game, 15) for game in games[:n_boards_mid]]
         states_boards_end = [get_board_after_n_orig(game, 30) for game in games[:n_boards_end]]
         states_boards = states_boards_mid + states_boards_end
-        sunfish_boards2 = [board2sunfish(board, eval_pos(board)) for board in states_boards]
+        sunfish_boards = [board2sunfish(board, eval_pos(board)) for board in states_boards]
 
     model(sunfish_boards=sunfish_boards, player_moves=player_moves, config_data=config_data, out_path=out_path)
