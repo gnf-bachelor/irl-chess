@@ -89,11 +89,10 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path, ):
     else:
         raise Exception(f"The move function {config_data['move_function']} is not implemented yet")
 
-    permute_all = config_data['permute_all']
     permute_idxs = char_to_idxs(config_data['permute_char'])
 
+    Rs = []
     R = np.array(config_data['R_start'])
-    R_new = copy.copy(R)
     delta = config_data['delta']
 
     last_acc = 0
@@ -103,30 +102,26 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path, ):
             delayed(sunfish_move)(state, pst, config_data['time_limit'], True)
             for state in tqdm(sunfish_boards, desc='Getting true moves', ))
         for epoch in tqdm(range(config_data['epochs']), desc='Epoch'):
-            if permute_all:
-                add = np.random.uniform(low=-delta, high=delta, size=len(permute_idxs)).astype(R.dtype)
-                R_new[permute_idxs] = R[permute_idxs] + add
-            else:
-                choice = np.random.choice(permute_idxs)
-                R_new[choice] += np.random.uniform(low=-delta, high=delta, size=1).item()
+            add = np.zeros(6)
+            add[permute_idxs] = np.random.choice([-delta, delta], len(permute_idxs))
+            R_new = R + add
 
             pst_new = get_new_pst(R_new)  # Sunfish uses only pst table for calculations
             actions_new = parallel(delayed(sunfish_move)(state, pst_new, config_data['time_limit'], True)
                                    for state in tqdm(sunfish_boards, desc='Getting new actions'))
 
             acc = sum([a == a_new for a, a_new in list(zip(actions_true, actions_new))]) / config_data['n_boards']
-            change_weights = np.random.rand() < np.exp(acc) / (np.exp(acc) + np.exp(last_acc)) if config_data[
-                                                                                                      'version'] == 'v1_native_multi' else acc >= last_acc
-            if change_weights:
+            if acc >= last_acc:
                 R = copy.copy(R_new)
                 last_acc = copy.copy(acc)
 
             accuracies.append((acc, last_acc))
+            Rs.append(R)
 
             if epoch % config_data['decay_step'] == 0 and epoch != 0:
                 delta *= config_data['decay']
 
             process_epoch(R, epoch, config_data, out_path)  # , accuracies=accuracies)
 
-            print(f'Current accuracy: {acc}, {last_acc}')
+            print(f'Current accuracy: {acc}, best: {last_acc}')
             print(f'Best R: {R}')
