@@ -81,7 +81,7 @@ def sunfish_native_result_string(model_config_data):
     return f"{delta}-{decay}-{decay_step}-{permute_all}-{time_limit}--{R_start}-{R_true}"
 
 
-def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path, ):
+def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path):
     if config_data['move_function'] == "sunfish_move":
         use_player_move = False
     elif config_data['move_function'] == "player_move":

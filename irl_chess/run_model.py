@@ -33,7 +33,7 @@ if __name__ == '__main__':
     # testing if the data/ data gathering method is what is causing problems
     testing_2014 = True
     if testing_2014:
-        def get_board_after_n(game, n):
+        def get_board_after_n_orig(game, n):
             board = game.board()
             for i, move in enumerate(game.mainline_moves()):
                 board.push(move)
@@ -42,7 +42,7 @@ if __name__ == '__main__':
             return board
 
 
-        pgn = open("data/lichess_db_standard_rated_2014-09.pgn/lichess_db_standard_rated_2014-09.pgn")
+        pgn = open("data/raw/lichess_db_standard_rated_2013-01.pgn")
         games = []
         n_games = 0
         n_boards_total = config_data['n_boards']
@@ -51,12 +51,12 @@ if __name__ == '__main__':
         print('Getting games')
         while len(games) < n_boards_total:
             game = chess.pgn.read_game(pgn)
-            if len(list(game.mainline_moves())) > 26:
+            if len(list(game.mainline_moves())) > 31:
                 games.append(game)
 
-        states_boards_mid = [get_board_after_n(game, 15) for game in games[:n_boards_mid]]
-        states_boards_end = [get_board_after_n(game, 30) for game in games[:n_boards_end]]
+        states_boards_mid = [get_board_after_n_orig(game, 15) for game in games[:n_boards_mid]]
+        states_boards_end = [get_board_after_n_orig(game, 30) for game in games[:n_boards_end]]
         states_boards = states_boards_mid + states_boards_end
-        sunfish_boards = [board2sunfish(board, eval_pos(board)) for board in states_boards]
+        sunfish_boards2 = [board2sunfish(board, eval_pos(board)) for board in states_boards]
 
     model(sunfish_boards=sunfish_boards, player_moves=player_moves, config_data=config_data, out_path=out_path)

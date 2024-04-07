@@ -44,10 +44,10 @@ def str_to_sunfish_move(move):
     if not isinstance(move, str):
         move = move.uci()
     # Assert either normal move or promotion
-    assert (len(move) == 4 or len(move) == 6), 'Move must be 4 or 6 chars long'
+    assert (len(move) == 4 or len(move) == 5), 'Move must be 4 or 5 chars long'
     i = square2sunfish(move[:2])
     j = square2sunfish(move[2:4])
-    prom = move[5] if len(move) > 4 else ''
+    prom = move[4] if len(move) > 4 else ''
     return Move(i, j, prom)
 
 # Takes a board object and returns the position
