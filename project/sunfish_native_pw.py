@@ -9,18 +9,7 @@ from joblib import Parallel, delayed
 from project import pst
 from project.chess_utils.sunfish_utils import board2sunfish, eval_pos, get_new_pst, sunfish_move_mod
 from project.chess_utils.utils import get_board_after_n, plot_R
-from multiprocessing import Pool
-from functools import partial
 
-def state_batches(states, batch_size):
-    n_states = len(states)
-    state_batches = []
-    for i in range(0, n_states, batch_size):
-        if i + batch_size > n_states:
-            state_batches.append(states[i:])
-            break
-        state_batches.append(states[i:i+batch_size])
-    return state_batches
 
 if __name__ == '__main__':
     if os.getcwd()[-9:] != 'irl-chess':
