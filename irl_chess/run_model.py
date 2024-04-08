@@ -26,12 +26,12 @@ if __name__ == '__main__':
     websites_filepath = join(os.getcwd(), 'downloads', 'lichess_websites.txt')
     file_path_data = join(os.getcwd(), 'data', 'raw')
 
-    sunfish_boards2, player_moves = get_states(websites_filepath=websites_filepath,
+    sunfish_boards, player_moves = get_states(websites_filepath=websites_filepath,
                                 file_path_data=file_path_data,
                                 config_data=config_data) # Boards in the sunfish format.
 
     # testing if the data/ data gathering method is what is causing problems
-    testing_2014 = True
+    testing_2014 = False
     if testing_2014:
         def get_board_after_n_orig(game, n):
             board = game.board()
