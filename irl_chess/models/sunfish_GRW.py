@@ -101,7 +101,9 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path):
         actions_true = player_moves if use_player_move else parallel(
             delayed(sunfish_move)(state, pst, config_data['time_limit'], True)
             for state in tqdm(sunfish_boards, desc='Getting true moves', ))
-        for epoch in tqdm(range(config_data['epochs']), desc='Epoch'):
+        print(f'First 5 true actions: {actions_true[:5]}')
+        for epoch in range(config_data['epochs']):
+            print(f'Epoch {epoch + 1}\n', '-' * 25)
             add = np.zeros(6)
             add[permute_idxs] = np.random.choice([-delta, delta], len(permute_idxs))
             R_new = R + add
@@ -109,6 +111,12 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path):
             pst_new = get_new_pst(R_new)  # Sunfish uses only pst table for calculations
             actions_new = parallel(delayed(sunfish_move)(state, pst_new, config_data['time_limit'], True)
                                    for state in tqdm(sunfish_boards, desc='Getting new actions'))
+            # check sunfish moves same color as player
+            for k, pos in enumerate(sunfish_boards):
+                player_move_square = player_moves[k].i
+                sunfish_move_square = actions_new[k].i
+                move_ok = pos.board[player_move_square].isupper() == pos.board[sunfish_move_square].isupper()
+                assert move_ok, 'Wrong color piece moved by sunfish'
 
             acc = sum([a == a_new for a, a_new in list(zip(actions_true, actions_new))]) / config_data['n_boards']
             if acc >= last_acc:
@@ -123,5 +131,6 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path):
 
             process_epoch(R, epoch, config_data, out_path)  # , accuracies=accuracies)
 
+            print(f'First 5 model actions: {actions_new[:5]}')
             print(f'Current accuracy: {acc}, best: {last_acc}')
             print(f'Best R: {R}')

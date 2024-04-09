@@ -85,11 +85,13 @@ def get_board_after_n(game, n, ):
     """
     board = game.board()
     for i, move in enumerate(game.mainline_moves()):
-        if i < n - 1:  # Get the board after exactly n moves (iterator starts from 0)
+        if i < n:
             board.push(move)
         if i == n:  # Get the next move
             break
-    return board, str_to_sunfish_move(move)
+    flip = not board.turn
+    move = str_to_sunfish_move(move, flip)
+    return board, move
 
 
 def is_valid_game(game, config_data):
