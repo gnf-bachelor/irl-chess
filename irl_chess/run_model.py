@@ -57,6 +57,6 @@ if __name__ == '__main__':
         states_boards_mid = [get_board_after_n_orig(game, 15) for game in games[:n_boards_mid]]
         states_boards_end = [get_board_after_n_orig(game, 30) for game in games[:n_boards_end]]
         states_boards = states_boards_mid + states_boards_end
-        sunfish_boards2 = [board2sunfish(board, eval_pos(board)) for board in states_boards]
+        sunfish_boards = [board2sunfish(board, eval_pos(board)) for board in states_boards]
 
     model(sunfish_boards=sunfish_boards, player_moves=player_moves, config_data=config_data, out_path=out_path)
