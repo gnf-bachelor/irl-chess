@@ -67,7 +67,7 @@ def sunfish_move(state, pst, time_limit, move_only=False, run_at_least=1):
                                    searcher"
     if move_only:
         return best_move
-    return best_move, searcher.tp_move, searcher.tp_score
+    return best_move, searcher.best_moves, searcher.move_dict
 
 
 def sunfish_native_result_string(model_config_data):
