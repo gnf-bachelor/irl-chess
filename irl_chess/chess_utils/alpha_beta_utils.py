@@ -27,23 +27,23 @@ class PriorityQueueWithFIFO(PriorityQueue):
         priority, _, data = super().get()
         return priority, data
     
-    def update_best_moves(self, eval, data, maximize):
-        self.put(((1 if maximize else -1)*eval, data))
+    def update_best_moves(self, eval, board, move_queue, maximize):
+        self.put(((1 if maximize else -1)*eval, (board, move_queue)))
         if self.full():
             self.get()  # Remove the least best move if queue is full. Keep the highest eval. 
 
-    def process_move(self, eval, data, maximize):
-        self.update_best_moves(eval, data, maximize)
+    def process_move(self, eval, board, move_queue, maximize):
+        self.update_best_moves(eval, board, move_queue, maximize)
         # Return evaluation of worst move in priority queue. Highest for white and lowest for black. 
         return (1 if maximize else -1)*self.queue[0][0]   
     
-    def to_ordered_list(self, maximize, k = None, verbose = False) -> list[tuple[float, type]]:
+    def to_ordered_list(self, maximize, k = None, verbose = False):
         # Extract the k best moves from the priority queue
         if k is None: k = self.maxsize-1
         k_best_moves = []
         while not self.empty():
-            eval, data = self.get()
-            k_best_moves.append(((1 if maximize else -1)*eval, data))
+            eval, (board, move_queue) = self.get()
+            k_best_moves.append(((1 if maximize else -1)*eval, board, move_queue))
         k_best_moves.reverse() # Order from best to worst
         if verbose and len(k_best_moves) != k: print(f"Warning: only {len(k_best_moves)} available and not {k} from this position")
         return k_best_moves
@@ -152,7 +152,7 @@ def alpha_beta_search_k(board: chess.Board,
                 eval, board_last, move_queue = alpha_beta_search_k(board, depth - 1, k=1, alpha=alpha, beta=beta, maximize=False, R=R, pst=pst, evaluation_function=evaluation_function, quiesce=quiesce)[0]
                 board.pop()
                 move_queue.appendleft(move)
-                atLeastEval = best_moves.process_move(eval, (board_last, move_queue), maximize) # Returns eval of the worst move in our best_moves list
+                atLeastEval = best_moves.process_move(eval, board_last, move_queue, maximize) # Returns eval of the worst move in our best_moves list
                 if best_moves.size == k: alpha = atLeastEval
                 if beta <= alpha:
                     break  # Beta cut-off
@@ -173,12 +173,12 @@ def alpha_beta_search_k(board: chess.Board,
                 eval, board_last, move_queue = alpha_beta_search_k(board, depth=depth - 1, k=1, alpha=alpha, beta=beta, maximize=True, R=R, pst=pst, evaluation_function=evaluation_function, quiesce=quiesce)[0]
                 board.pop()
                 move_queue.appendleft(move)
-                atLeastEval = best_moves.process_move(eval, (board_last, move_queue), maximize) # Returns eval of the worst move in our best_moves list
+                atLeastEval = best_moves.process_move(eval, board_last, move_queue, maximize) # Returns eval of the worst move in our best_moves list
                 if best_moves.size == k: beta = atLeastEval
                 if beta <= alpha:
                     break  # Alpha cut-off
 
-    return [(eval, board, move_queue) for eval, (board, move_queue) in best_moves.to_ordered_list(maximize, k)]
+    return best_moves.to_ordered_list(maximize, k)
 
 def quiescence_search(board: chess.Board,
                       depth,
@@ -219,7 +219,7 @@ def quiescence_search(board: chess.Board,
         static_eval, board_best, move_queue_best = no_moves_eval(board, R, pst, evaluation_function)
         if static_eval >= beta: return [(beta, board_best, move_queue_best)] # Position is too good for white for black to allow. 
                 # Or at best equal to something already explored. This means it should never be included in our final returned moves.
-        atLeastEval = best_moves.process_move(static_eval, (board_last, move_queue), maximize) 
+        atLeastEval = best_moves.process_move(static_eval, board_best, move_queue_best, maximize) 
         if best_moves.size == k: alpha = atLeastEval
 
         
@@ -230,7 +230,7 @@ def quiescence_search(board: chess.Board,
                 eval, board_last, move_queue = quiescence_search(board, depth - 1, k=1, alpha=alpha, beta=beta, maximize=False, R=R, pst=pst, evaluation_function=evaluation_function)[0]
                 board.pop()
                 move_queue.appendleft(move)
-                atLeastEval = best_moves.process_move(eval, (board_last, move_queue), maximize) # Returns eval of the worst move in our best_moves list
+                atLeastEval = best_moves.process_move(eval, board_last, move_queue, maximize) # Returns eval of the worst move in our best_moves list
                 if best_moves.size == k: alpha = atLeastEval
                 if beta <= alpha:
                     break  # Beta cut-off
@@ -242,7 +242,7 @@ def quiescence_search(board: chess.Board,
         static_eval, board_best, move_queue_best = no_moves_eval(board, R, pst, evaluation_function)
         if static_eval <= alpha: return [(alpha, board_best, move_queue_best)] # Position is too good for black for white to allow. 
                 # Or at best equal to something already explored. This means it should never be included in our final returned moves.
-        atLeastEval = best_moves.process_move(static_eval, (board_last, move_queue), maximize) 
+        atLeastEval = best_moves.process_move(static_eval, board_best, move_queue_best, maximize) 
         if best_moves.size == k: beta = atLeastEval
 
         if (not no_move):
@@ -251,12 +251,12 @@ def quiescence_search(board: chess.Board,
                 eval, board_last, move_queue = quiescence_search(board, depth=depth - 1, k=1, alpha=alpha, beta=beta, maximize=True, R=R, pst=pst, evaluation_function=evaluation_function)[0]
                 board.pop()
                 move_queue.appendleft(move)
-                atLeastEval = best_moves.process_move(eval, (board_last, move_queue), maximize) # Returns eval of the worst move in our best_moves list
+                atLeastEval = best_moves.process_move(eval, board_last, move_queue, maximize) # Returns eval of the worst move in our best_moves list
                 if best_moves.size == k: beta = atLeastEval
                 if beta <= alpha:
                     break  # Beta cut-off
 
-    return [(eval, board, move_queue) for eval, (board, move_queue) in best_moves.to_ordered_list(maximize, k)]
+    return best_moves.to_ordered_list(maximize, k)
 
 def alpha_beta_search(board: chess.Board,
                       depth,
