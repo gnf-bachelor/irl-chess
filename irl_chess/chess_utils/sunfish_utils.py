@@ -140,3 +140,21 @@ def eval_pos(board, R=None):
                 eval += piece_dict[p] + pst[p][square]
     return eval
 
+def top_k_moves(move_dict, k, verbose=False):
+    score_matrix = np.zeros((len(move_dict), 200), dtype=float) - np.inf
+    for i, (move, scores) in enumerate(move_dict.items()):
+        score_matrix[i, :len(scores)] = scores
+    moves_at_depth = (score_matrix != -np.inf).sum(axis=0)
+    top_moves_depth = sum(moves_at_depth > k)
+    top_moves_idxs = np.where(score_matrix[:, top_moves_depth] != -np.inf)[0]
+    if verbose:
+        print('Intermediary moves')
+        print({sunfish_move_to_str(move) for i, move in enumerate(move_dict) if i in top_moves_idxs}, '\n')
+    score_matrix[top_moves_idxs, top_moves_depth-1] = -np.inf
+    missing_moves = k - len(top_moves_idxs)
+    if verbose:
+        print(missing_moves)
+    if missing_moves:
+        top_moves_idxs = np.append(top_moves_idxs, score_matrix[:, top_moves_depth-1].argsort()[-missing_moves:])
+    return {move for i, move in enumerate(move_dict) if i in top_moves_idxs}
+

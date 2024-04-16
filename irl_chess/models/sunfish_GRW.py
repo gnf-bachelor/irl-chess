@@ -9,7 +9,7 @@ from tqdm import tqdm
 from joblib import Parallel, delayed
 
 from irl_chess import Searcher, pst, piece
-from irl_chess.chess_utils.sunfish_utils import board2sunfish, sunfish2board
+from irl_chess.chess_utils.sunfish_utils import board2sunfish, sunfish2board, top_k_moves
 from irl_chess.visualizations import char_to_idxs
 
 from irl_chess.misc_utils.utils import reformat_list
@@ -90,6 +90,7 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path):
         raise Exception(f"The move function {config_data['move_function']} is not implemented yet")
 
     permute_idxs = char_to_idxs(config_data['permute_char'])
+    metric = config_data['metric']
 
     R = np.array(config_data['R_start'])
     Rs = [R]
@@ -101,7 +102,7 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path):
         actions_true = player_moves if use_player_move else parallel(
             delayed(sunfish_move)(state, pst, config_data['time_limit'], True)
             for state in tqdm(sunfish_boards, desc='Getting true moves', ))
-        print(f'First 5 true actions: {actions_true[:5]}')
+
         for epoch in range(config_data['epochs']):
             print(f'Epoch {epoch + 1}\n', '-' * 25)
             add = np.zeros(6)
@@ -109,16 +110,32 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path):
             R_new = R + add
 
             pst_new = get_new_pst(R_new)  # Sunfish uses only pst table for calculations
-            actions_new = parallel(delayed(sunfish_move)(state, pst_new, config_data['time_limit'], True)
-                                   for state in tqdm(sunfish_boards, desc='Getting new actions'))
-            # check sunfish moves same color as player
-            for k, pos in enumerate(sunfish_boards):
-                player_move_square = player_moves[k].i
-                sunfish_move_square = actions_new[k].i
-                move_ok = pos.board[player_move_square].isupper() == pos.board[sunfish_move_square].isupper()
-                assert move_ok, 'Wrong color piece moved by sunfish'
+            results = parallel(delayed(sunfish_move)(state, pst_new, config_data['time_limit'], False)
+                                                            for state in tqdm(sunfish_boards, desc='Getting new actions'))
+            # metric_index = ['best move', 'best move list', 'top k moves'].index(metric)
+            # actions_new = [result[metric_index] for result in results]
+            # if metric == 'top k moves':
+            #     actions_new = [top_k_moves(move_dict, 5) for move_dict in actions_new]
+            metric = 'best move list'
+            moves = [move for (move, best_moves, move_dict) in results]
+            best_moves_lists = [best_moves for (move, best_moves, move_dict) in results]
+            move_dicts = [move_dict for (move, best_moves, move_dict) in results]
 
-            acc = sum([a == a_new for a, a_new in list(zip(actions_true, actions_new))]) / config_data['n_boards']
+            actions_new = [top_k_moves(move_dict, 5) for move_dict in move_dicts]
+
+            assert all([move in best_moves_list for move, best_moves_list in list(zip(moves, best_moves_lists))]), 'best move not in list'
+
+            # check sunfish moves same color as player
+            # for k, pos in enumerate(sunfish_boards):
+            #     player_move_square = actions_true[k].i
+            #     sunfish_move_square = actions_new[k][0].i
+            #     move_ok = pos.board[player_move_square].isupper() == pos.board[sunfish_move_square].isupper()
+            #     assert move_ok, 'Wrong color piece moved by sunfish'
+
+            acc = sum([a == a_new for a, a_new in list(zip(actions_true, moves))]) / config_data['n_boards']
+            acc2 = sum([a in a_new for a, a_new in list(zip(actions_true, best_moves_lists))]) / config_data['n_boards']
+            acc3 = sum([a in a_new for a, a_new in list(zip(actions_true, actions_new))]) / config_data['n_boards']
+            print(acc, acc2, acc3)
             if acc >= last_acc:
                 R = copy.copy(R_new)
                 last_acc = copy.copy(acc)
@@ -131,6 +148,5 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path):
 
             process_epoch(R, epoch, config_data, out_path)  # , accuracies=accuracies)
 
-            print(f'First 5 model actions: {actions_new[:5]}')
             print(f'Current accuracy: {acc}, best: {last_acc}')
             print(f'Best R: {R}')

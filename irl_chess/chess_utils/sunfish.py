@@ -391,6 +391,7 @@ class Searcher:
                 else:
                     self.move_dict[move].append(score)
 
+
             if best >= gamma:
                 # Save the move for pv construction and killer heuristic
                 if move is not None:
