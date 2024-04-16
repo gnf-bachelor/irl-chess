@@ -1,14 +1,12 @@
 ---- Current tasks ---- X = Done, ? = Unsure, . = Partially ocmplete
+[x]    Get sunfish up and running.
+[x]        Write trainable alpha-beta search function weighted with BIRL heuristics.
+[X]        Combine the two by permuting the weights and using the function to approximate the true ones
+[?]            Evaluate performance (doesn't yeild promising results)
+[ ]                Evaluate heuristics qualitatively for different trained chess engines.
 
-[ ]    Can always write on the report
-
-[ ]    Sunfish top-k
-[ ]    Sunfish depth as parameter (max depth of iterative deepening)
-[ ]    Evaluate founds heuristics:
-            More proofs of concept and affirmation that it works
-            Characterization of players at different levels (bad, mid, good; also AI)
-                Would be very cool with characterization of specific players. 
-
+[X]    Segment Lichess dataset and make it amenable to Bayesian IRL algorithm.
+[X]        Begin with a small sample.
 [.]    Go through Berkely Deep RL course
 [.]    Read and understand reading list (see reading list section)
 
@@ -22,10 +20,6 @@
 [ ]    Implement evaluation for king safety, pawn structure, etc.
 [ ]    Implement self-play for sunfish vs sunfish with moderated eval function.
 
-Tue ideer:
-- greedy eval, glem 3.c else statement
-- top k idé, for R og R_ hvor mange af trækkene i deres top k er i A? w+1/W+1
-- Leela0 vektorer?  
 
 
 
@@ -38,21 +32,17 @@ Tue ideer:
     Complete Berkely Deep RL course
     Complete reading list and have strong overview of modern IRL methods
 
-    Ideally having minimum working prototype
+    Ideally having minimum working prototype 
 
 1st April:
-    Harmonize and standardize code library - Almost there
-
-1st May:
+    Harmonize and standardize code library
     Implement more BIRL methods within the framework
-    Implement k-best moves in Sunfish as well (Gabriel) (My framework with priority queue)
     Complete Berkely Deep RL course
     Complete reading list and have strong overview of modern IRL methods
 
-16th May - 31th May : Bachelor grind period
 
-31th May:
-    Be ready to submit
+1st May:
+
 
 6th June:
     Submission deadline    

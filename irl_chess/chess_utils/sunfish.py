@@ -289,7 +289,7 @@ class Searcher:
         self.nodes = 0
         self.search_pst = search_pst
 
-    def bound(self, pos, gamma, depth, can_null=True):
+    def bound(self, pos, gamma, depth, root_position, can_null=True):
         """ Let s* be the "true" score of the sub-tree we are searching.
             The method returns r, where
             if gamma >  s* then s* <= r < gamma  (A better upper bound)
@@ -334,7 +334,7 @@ class Searcher:
             #if depth > 2 and can_null and any(c in pos.board for c in "RBNQ"):
             #if depth > 2 and can_null and any(c in pos.board for c in "RBNQ") and abs(pos.score) < 500:
             if depth > 2 and can_null and abs(pos.score) < 500:
-                yield None, -self.bound(pos.rotate(nullmove=True), 1 - gamma, depth - 3)
+                yield None, -self.bound(pos.rotate(nullmove=True), 1 - gamma, depth - 3, root_position)
 
             # For QSearch we have a different kind of null-move, namely we can just stop
             # and not capture anything else.
@@ -348,7 +348,7 @@ class Searcher:
             # This is known as Internal Iterative Deepening (IID). We set
             # can_null=True, since we want to make sure we actually find a move.
             if not killer and depth > 2:
-                self.bound(pos, gamma, depth - 3, can_null=False)
+                self.bound(pos, gamma, depth - 3, root_position, can_null=False)
                 killer = self.tp_move.get(pos)
 
             # If depth == 0 we only try moves with high intrinsic score (captures and
@@ -360,7 +360,7 @@ class Searcher:
             # We will search it again in the main loop below, but the tp will fix
             # things for us.
             if killer and pos.value(killer, self.search_pst) >= val_lower:
-                yield killer, -self.bound(pos.move(killer, self.search_pst), 1 - gamma, depth - 1)
+                yield killer, -self.bound(pos.move(killer, self.search_pst), 1 - gamma, depth - 1, root_position)
 
             # Then all the other moves
             for val, move in sorted(((pos.value(m, self.search_pst), m) for m in pos.gen_moves()), reverse=True):
@@ -379,16 +379,24 @@ class Searcher:
                     # so it can't get any better than this.
                     break
 
-                yield move, -self.bound(pos.move(move, self.search_pst), 1 - gamma, depth - 1)
+                yield move, -self.bound(pos.move(move, self.search_pst), 1 - gamma, depth - 1, root_position)
 
         # Run through the moves, shortcutting when possible
         best = -MATE_UPPER
         for move, score in moves():
             best = max(best, score)
+            if pos == root_position:
+                if move not in self.move_dict:
+                    self.move_dict[move] = [score]
+                else:
+                    self.move_dict[move].append(score)
+
             if best >= gamma:
                 # Save the move for pv construction and killer heuristic
                 if move is not None:
                     self.tp_move[pos] = move
+                    if (pos == root_position) and (move not in self.best_moves):
+                        self.best_moves[move] = score
                 break
 
         # Stalemate checking is a bit tricky: Say we failed low, because
@@ -412,7 +420,7 @@ class Searcher:
         if depth > 2 and best == -MATE_UPPER:
             flipped = pos.rotate(nullmove=True)
             # Hopefully this is already in the TT because of null-move
-            in_check = self.bound(flipped, MATE_UPPER, 0) == MATE_UPPER
+            in_check = self.bound(flipped, MATE_UPPER, 0, root_position) == MATE_UPPER
             best = -MATE_LOWER if in_check else 0
 
         # Table part 2
@@ -428,7 +436,10 @@ class Searcher:
         self.nodes = 0
         self.history = set(history)
         self.tp_score.clear()
+        self.move_dict = {}
+        self.best_moves = {}
 
+        root_position = history[-1]
         gamma = 0
         # In finished games, we could potentially go far enough to cause a recursion
         # limit exception. Hence we bound the ply. We also can't start at 0, since
@@ -440,7 +451,7 @@ class Searcher:
             # on what's probably not going to change the move played.
             lower, upper = -MATE_LOWER, MATE_LOWER
             while lower < upper - EVAL_ROUGHNESS:
-                score = self.bound(history[-1], gamma, depth, can_null=False)
+                score = self.bound(history[-1], gamma, depth, root_position, can_null=False)
                 if score >= gamma:
                     lower = score
                 if score < gamma:
