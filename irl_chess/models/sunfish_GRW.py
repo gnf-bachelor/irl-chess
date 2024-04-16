@@ -116,10 +116,11 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path):
             # actions_new = [result[metric_index] for result in results]
             # if metric == 'top k moves':
             #     actions_new = [top_k_moves(move_dict, 5) for move_dict in actions_new]
-            metric = 'best move list'
-            moves = [move for (move, best_moves, move_dict) in results]
-            best_moves_lists = [best_moves for (move, best_moves, move_dict) in results]
-            move_dicts = [move_dict for (move, best_moves, move_dict) in results]
+            moves, best_moves_lists, move_dicts = [], [], []
+            for (move, best_moves, move_dict) in results:
+                moves.append(move)
+                best_moves_lists.append(best_moves)
+                move_dicts.append(move_dict)
 
             actions_new = [top_k_moves(move_dict, 5) for move_dict in move_dicts]
 
