@@ -7,7 +7,7 @@
     "max_elo": 3000,
     "n_midgame": 15,
     "n_endgame": 30,
-    "n_boards": 100,
+    "n_boards": 5000,
     "epochs": 50,
     "n_threads": -2,
     "save_every": 50,

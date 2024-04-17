@@ -133,10 +133,12 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path):
             #     move_ok = pos.board[player_move_square].isupper() == pos.board[sunfish_move_square].isupper()
             #     assert move_ok, 'Wrong color piece moved by sunfish'
 
-            acc = sum([a == a_new for a, a_new in list(zip(actions_true, moves))]) / config_data['n_boards']
+            acc1 = sum([a == a_new for a, a_new in list(zip(actions_true, moves))]) / config_data['n_boards']
             acc2 = sum([a in a_new for a, a_new in list(zip(actions_true, best_moves_lists))]) / config_data['n_boards']
             acc3 = sum([a in a_new for a, a_new in list(zip(actions_true, actions_new))]) / config_data['n_boards']
-            print(acc, acc2, acc3)
+
+            print(acc1, acc2, acc3)
+            acc = acc3
             if acc >= last_acc:
                 R = copy.copy(R_new)
                 last_acc = copy.copy(acc)
