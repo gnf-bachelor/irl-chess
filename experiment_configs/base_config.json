@@ -3,7 +3,7 @@
     "n_files": 6,
     "time_control": false,
     "min_elo": 2000,
-    "max_elo": 2000,
+    "max_elo": 2200,
     "n_midgame": 15,
     "n_endgame": 30,
     "n_boards": 10000,
