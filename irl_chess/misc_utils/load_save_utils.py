@@ -2,6 +2,7 @@ import json
 import os
 from os.path import join
 from shutil import copy2
+from copy import deepcopy
 import chess
 import chess.pgn
 import chess.svg
@@ -78,20 +79,19 @@ def create_result_path(base_config_data, model_config_data, model_result_string,
 
 
 # ================= Loading chess games =================
-
-def get_board_after_n(game, n, ):
-    """
-    Must only get boards with moves
-    """
+def get_board_between(game, n_start, n_end):
+    boards, moves = [], []
     board = game.board()
     for i, move in enumerate(game.mainline_moves()):
-        if i < n:
-            board.push(move)
-        if i == n:  # Get the next move
+        board.push(move)
+        if n_start <= i < n_end:
+            flip = not board.turn
+            move = str_to_sunfish_move(move, flip)
+            boards.append(deepcopy(board))
+            moves.append(move)
+        elif i == n_end:
             break
-    flip = not board.turn
-    move = str_to_sunfish_move(move, flip)
-    return board, move
+    return boards, moves
 
 
 def is_valid_game(game, config_data):
@@ -133,12 +133,9 @@ def get_states(websites_filepath, file_path_data, config_data):
                 while len(chess_boards) < config_data['n_boards']:
                     game = chess.pgn.read_game(pgn)
                     if is_valid_game(game, config_data=config_data):
-                        board_midgame, move_midgame = get_board_after_n(game, config_data['n_midgame'], )
-                        board_endgame, move_endgame = get_board_after_n(game, config_data['n_endgame'], )
-                        chess_boards.append(board_midgame)
-                        moves.append(move_midgame)
-                        chess_boards.append(board_endgame)
-                        moves.append(move_endgame)
+                        boards_, moves_ = get_board_between(game, config_data['n_midgame'], config_data['n_endgame'])
+                        chess_boards += boards_
+                        moves += moves_
                     pbar.update(pgn.tell() - progress)
                     progress = pgn.tell()
                     if size <= progress:
@@ -146,7 +143,7 @@ def get_states(websites_filepath, file_path_data, config_data):
             i += 1
 
     boards = [board_translation(board, eval_pos(board)) for board in chess_boards]
-    return boards, moves
+    return boards[:config_data['n_boards']], moves[:config_data['n_boards']]
 
 
 # ================= Processing results =================
