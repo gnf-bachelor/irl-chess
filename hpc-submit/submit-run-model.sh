@@ -1,7 +1,7 @@
 #BSUB -J sunfish-run
 #BSUB -o /zhome/e0/2/169222/Desktop/irl-chess/hpc-logs/sunfish-run/%J.out
 #BSUB -e /zhome/e0/2/169222/Desktop/irl-chess/hpc-logs/sunfish-run/%J.err
-#BSUB -q hpc
+#BSUB -q compute
 #BSUB -n 48
 #BSUB -R "rusage[mem=1G]"
 #BSUB -R "span[hosts=1]"
