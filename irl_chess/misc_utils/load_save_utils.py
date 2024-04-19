@@ -84,12 +84,12 @@ def get_board_between(game, n_start, n_end):
     board = game.board()
     for i, move in enumerate(game.mainline_moves()):
         board.push(move)
-        if n_start <= i < n_end:
+        if n_start <= i <= n_end:
             flip = not board.turn
             move = str_to_sunfish_move(move, flip)
             boards.append(deepcopy(board))
             moves.append(move)
-        elif i == n_end:
+        elif n_end < i:
             break
     return boards, moves
 
