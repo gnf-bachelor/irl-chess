@@ -39,7 +39,7 @@ def eval_pos(board, R=None):
     return eval
 
 
-def sunfish_move(state, pst, time_limit, move_only=False, run_at_least=1):
+def sunfish_move(state, pst, time_limit, max_depth=1000, move_only=False, run_at_least=1):
     """
     Given a state, p-square table and time limit,
     return the sunfish move.
@@ -48,7 +48,7 @@ def sunfish_move(state, pst, time_limit, move_only=False, run_at_least=1):
     :param time_limit:
     :return:
     """
-    searcher = Searcher(pst)
+    searcher = Searcher(pst, max_depth=max_depth)
     start = time()
     best_move = None
     count = 0

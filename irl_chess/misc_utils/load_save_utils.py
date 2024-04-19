@@ -123,14 +123,15 @@ def get_states(websites_filepath, file_path_data, config_data):
 
     chess_boards, moves = [], []
     i = 0
-    while len(chess_boards) < config_data['n_boards']:
+    n_boards = config_data['n_boards']
+    while len(chess_boards) < n_boards:
         pgn_path = pgn_paths[i]
         print(pgn_path)
         progress = 0
         with open(pgn_path) as pgn:
             size = os.path.getsize(pgn_path)
             with tqdm(total=size, desc=f'Looking through file {i}') as pbar:
-                while len(chess_boards) < config_data['n_boards']:
+                while len(chess_boards) < n_boards:
                     game = chess.pgn.read_game(pgn)
                     if is_valid_game(game, config_data=config_data):
                         board_midgame, move_midgame = get_board_after_n(game, config_data['n_midgame'], )

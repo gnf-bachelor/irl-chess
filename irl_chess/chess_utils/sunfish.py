@@ -282,12 +282,13 @@ Entry = namedtuple("Entry", "lower upper")
 
 
 class Searcher:
-    def __init__(self, search_pst):
+    def __init__(self, search_pst, max_depth=1000):
         self.tp_score = {}
         self.tp_move = {}
         self.history = set()
         self.nodes = 0
         self.search_pst = search_pst
+        self.max_depth = max_depth
 
     def bound(self, pos, gamma, depth, root_position, can_null=True):
         """ Let s* be the "true" score of the sub-tree we are searching.
@@ -445,7 +446,7 @@ class Searcher:
         # In finished games, we could potentially go far enough to cause a recursion
         # limit exception. Hence we bound the ply. We also can't start at 0, since
         # that's quiscent search, and we don't always play legal moves there.
-        for depth in range(1, 1000):  # We never search the full 1000, we simply set a time limit!!!
+        for depth in range(1, self.max_depth + 1):  # We never search the full 1000, we simply set a time limit!!!
             # The inner loop is a binary search on the score of the position.
             # Inv: lower <= score <= upper
             # 'while lower != upper' would work, but it's too much effort to spend
