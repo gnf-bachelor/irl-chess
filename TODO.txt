@@ -14,7 +14,21 @@
             (optimize reward function to distinguish between policy moves and data moves,
             policy is then informed by that reward function. Sample from that. Gradient step again.)
                 Figure out how this works and if we want to try it. 
-            
+[ ]    Run the following experiments for actual results:
+        - Sunfish moves
+            - Lower vs higher ELO
+                - Sunfish
+                - (Maia?)
+        - Player game moves
+            - Lower vs higher ELO
+                - Sunfish
+                - Maia
+            - Test on player games
+        - Player puzzle moves
+            - Lower vs higher ELO
+                - Sunfish
+                - Maia
+            - Test on player games
 
 [ ]    Use pst in evaluation function.
 [ ]    Implement evaluation for king safety, pawn structure, etc.
