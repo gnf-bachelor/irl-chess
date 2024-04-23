@@ -1,14 +1,17 @@
 import copy
+import pickle
+from os.path import join
 from time import time
 
 import chess
 import chess.pgn
 import chess.svg
 import numpy as np
+import pandas as pd
 from tqdm import tqdm
 from joblib import Parallel, delayed
 
-from irl_chess import Searcher, pst, piece
+from irl_chess import Searcher, pst, piece, plot_R_weights
 from irl_chess.chess_utils.sunfish_utils import board2sunfish, sunfish2board
 from irl_chess.visualizations import char_to_idxs
 
@@ -81,7 +84,7 @@ def sunfish_native_result_string(model_config_data):
     return f"{delta}-{decay}-{decay_step}-{permute_all}-{time_limit}--{R_start}-{R_true}"
 
 
-def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path):
+def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path, validation_set):
     if config_data['move_function'] == "sunfish_move":
         use_player_move = False
     elif config_data['move_function'] == "player_move":
@@ -94,6 +97,7 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path):
     R = np.array(config_data['R_start'])
     Rs = [R]
     delta = config_data['delta']
+    start_time = time()
 
     last_acc = 0
     accuracies = []
@@ -118,7 +122,7 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path):
                 move_ok = pos.board[player_move_square].isupper() == pos.board[sunfish_move_square].isupper()
                 assert move_ok, 'Wrong color piece moved by sunfish'
 
-            acc = sum([a == a_new for a, a_new in list(zip(actions_true, actions_new))]) / config_data['n_boards']
+            acc = sum([a == a_new for a, a_new in zip(actions_true, actions_new)]) / config_data['n_boards']
             if acc >= last_acc:
                 R = copy.copy(R_new)
                 last_acc = copy.copy(acc)
@@ -134,3 +138,15 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path):
             print(f'First 5 model actions: {actions_new[:5]}')
             print(f'Current accuracy: {acc}, best: {last_acc}')
             print(f'Best R: {R}')
+            if time() - start_time > config_data['max_hours'] * 60 * 60:
+                break
+
+    pst_val = get_new_pst(R)
+    actions_val = parallel(delayed(sunfish_move)(state, pst_val, config_data['time_limit'], True)
+                           for state, move in tqdm(validation_set, desc='Getting validation actions'))
+    acc_temp = []
+    for (state, a), a_val in zip(validation_set, actions_val):
+        acc_temp.append(a == a_val)
+    acc = sum(acc_temp) / len(acc_temp)
+    df = pd.DataFrame([(state, a_true, a_val) for (state, a_true), a_val in zip(validation_set, actions_val)])
+    df.to_csv(join(out_path, 'validation_output.csv'))

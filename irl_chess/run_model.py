@@ -59,4 +59,10 @@ if __name__ == '__main__':
         states_boards = states_boards_mid + states_boards_end
         sunfish_boards = [board2sunfish(board, eval_pos(board)) for board in states_boards]
 
-    model(sunfish_boards=sunfish_boards, player_moves=player_moves, config_data=config_data, out_path=out_path)
+    validation_set = list(zip(sunfish_boards, player_moves))
+
+    model(sunfish_boards=sunfish_boards,
+          player_moves=player_moves,
+          config_data=config_data,
+          out_path=out_path,
+          validation_set=validation_set)
