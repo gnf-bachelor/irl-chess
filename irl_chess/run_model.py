@@ -30,33 +30,4 @@ if __name__ == '__main__':
                                 file_path_data=file_path_data,
                                 config_data=config_data) # Boards in the sunfish format.
 
-    # testing if the data/ data gathering method is what is causing problems
-    testing_2014 = False
-    if testing_2014:
-        def get_board_after_n_orig(game, n):
-            board = game.board()
-            for i, move in enumerate(game.mainline_moves()):
-                board.push(move)
-                if i == n:
-                    break
-            return board
-
-
-        pgn = open("data/raw/lichess_db_standard_rated_2013-01.pgn")
-        games = []
-        n_games = 0
-        n_boards_total = config_data['n_boards']
-        n_boards_mid = n_boards_total//2
-        n_boards_end = n_boards_total//2
-        print('Getting games')
-        while len(games) < n_boards_total:
-            game = chess.pgn.read_game(pgn)
-            if len(list(game.mainline_moves())) > 31:
-                games.append(game)
-
-        states_boards_mid = [get_board_after_n_orig(game, 15) for game in games[:n_boards_mid]]
-        states_boards_end = [get_board_after_n_orig(game, 30) for game in games[:n_boards_end]]
-        states_boards = states_boards_mid + states_boards_end
-        sunfish_boards = [board2sunfish(board, eval_pos(board)) for board in states_boards]
-
     model(sunfish_boards=sunfish_boards, player_moves=player_moves, config_data=config_data, out_path=out_path)

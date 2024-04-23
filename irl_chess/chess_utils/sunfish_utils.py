@@ -53,10 +53,14 @@ def str_to_sunfish_move(move, flip):
     prom = move[4] if len(move) > 4 else ''
     return Move(i, j, prom)
 
+
 # Takes a board object and returns the position
 # in the format sunfish uses. Mangler score.
 def board2sunfish(board, score):
-    fen = board.fen()
+    if isinstance(board, str):
+        fen = board
+    else:
+        fen = board.fen()
 
     board_string, to_move, castling, ep, half_move, full_move = fen.split()
 
@@ -140,7 +144,7 @@ def eval_pos(board, R=None):
                 eval += piece_dict[p] + pst[p][square]
     return eval
 
-def top_k_moves(move_dict, k, verbose=False):
+def top_k_moves(move_dict, k, verbose=False, uci=False):
     score_matrix = np.zeros((len(move_dict), 200), dtype=float) - np.inf
     for i, (move, scores) in enumerate(move_dict.items()):
         score_matrix[i, :len(scores)] = scores
@@ -156,5 +160,7 @@ def top_k_moves(move_dict, k, verbose=False):
         print(missing_moves)
     if missing_moves:
         top_moves_idxs = np.append(top_moves_idxs, score_matrix[:, top_moves_depth-1].argsort()[-missing_moves:])
-    return {move for i, move in enumerate(move_dict) if i in top_moves_idxs}
+    if uci:
+        return [sunfish_move_to_str(move) for i, move in enumerate(move_dict) if i in top_moves_idxs]
+    return [move for i, move in enumerate(move_dict) if i in top_moves_idxs]
 

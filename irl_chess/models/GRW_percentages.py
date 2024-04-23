@@ -1,16 +1,13 @@
 import copy
 from time import time
-import chess
-import chess.pgn
-import chess.svg
+import os
+import json
 import numpy as np
 from tqdm import tqdm
 from joblib import Parallel, delayed
 from irl_chess import Searcher, pst, piece
 from irl_chess.chess_utils.sunfish_utils import board2sunfish, sunfish2board, top_k_moves
 from irl_chess.visualizations import char_to_idxs
-from irl_chess.misc_utils.utils import reformat_list
-from irl_chess.misc_utils.load_save_utils import process_epoch
 from irl_chess.chess_utils.sunfish_utils import get_new_pst, str_to_sunfish_move
 
 
@@ -67,27 +64,20 @@ def sunfish_move(state, pst, time_limit, max_depth=1000, move_only=False, run_at
     return best_move, searcher.best_moves, searcher.move_dict
 
 
-def sunfish_native_result_string(model_config_data):
-    delta = model_config_data['delta']
-    decay = model_config_data['decay']
-    decay_step = model_config_data['decay_step']
-    time_limit = model_config_data['time_limit']
-    permute_all = model_config_data['permute_all']
-    R_true = reformat_list(model_config_data['R_true'], '_')
-    R_start = reformat_list(model_config_data['R_start'], '_')
-    return f"{delta}-{decay}-{decay_step}-{permute_all}-{time_limit}--{R_start}-{R_true}"
+if __name__ == '__main__':
+    os.chdir('..')
+    os.chdir('..')
+    with open('data/move_percentages/moves_1000-1200', 'r') as f:
+        moves_dict = json.load(f)
 
+    n_boards = 1000
+    states = [board2sunfish(fen, 0) for fen in list(moves_dict.keys())[:n_boards]]
+    player_moves = list(moves_dict.values())[:n_boards]
 
-def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path):
-    if config_data['move_function'] == "sunfish_move":
-        use_player_move = False
-    elif config_data['move_function'] == "player_move":
-        use_player_move = True
-    else:
-        raise Exception(f"The move function {config_data['move_function']} is not implemented yet")
+    with open('experiment_configs/GRW_percentages/config.json', 'r') as f:
+        config_data = json.load(f)
 
     permute_idxs = char_to_idxs(config_data['permute_char'])
-    metric = config_data['metric']
 
     R = np.array(config_data['R_start'])
     Rs = [R]
@@ -96,10 +86,6 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path):
     last_acc = 0
     accuracies = []
     with (Parallel(n_jobs=config_data['n_threads']) as parallel):
-        actions_true = player_moves if use_player_move else parallel(
-            delayed(sunfish_move)(state, pst, config_data['time_limit'], True)
-            for state in tqdm(sunfish_boards, desc='Getting true moves', ))
-
         for epoch in range(config_data['epochs']):
             print(f'Epoch {epoch + 1}\n', '-' * 25)
             add = np.zeros(6)
@@ -107,8 +93,8 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path):
             R_new = R + add
 
             pst_new = get_new_pst(R_new)  # Sunfish uses only pst table for calculations
-            results = parallel(delayed(sunfish_move)(state, pst_new, config_data['time_limit'], False)
-                                                            for state in tqdm(sunfish_boards, desc='Getting new actions'))
+            results = parallel(delayed(sunfish_move)(state, pst_new, config_data['time_limit'])
+                               for state in tqdm(states, desc='Getting new actions'))
 
             moves, best_moves_lists, move_dicts = [], [], []
             for (move, best_moves, move_dict) in results:
@@ -116,34 +102,22 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path):
                 best_moves_lists.append(best_moves)
                 move_dicts.append(move_dict)
 
-            actions_new = [top_k_moves(move_dict, 5) for move_dict in move_dicts]
+            actions_new = [top_k_moves(move_dict, 5, uci=True) for move_dict in move_dicts]
 
-            assert all([move in best_moves_list for move, best_moves_list in list(zip(moves, best_moves_lists))]), 'best move not in list'
+            acc = 0
+            for i in range(n_boards):
+                sunfish_moves = actions_new[i]
+                player_move_dict = player_moves[i]
+                acc += sum([player_move_dict[move][0] for move in sunfish_moves
+                            if move in player_move_dict])
+            acc /= n_boards
 
-            # check sunfish moves same color as player
-            # for k, pos in enumerate(sunfish_boards):
-            #     player_move_square = actions_true[k].i
-            #     sunfish_move_square = actions_new[k][0].i
-            #     move_ok = pos.board[player_move_square].isupper() == pos.board[sunfish_move_square].isupper()
-            #     assert move_ok, 'Wrong color piece moved by sunfish'
-
-            acc1 = sum([a == a_new for a, a_new in list(zip(actions_true, moves))]) / config_data['n_boards']
-            acc2 = sum([a in a_new for a, a_new in list(zip(actions_true, best_moves_lists))]) / config_data['n_boards']
-            acc3 = sum([a in a_new for a, a_new in list(zip(actions_true, actions_new))]) / config_data['n_boards']
-
-            print(acc1, acc2, acc3)
-            acc = acc3
             if acc >= last_acc:
                 R = copy.copy(R_new)
                 last_acc = copy.copy(acc)
 
             accuracies.append((acc, last_acc))
             Rs.append(R)
-
-            if epoch % config_data['decay_step'] == 0 and epoch != 0:
-                delta *= config_data['decay']
-
-            process_epoch(R, epoch, config_data, out_path)  # , accuracies=accuracies)
 
             print(f'Current accuracy: {acc}, best: {last_acc}')
             print(f'Best R: {R}')

@@ -79,7 +79,7 @@ def create_result_path(base_config_data, model_config_data, model_result_string,
 
 # ================= Loading chess games =================
 
-def get_board_after_n(game, n, ):
+def get_board_after_n(game, n):
     """
     Must only get boards with moves
     """
