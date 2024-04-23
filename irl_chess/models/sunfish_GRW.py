@@ -148,5 +148,6 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path, validat
     for (state, a), a_val in zip(validation_set, actions_val):
         acc_temp.append(a == a_val)
     acc = sum(acc_temp) / len(acc_temp)
+    print(f'Validation accuracy: {acc}')
     df = pd.DataFrame([(state, a_true, a_val) for (state, a_true), a_val in zip(validation_set, actions_val)])
     df.to_csv(join(out_path, 'validation_output.csv'))
