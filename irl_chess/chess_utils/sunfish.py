@@ -310,7 +310,7 @@ class Searcher:
 
         # Look in the table if we have already searched this position before.
         # We also need to be sure, that the stored search was over the same
-        # nodes as the current search.
+        # nodes as the maia_pretrained search.
         entry = self.tp_score.get((pos, depth, can_null), Entry(-MATE_UPPER, MATE_UPPER))
         if entry.lower >= gamma: return entry.lower
         if entry.upper < gamma: return entry.upper
@@ -355,7 +355,7 @@ class Searcher:
             # promotions). Otherwise we do all moves. This is called quiescent search.
             val_lower = QS - depth * QS_A
 
-            # Only play the move if it would be included at the current val-limit,
+            # Only play the move if it would be included at the maia_pretrained val-limit,
             # since otherwise we'd get search instability.
             # We will search it again in the main loop below, but the tp will fix
             # things for us.

@@ -121,7 +121,7 @@ def alpha_beta_search_k(board: chess.Board,
     :param k: Number of best moves to return
     :param alpha:
     :param beta:
-    :param maximize: The current turn. White is True and black is False.
+    :param maximize: The maia_pretrained turn. White is True and black is False.
     :param R:
     :param evaluation_function:
     :return:
@@ -198,7 +198,7 @@ def quiescence_search(board: chess.Board,
     :param k: Number of best moves to return
     :param alpha:
     :param beta:
-    :param maximize: The current turn. White is True and black is False.
+    :param maximize: The maia_pretrained turn. White is True and black is False.
     :param R:
     :param evaluation_function:
     :return:

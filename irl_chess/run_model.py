@@ -18,6 +18,9 @@ if __name__ == '__main__':
         case "bayesian_optimisation":
             from irl_chess.models.bayesian_optimisation import run_bayesian_optimisation as model, \
                                           bayesian_model_result_string as model_result_string
+        case "maia_pretrained":
+            from irl_chess.models.maia_pretrained import run_maia_pre as model, maia_pre_result_string as model_result_string
+
         case _:
             raise Exception(f"No model found with the name {config_data['model']}")
 

@@ -8,7 +8,7 @@ if __name__ == '__main__':
         os.chdir('../')
     from irl_chess import plot_R_weights, create_sunfish_path
 
-    with open(join(os.getcwd(), 'experiment_configs', 'current', 'config.json'), 'r') as file:
+    with open(join(os.getcwd(), 'experiment_configs', 'maia_pretrained', 'config.json'), 'r') as file:
         config_data = json.load(file)
 
     path_result = join(os.getcwd(), 'models', 'sunfish_permuted')

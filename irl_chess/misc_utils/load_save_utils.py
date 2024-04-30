@@ -27,7 +27,7 @@ def fix_cwd():
         assert_cwd()
     except AssertionError:
         print(os.getcwd())
-        print("Attempting to fix the current working directory.")
+        print("Attempting to fix the maia_pretrained working directory.")
         os.chdir('../')
         print(os.getcwd())
         assert_cwd()
@@ -110,7 +110,9 @@ def is_valid_game(game, config_data):
 
 
 def get_states(websites_filepath, file_path_data, config_data):
-    if config_data['move_function'] == "sunfish_move":
+    if config_data['model'] == 'maia_pretrained':
+        board_translation = lambda *args: args[0]
+    elif config_data['move_function'] == "sunfish_move":
         board_translation = board2sunfish
     elif config_data['move_function'] == "player_move":
         board_translation = board2sunfish

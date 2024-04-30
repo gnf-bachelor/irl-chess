@@ -14,6 +14,6 @@
     "plot_every": 10,
     "plot_char": ["P", "N", "B", "R", "Q"],
     "permute_char": ["N", "B", "R", "Q"],
-    "model": "sunfish_GRW",
+    "model": "maia_pretrained",
     "move_function": "sunfish_move"
 }
