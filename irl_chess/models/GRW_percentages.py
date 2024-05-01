@@ -89,7 +89,9 @@ if __name__ == '__main__':
         for epoch in range(config_data['epochs']):
             print(f'Epoch {epoch + 1}\n', '-' * 25)
             add = np.zeros(6)
-            add[permute_idxs] = np.random.choice([-delta, delta], len(permute_idxs))
+            # don't permute on first epoch.
+            if not epoch == 0:
+                add[permute_idxs] = np.random.choice([-delta, delta], len(permute_idxs))
             R_new = R + add
 
             pst_new = get_new_pst(R_new)  # Sunfish uses only pst table for calculations

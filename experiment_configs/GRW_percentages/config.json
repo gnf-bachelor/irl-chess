@@ -1,10 +1,10 @@
 {
   "delta": 20.0,
-  "time_limit": 0.2,
+  "time_limit": 0.5,
   "permute_all": true,
   "R_start": [100, 100, 100, 500, 900, 60000],
   "time_control": false,
-  "epochs": 50,
+  "epochs": 10,
   "n_threads": -2,
   "save_every": 50,
   "plot_every": 50,
