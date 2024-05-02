@@ -35,7 +35,7 @@ def run_maia_pre(sunfish_boards, player_moves, config_data, out_path, validation
                               time_limit=config_data['time_limit'],
                               parent='maia_chess/')
 
-    actions_val = [maia_pre_move(sunfish2board(state), model) for state, move in
+    actions_val = [maia_pre_move(state, model) for state, move in
                    tqdm(validation_set, desc='Getting validation actions')]
 
     acc_temp = []
