@@ -366,7 +366,7 @@ class Searcher:
             # Then all the other moves
             for val, move in sorted(((pos.value(m, self.search_pst), m) for m in pos.gen_moves()), reverse=True):
                 # Quiescent search
-                if val < val_lower:
+                if val < val_lower and pos != root_position:
                     break
 
                 # If the new score is less than gamma, the opponent will for sure just
@@ -378,7 +378,8 @@ class Searcher:
                     yield move, pos.score + val if val < MATE_LOWER else MATE_UPPER
                     # We can also break, since we have ordered the moves by value,
                     # so it can't get any better than this.
-                    break
+                    if pos != root_position:
+                        break
 
                 yield move, -self.bound(pos.move(move, self.search_pst), 1 - gamma, depth - 1, root_position)
 

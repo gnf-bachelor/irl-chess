@@ -1,0 +1,3 @@
+[submodule "maia-chess"]
+	path = maia-chess
+	url = https://github.com/gnf-bachelor/maia-chess.git

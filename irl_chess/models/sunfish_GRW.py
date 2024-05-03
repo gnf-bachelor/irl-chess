@@ -36,7 +36,7 @@ def eval_pos(board, R=None):
     return eval
 
 
-def sunfish_move(state, pst, time_limit, max_depth=1000, move_only=False, run_at_least=1):
+def sunfish_move(state, pst, time_limit, max_depth=1000, move_only=False, run_at_least=1, min_depth=1):
     """
     Given a state, p-square table and time limit,
     return the sunfish move.
@@ -55,7 +55,7 @@ def sunfish_move(state, pst, time_limit, max_depth=1000, move_only=False, run_at
         if score >= gamma:
             best_move = move
             count_gamma += 1
-        if time() - start > time_limit and count_gamma >= 1 and (count >= run_at_least):
+        if time() - start > time_limit and count_gamma >= 1 and (count >= run_at_least) and depth >= min_depth:
             break
     if best_move is None:
         print(f"best move is: {best_move} and count is {count}")
