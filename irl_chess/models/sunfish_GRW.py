@@ -106,8 +106,8 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path, validat
             delayed(sunfish_move)(state, pst, config_data['time_limit'], True)
             for state in tqdm(sunfish_boards, desc='Getting true moves', ))
         print(f'First 5 true actions: {actions_true[:5]}')
-        for epoch in range(config_data['epochs']):
-            print(f'Epoch {epoch + 1}\n', '-' * 25)
+        for epoch in range(1, config_data['epochs'] + 1):
+            print(f'Epoch {epoch}\n', '-' * 25)
             add = np.zeros(6)
             add[permute_idxs] = np.random.choice([-delta, delta], len(permute_idxs))
             R_new = R + add
