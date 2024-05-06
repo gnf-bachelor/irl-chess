@@ -110,14 +110,11 @@ def is_valid_game(game, config_data):
 
 
 def get_states(websites_filepath, file_path_data, config_data):
-    if config_data['model'] == 'maia_pretrained':
-        board_translation = lambda *args: args[0]
-    elif config_data['move_function'] == "sunfish_move":
-        board_translation = board2sunfish
-    elif config_data['move_function'] == "player_move":
+    if config_data['board_translation'] == 'sunfish':
         board_translation = board2sunfish
     else:
-        raise ValueError(f"Invalid move function for getting states: {config_data['move_function']}")
+        def board_translation(*args):
+            return args[0]
 
     pgn_paths = download_lichess_pgn(websites_filepath=websites_filepath,
                                      file_path_data=file_path_data,

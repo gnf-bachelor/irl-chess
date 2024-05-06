@@ -136,7 +136,7 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path, validat
             process_epoch(R, epoch, config_data, out_path)  # , accuracies=accuracies)
 
             print(f'First 5 model actions: {actions_new[:5]}')
-            print(f'Current accuracy: {acc}, best: {last_acc}')
+            print(f'Current sunfish accuracy: {acc}, best: {last_acc}')
             print(f'Best R: {R}')
             if time() - start_time > config_data['max_hours'] * 60 * 60:
                 break
@@ -151,3 +151,4 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path, validat
         print(f'Validation accuracy: {acc}')
         df = pd.DataFrame([(state, a_true, a_val) for (state, a_true), a_val in zip(validation_set, actions_val)])
         df.to_csv(join(out_path, 'validation_output.csv'))
+        return acc
