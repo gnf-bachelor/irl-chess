@@ -5,14 +5,12 @@ USE PYTHON 3.10!! Otherwise maia-chess will not work
 In order to use Maia chess engines clone this repository, then cd into it.
 Next execute the following command which clones the 'maia-chess' repository into this one:
 
-git clone https://github.com/gnf-bachelor/maia-chess.git
+git clone https://github.com/gnf-bachelor/maia_chess.git
 
-git submodule add https://github.com/gnf-bachelor/maia-chess.git maia_chess
+git submodule add https://github.com/gnf-bachelor/maia_chess.git maia_chess
 
 Then go to https://lczero.org/play/download/ and download an appropriate backend. Place the contents in
 a subfolder of maia-chess called 'lc0-exe-folder' (maia-chess/lc0-exe-folder). 
-
-Rename 'maia-chess' to 'maia_chess' so it can be recognised by python as a module...
 
 Run pip install -r maia_chess/requirements.txt
 
