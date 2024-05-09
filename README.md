@@ -7,7 +7,7 @@ Next execute the following command which clones the 'maia-chess' repository into
 
 git clone https://github.com/gnf-bachelor/maia-chess.git
 
-git submodule add https://github.com/gnf-bachelor/maia-chess.git maia-chess
+git submodule add https://github.com/gnf-bachelor/maia-chess.git maia_chess
 
 Then go to https://lczero.org/play/download/ and download an appropriate backend. Place the contents in
 a subfolder of maia-chess called 'lc0-exe-folder' (maia-chess/lc0-exe-folder). 
