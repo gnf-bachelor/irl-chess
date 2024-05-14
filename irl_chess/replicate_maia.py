@@ -34,12 +34,14 @@ if __name__ == '__main__':
     print(f'Took {time() - t:.2f} seconds to download and load maia dataset')
     elos_players, accuracies, maia_elos = [], [], []
     n_moves = 5000
+    maia_range = (1100, 2000)   # incl. excl.
+    player_range = (1000, 1900) # incl. excl.
 
-    for elo_maia in tqdm(range(1100, 2000, 100), desc='ELO Maia'):
+    for elo_maia in tqdm(range(maia_range[0], maia_range[1], 100), desc='ELO Maia'):
         accuracies.append([])
         elos_players.append([])
         maia_elos.append(elo_maia)
-        for elo_player in tqdm(range(1000, 1900, 100), desc='ELO Players'):
+        for elo_player in tqdm(range(player_range[0], player_range[1], 100), desc='ELO Players'):
             model = load_maia_network(elo=elo_maia, parent='irl_chess/maia_chess/')
             val_df = df[(elo_player < df['opponent_elo']) & (df['white_elo'] < (elo_player + 100))]
             n_moves = val_df.shape[0] if n_moves is None else n_moves
