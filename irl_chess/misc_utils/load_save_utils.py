@@ -1,5 +1,6 @@
 import json
 import os
+from collections import defaultdict
 from os.path import join
 from shutil import copy2
 from copy import deepcopy
@@ -109,7 +110,9 @@ def is_valid_game(game, config_data):
         return False
 
 
-def get_states(websites_filepath, file_path_data, config_data):
+def get_states(websites_filepath, file_path_data, config_data, ply_range=None):
+    ply_dict_boards = defaultdict(lambda: [])
+    ply_dict_moves = defaultdict(lambda: [])
     if config_data['board_translation'] == 'sunfish':
         board_translation = board2sunfish
     else:
@@ -133,16 +136,25 @@ def get_states(websites_filepath, file_path_data, config_data):
                 while len(chess_boards) < config_data['n_boards']:
                     game = chess.pgn.read_game(pgn)
                     if is_valid_game(game, config_data=config_data):
-                        boards_, moves_ = get_boards_between(game, config_data['n_midgame'], config_data['n_endgame'])
-                        chess_boards += boards_
-                        moves += moves_
+                        if ply_range is None:
+                            boards_, moves_ = get_boards_between(game, config_data['n_midgame'], config_data['n_endgame'])
+                            chess_boards += [board_translation(board, eval_pos(board)) for board in boards_]
+                            moves += moves_
+                        else:
+                            for n_ply in range(ply_range[0], ply_range[1]):
+                                boards_, moves_ = get_boards_between(game, n_ply, n_ply)
+                                ply_dict_boards[n_ply] += [board_translation(board, eval_pos(board)) for board in boards_]
+                                ply_dict_moves[n_ply] += moves_
+                            chess_boards += boards_
                     pbar.update(pgn.tell() - progress)
                     progress = pgn.tell()
                     if size <= progress:
                         break
             i += 1
 
-    boards = [board_translation(board, eval_pos(board)) for board in chess_boards]
+    boards = chess_boards
+    if ply_range is not None:
+        return ply_dict_boards, ply_dict_moves
     return boards[:config_data['n_boards']], moves[:config_data['n_boards']]
 
 

@@ -24,6 +24,9 @@ if __name__ == '__main__':
         union_dicts, create_result_path, get_states, board2sunfish, eval_pos
 
     base_config_data, m_config_data = load_config()
+    move_range = (12, 31)   # (inclusive, exclusive)
+
+    base_config_data['n_endgame'] = move_range[1]
     config_data_sunfish = union_dicts(base_config_data, m_config_data)
     with open('experiment_configs/maia_pretrained/config.json') as json_file:
         config_data_maia = json.load(json_file)
@@ -32,7 +35,13 @@ if __name__ == '__main__':
     websites_filepath = join(os.getcwd(), 'downloads', 'lichess_websites.txt')
     file_path_data = join(os.getcwd(), 'data', 'raw')
 
-    move_range = (12, 31)   # (inclusive, exclusive)
+    chess_boards_dict, player_moves_dict = get_states(
+        websites_filepath=websites_filepath,
+        file_path_data=file_path_data,
+        config_data=config_data_maia,
+        ply_range=move_range
+    )  # Boards in the sunfish format.
+
     acc_sunfish_list = []
     acc_maia_list = []
     acc_random_list = []
@@ -42,15 +51,13 @@ if __name__ == '__main__':
         base_config_data['n_endgame'] = n_moves
         config_data_maia['n_midgame'] = n_moves
         config_data_maia['n_endgame'] = n_moves
+        chess_boards = chess_boards_dict[n_moves]
+        player_moves = player_moves_dict[n_moves]
+
         out_path_sunfish = create_result_path(base_config_data, m_config_data, sunfish_native_result_string,
                                               path_result=None)
         out_path_maia = create_result_path(base_config_data, config_data_maia, maia_pre_result_string, path_result=None)
 
-        chess_boards, player_moves = get_states(
-            websites_filepath=websites_filepath,
-            file_path_data=file_path_data,
-            config_data=config_data_maia
-        )  # Boards in the sunfish format.
         sunfish_boards = [board2sunfish(board, eval_pos(board)) for board in chess_boards]
 
         validation_set_sunfish = list(zip(sunfish_boards, player_moves))
