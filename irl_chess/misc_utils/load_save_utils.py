@@ -130,6 +130,7 @@ def get_states(websites_filepath, file_path_data, config_data, ply_range=None):
         pgn_path = pgn_paths[i]
         print(pgn_path)
         progress = 0
+        last_len = 0
         with open(pgn_path) as pgn:
             size = os.path.getsize(pgn_path)
             with tqdm(total=size, desc=f'Looking through file {i}') as pbar:
@@ -148,6 +149,9 @@ def get_states(websites_filepath, file_path_data, config_data, ply_range=None):
                             chess_boards += boards_
                     pbar.update(pgn.tell() - progress)
                     progress = pgn.tell()
+                    if len(chess_boards) > last_len:
+                        print(f'Found {len(chess_boards)}/{config_data["n_boards"]} boards so far')
+                        last_len = len(chess_boards)
                     if size <= progress:
                         break
             i += 1
@@ -168,7 +172,7 @@ def process_epoch(R, epoch, config_data, out_path, **kwargs):
     if config_data['save_every'] and epoch % config_data['save_every'] == 0:
         pd.DataFrame(R.reshape((-1, 1)), columns=['Result']).to_csv(join(out_path, f'{epoch}.csv'),
                                                                     index=False)
-    if config_data['plot_every'] and epoch % config_data['plot_every'] == 0:
+    if epoch and config_data['plot_every'] and (epoch + 1) % config_data['plot_every'] == 0:
         plot_R_weights(config_data=config_data,
                        out_path=out_path,
                        epoch=epoch,

@@ -24,7 +24,7 @@ if __name__ == '__main__':
         union_dicts, create_result_path, get_states, board2sunfish, eval_pos
 
     base_config_data, m_config_data = load_config()
-    move_range = (12, 31)   # (inclusive, exclusive)
+    move_range = (10, 31)   # (inclusive, exclusive)
 
     base_config_data['n_endgame'] = move_range[1]
     config_data_sunfish = union_dicts(base_config_data, m_config_data)
@@ -92,6 +92,6 @@ if __name__ == '__main__':
         plt.ylabel('Accuracy')
         plt.legend()
         os.makedirs('results/plots', exist_ok=True)
-        plt.savefig(f'results/plots/sunfish_maia_accuracy_{move_range[0]}_{n_moves}.png')
+        plt.savefig(f'results/plots/sunfish_maia_accuracy_{base_config_data["n_boards"]}_{move_range[0]}_{n_moves}.png')
         plt.show()
         plt.close()
