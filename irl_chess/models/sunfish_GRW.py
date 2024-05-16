@@ -141,14 +141,16 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path, validat
             if time() - start_time > config_data['max_hours'] * 60 * 60:
                 break
 
-        pst_val = get_new_pst(R)
-        actions_val = parallel(delayed(sunfish_move)(state, pst_val, config_data['time_limit'], True)
-                               for state, move in tqdm(validation_set, desc='Getting Sunfish validation actions'))
-        acc_temp = []
-        for (state, a), a_val in zip(validation_set, actions_val):
-            acc_temp.append(a == a_val)
-        acc = sum(acc_temp) / len(acc_temp)
-        print(f'Validation accuracy: {acc}')
-        df = pd.DataFrame([(state, a_true, a_val) for (state, a_true), a_val in zip(validation_set, actions_val)])
-        df.to_csv(join(out_path, 'validation_output.csv'))
+            if (epoch + 1) % config_data['val_every'] or (epoch - 1) == config_data['epochs']:
+
+                pst_val = get_new_pst(R)
+                actions_val = parallel(delayed(sunfish_move)(state, pst_val, config_data['time_limit'], True)
+                                       for state, move in tqdm(validation_set, desc='Getting Sunfish validation actions'))
+                acc_temp = []
+                for (state, a), a_val in zip(validation_set, actions_val):
+                    acc_temp.append(a == a_val)
+                acc = sum(acc_temp) / len(acc_temp)
+                print(f'Validation accuracy: {acc}')
+                df = pd.DataFrame([(state, a_true, a_val) for (state, a_true), a_val in zip(validation_set, actions_val)])
+                df.to_csv(join(out_path, f'validation_output_{epoch}_{acc}.csv'))
         return acc
