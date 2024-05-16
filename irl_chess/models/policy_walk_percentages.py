@@ -78,6 +78,9 @@ if __name__ == '__main__':
             Q_policy_old = [Q_new_dicts[state][move] for state, move in list(zip(states, moves_old))]  # Q(s,pi,R~)
             Q_policy_new = [Q_new_dicts[state][move] for state, move in list(zip(states, moves_new))]  # Q(s,pi~,R~)
 
+            acc = sum([player_move == move for player_move, move in list(zip(actions, moves_new))]) / n_boards
+            print(f'Accuracy for {R_new}: {acc}')
+
             if any([q_a > q_p for q_a, q_p in list(zip(Q_actions, Q_policy_new))]):
                 joint_p_fraction = joint_probability(Q_policy_new, Q_old_old)
                 p = min(1, joint_p_fraction)

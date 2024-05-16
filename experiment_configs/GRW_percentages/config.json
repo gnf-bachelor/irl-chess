@@ -4,7 +4,7 @@
   "permute_all": true,
   "R_start": [100, 100, 100, 500, 900, 60000],
   "time_control": false,
-  "n_boards": 200,
+  "n_boards": 500,
   "epochs": 50,
   "n_threads": -2,
   "save_every": 50,
