@@ -14,7 +14,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from irl_chess.data.make_dataset import download_lichess_pgn
-from irl_chess.chess_utils.sunfish_utils import board2sunfish, eval_pos, str_to_sunfish_move
+from irl_chess.chess_utils.sunfish_utils import board2sunfish, eval_pos, str_to_sunfish_move, sunfish_move_to_str
 from irl_chess.visualizations import char_to_idxs, plot_R_weights
 
 
@@ -87,12 +87,9 @@ def create_result_path(base_config_data, model_config_data, model_result_string,
 # ================= Loading chess games =================
 def get_boards_between(game, n_start, n_end, board_dict=None, move_dict=None):
     boards, moves = [], []
-    board = game.board()
+    board = chess.Board()
     var = game.variations[0]
-    i = 0
-    while var.variations:
-        i += 1
-        move = var.move
+    for i, move in enumerate(game.mainline_moves()):
         # Search for the pattern in the input string
         match = re.search(pattern_time, var.comment)
         if not match:
@@ -111,12 +108,12 @@ def get_boards_between(game, n_start, n_end, board_dict=None, move_dict=None):
             boards.append(deepcopy(board))
             moves.append(move_sunfish)
             if board_dict is not None and move_dict is not None:
-                board_dict[i].append(board)
+                board_dict[i].append(deepcopy(board))
                 move_dict[i].append(move_sunfish)
         elif n_end < i:
             break
 
-        var = var.variations[0]
+        var = var.variations[0] if var.variations else None
         board.push(move)
 
     return boards, moves
@@ -138,19 +135,7 @@ def is_valid_game(game, config_data):
 
 
 def get_states(websites_filepath, file_path_data, config_data, use_ply_range=True, pgn_paths=None):
-    if use_ply_range:
-        config_data = config_data
-        pickle_path = f'data/processed/'
-        os.makedirs(pickle_path, exist_ok=True)
-        filename_unique = f'{config_data["min_elo"]}_{config_data["max_elo"]}_{config_data["n_midgame"]}_{config_data["n_endgame"]}_{config_data["n_boards"]}.pkl'
-        try:
-            with open(join(pickle_path, f'chess_boards_' + filename_unique), 'rb') as file:
-                ply_dict_boards = pickle.load(file)
-            with open(join(pickle_path, f'player_moves' + filename_unique), 'wb') as file:
-                ply_dict_moves = pickle.load(file)
-            return ply_dict_boards, ply_dict_moves
-        except FileNotFoundError:
-            pass
+
     ply_dict_boards = defaultdict(lambda: []) if use_ply_range else None
     ply_dict_moves = defaultdict(lambda: []) if use_ply_range else None
 
@@ -164,7 +149,19 @@ def get_states(websites_filepath, file_path_data, config_data, use_ply_range=Tru
                                      file_path_data=file_path_data,
                                      overwrite=config_data['overwrite'],
                                      n_files=config_data['n_files']) if pgn_paths is None else pgn_paths
-
+    if use_ply_range:
+        config_data = config_data
+        pickle_path = f'data/processed/'
+        os.makedirs(pickle_path, exist_ok=True)
+        filename_unique = pgn_paths[0][-11:-4] + f'{config_data["min_elo"]}_{config_data["max_elo"]}_{config_data["n_midgame"]}_{config_data["n_endgame"]}_{config_data["n_boards"]}.pkl'
+        try:
+            with open(join(pickle_path, f'chess_boards_' + filename_unique), 'rb') as file:
+                ply_dict_boards = pickle.load(file)
+            with open(join(pickle_path, f'player_moves_' + filename_unique), 'rb') as file1:
+                ply_dict_moves = pickle.load(file1)
+            return ply_dict_boards, ply_dict_moves
+        except FileNotFoundError:
+            pass
     chess_boards, moves = [], []
     i = 0
     n_games = 0
@@ -198,8 +195,8 @@ def get_states(websites_filepath, file_path_data, config_data, use_ply_range=Tru
     if use_ply_range:
         with open(join(pickle_path, f'chess_boards_' + filename_unique), 'wb') as file:
             pickle.dump(dict(ply_dict_boards), file)
-        with open(join(pickle_path, f'player_moves' + filename_unique), 'wb') as file:
-            pickle.dump(dict(ply_dict_moves), file)
+        with open(join(pickle_path, f'player_moves_' + filename_unique), 'wb') as file1:
+            pickle.dump(dict(ply_dict_moves), file1)
         return ply_dict_boards, ply_dict_moves
     return boards[:config_data['n_boards']], moves[:config_data['n_boards']]
 

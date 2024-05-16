@@ -7,7 +7,7 @@ from irl_chess.chess_utils.sunfish import Position, Move, Searcher, render, pst,
 from irl_chess.chess_utils.sunfish import pst_only
 
 
-def sunfish_move_to_str(move: Move, is_black:bool=False):
+def sunfish_move_to_str(move: Move, is_black:bool):
     i, j = move.i, move.j
     if is_black:
         i, j = 119 - i, 119 - j
