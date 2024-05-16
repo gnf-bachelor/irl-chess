@@ -1,5 +1,7 @@
 import json
 import os
+import pickle
+import re
 from collections import defaultdict
 from os.path import join
 from shutil import copy2
@@ -17,6 +19,8 @@ from irl_chess.visualizations import char_to_idxs, plot_R_weights
 
 
 # ================= Load configs and prepare output =================
+pattern_time = r'%clk (\d+):(\d+):(\d+)'
+
 
 def assert_cwd():
     assert os.path.basename(os.getcwd()) == 'irl-chess', f"This file {__file__} is not being run from the appropriate\
@@ -81,18 +85,40 @@ def create_result_path(base_config_data, model_config_data, model_result_string,
 
 
 # ================= Loading chess games =================
-def get_boards_between(game, n_start, n_end):
+def get_boards_between(game, n_start, n_end, board_dict=None, move_dict=None):
     boards, moves = [], []
     board = game.board()
-    for i, move in enumerate(game.mainline_moves()):
-        if n_start <= i <= n_end:
+    var = game.variations[0]
+    i = 0
+    while var.variations:
+        i += 1
+        move = var.move
+        # Search for the pattern in the input string
+        match = re.search(pattern_time, var.comment)
+        if not match:
+            print(f'No move-time information available: {var.comment}, ignoring game')
+            break
+
+        hh = int(match.group(1))
+        mm = int(match.group(2))
+        ss = int(match.group(3))
+
+        if not hh and not mm and ss < 30:
+            break
+        elif n_start <= i <= n_end:
             flip = not board.turn
             move_sunfish = str_to_sunfish_move(move, flip)
             boards.append(deepcopy(board))
             moves.append(move_sunfish)
+            if board_dict is not None and move_dict is not None:
+                board_dict[i].append(board)
+                move_dict[i].append(move_sunfish)
         elif n_end < i:
             break
+
+        var = var.variations[0]
         board.push(move)
+
     return boards, moves
 
 
@@ -102,17 +128,32 @@ def is_valid_game(game, config_data):
         elo_check_white = config_data['min_elo'] < int(game.headers['WhiteElo']) < config_data['max_elo']
         elo_check_black = config_data['min_elo'] < int(game.headers['BlackElo']) < config_data['max_elo']
         # Add 1 to length check to ensure there is a valid move in the position returned
-        length_check = len(list(game.mainline_moves())) > config_data['n_endgame'] + 1
-        return elo_check_white and elo_check_black and length_check
+        # length_check = len(list(game.mainline_moves())) > config_data['n_endgame'] + 1
+        game_type_check = float(game.headers['TimeControl'].split('+')[0]) > 180
+        return elo_check_white and elo_check_black and game_type_check # and length_check
     except KeyError:
         return False
     except ValueError:
         return False
 
 
-def get_states(websites_filepath, file_path_data, config_data, ply_range=None):
-    ply_dict_boards = defaultdict(lambda: [])
-    ply_dict_moves = defaultdict(lambda: [])
+def get_states(websites_filepath, file_path_data, config_data, use_ply_range=True, pgn_paths=None):
+    if use_ply_range:
+        config_data = config_data
+        pickle_path = f'data/processed/'
+        os.makedirs(pickle_path, exist_ok=True)
+        filename_unique = f'{config_data["min_elo"]}_{config_data["max_elo"]}_{config_data["n_midgame"]}_{config_data["n_endgame"]}_{config_data["n_boards"]}.pkl'
+        try:
+            with open(join(pickle_path, f'chess_boards_' + filename_unique), 'rb') as file:
+                ply_dict_boards = pickle.load(file)
+            with open(join(pickle_path, f'player_moves' + filename_unique), 'wb') as file:
+                ply_dict_moves = pickle.load(file)
+            return ply_dict_boards, ply_dict_moves
+        except FileNotFoundError:
+            pass
+    ply_dict_boards = defaultdict(lambda: []) if use_ply_range else None
+    ply_dict_moves = defaultdict(lambda: []) if use_ply_range else None
+
     if config_data['board_translation'] == 'sunfish':
         board_translation = board2sunfish
     else:
@@ -122,10 +163,11 @@ def get_states(websites_filepath, file_path_data, config_data, ply_range=None):
     pgn_paths = download_lichess_pgn(websites_filepath=websites_filepath,
                                      file_path_data=file_path_data,
                                      overwrite=config_data['overwrite'],
-                                     n_files=config_data['n_files'])
+                                     n_files=config_data['n_files']) if pgn_paths is None else pgn_paths
 
     chess_boards, moves = [], []
     i = 0
+    n_games = 0
     while len(chess_boards) < config_data['n_boards']:
         pgn_path = pgn_paths[i]
         print(pgn_path)
@@ -137,27 +179,27 @@ def get_states(websites_filepath, file_path_data, config_data, ply_range=None):
                 while len(chess_boards) < config_data['n_boards']:
                     game = chess.pgn.read_game(pgn)
                     if is_valid_game(game, config_data=config_data):
-                        if ply_range is None:
-                            boards_, moves_ = get_boards_between(game, config_data['n_midgame'], config_data['n_endgame'])
-                            chess_boards += [board_translation(board, eval_pos(board)) for board in boards_]
-                            moves += moves_
-                        else:
-                            for n_ply in range(ply_range[0], ply_range[1]):
-                                boards_, moves_ = get_boards_between(game, n_ply, n_ply)
-                                ply_dict_boards[n_ply] += [board_translation(board, eval_pos(board)) for board in boards_]
-                                ply_dict_moves[n_ply] += moves_
-                            chess_boards += boards_
+                        boards_, moves_ = get_boards_between(game, config_data['n_midgame'], config_data['n_endgame'], board_dict=ply_dict_boards, move_dict=ply_dict_moves)
+                        chess_boards += [board_translation(board, eval_pos(board)) for board in boards_]
+                        moves += moves_
+
                     pbar.update(pgn.tell() - progress)
                     progress = pgn.tell()
                     if len(chess_boards) > last_len:
-                        print(f'Found {len(chess_boards)}/{config_data["n_boards"]} boards so far')
+                        print(f'Found {len(chess_boards)}/{config_data["n_boards"]} boards so far from {n_games} games')
                         last_len = len(chess_boards)
+                        n_games += 1
                     if size <= progress:
                         break
             i += 1
 
     boards = chess_boards
-    if ply_range is not None:
+    config_data['n_boards'] = len(boards)
+    if use_ply_range:
+        with open(join(pickle_path, f'chess_boards_' + filename_unique), 'wb') as file:
+            pickle.dump(dict(ply_dict_boards), file)
+        with open(join(pickle_path, f'player_moves' + filename_unique), 'wb') as file:
+            pickle.dump(dict(ply_dict_moves), file)
         return ply_dict_boards, ply_dict_moves
     return boards[:config_data['n_boards']], moves[:config_data['n_boards']]
 
