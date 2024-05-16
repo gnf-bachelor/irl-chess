@@ -31,6 +31,7 @@ if __name__ == '__main__':
     move_range = (10, 31)   # (inclusive, exclusive)
     val_proportion = 0.2
 
+    base_config_data['n_midgame'] = move_range[0]
     base_config_data['n_endgame'] = move_range[1]
     config_data_sunfish = union_dicts(base_config_data, m_config_data)
     with open('experiment_configs/maia_pretrained/config.json') as json_file:
@@ -44,7 +45,6 @@ if __name__ == '__main__':
         websites_filepath=websites_filepath,
         file_path_data=file_path_data,
         config_data=config_data_maia,
-        ply_range=move_range
     )  # Boards in the sunfish format.
 
     acc_sunfish_list = []
