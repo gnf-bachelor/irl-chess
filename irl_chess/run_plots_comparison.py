@@ -18,6 +18,10 @@ def random_moves_acc(boards, moves):
     return acc / norm
 
 
+def result_path(config, move_min, val_prop):
+    return f"results/plots/{config['max_elo']}-{config['min_elo']}-{config['maia_elo']}-{config['n_boards']}-{move_min}-{val_prop}"
+
+
 if __name__ == '__main__':
     from irl_chess import run_sunfish_GRW, sunfish_native_result_string, run_maia_pre, maia_pre_result_string, \
         load_config, \
@@ -25,6 +29,7 @@ if __name__ == '__main__':
 
     base_config_data, m_config_data = load_config()
     move_range = (10, 31)   # (inclusive, exclusive)
+    val_proportion = 0.2
 
     base_config_data['n_endgame'] = move_range[1]
     config_data_sunfish = union_dicts(base_config_data, m_config_data)
@@ -58,21 +63,26 @@ if __name__ == '__main__':
                                               path_result=None)
         out_path_maia = create_result_path(base_config_data, config_data_maia, maia_pre_result_string, path_result=None)
 
-        sunfish_boards = [board2sunfish(board, eval_pos(board)) for board in chess_boards]
+        val_index = int(val_proportion * len(chess_boards))
+        sunfish_boards_train = [board2sunfish(board, eval_pos(board)) for board in chess_boards[val_index:]]
+        sunfish_boards_test = [board2sunfish(board, eval_pos(board)) for board in chess_boards[:val_index]]
+        chess_boards_test = chess_boards[:val_index]
+        player_moves_train = player_moves[val_index:]
+        player_moves_test = player_moves[:val_index]
 
-        validation_set_sunfish = list(zip(sunfish_boards, player_moves))
-        validation_set_maia = list(zip(chess_boards, player_moves))
-        acc_random = random_moves_acc(chess_boards, player_moves)
+        validation_set_sunfish = list(zip(sunfish_boards_test, player_moves_test))
+        validation_set_maia = list(zip(chess_boards_test, player_moves_test))
+        acc_random = random_moves_acc(chess_boards_test, player_moves_test)
         acc_sunfish = run_sunfish_GRW(
-            sunfish_boards=sunfish_boards,
-            player_moves=player_moves,
+            sunfish_boards=sunfish_boards_train,
+            player_moves=player_moves_train,
             config_data=config_data_sunfish,
             out_path=out_path_sunfish,
             validation_set=validation_set_sunfish
         )
         acc_maia, maia_model = run_maia_pre(
-            sunfish_boards=sunfish_boards,
-            player_moves=player_moves,
+            sunfish_boards=sunfish_boards_train,
+            player_moves=player_moves_train,
             config_data=config_data_maia,
             out_path=out_path_maia,
             validation_set=validation_set_maia,
@@ -84,14 +94,15 @@ if __name__ == '__main__':
         acc_sunfish_list.append(acc_sunfish)
         acc_maia_list.append(acc_maia)
 
-        plt.plot(range(move_range[0], n_moves+1), acc_sunfish_list, label='Sunfish Accuracy')
-        plt.plot(range(move_range[0], n_moves+1), acc_maia_list, label='Maia Accuracy')
+        plt.plot(range(move_range[0], n_moves+1), acc_sunfish_list, label='Sunfish GRW Accuracy')
+        plt.plot(range(move_range[0], n_moves+1), acc_maia_list, label=f'Maia {config_data_maia["maia_elo"]} Accuracy')
         plt.plot(range(move_range[0], n_moves+1), acc_random_list, label='Random Accuracy')
-        plt.title('Sunfish Accuracy vs Maia Accuracy by number of moves into a game')
+        plt.title(f'Sunfish Accuracy vs Maia {config_data_maia["maia_elo"]} Accuracy {move_range[0]} to {n_moves} number of moves into a game')
         plt.xlabel('Number of moves into game')
         plt.ylabel('Accuracy')
         plt.legend()
-        os.makedirs('results/plots', exist_ok=True)
-        plt.savefig(f'results/plots/sunfish_maia_accuracy_{base_config_data["n_boards"]}_{move_range[0]}_{n_moves}.png')
+        plot_path = result_path(config_data_maia, move_range[0], val_proportion)
+        os.makedirs(plot_path, exist_ok=True)
+        plt.savefig(f'{plot_path}/{n_moves}.png')
         plt.show()
         plt.close()
