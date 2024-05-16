@@ -17,6 +17,7 @@
 
 [ ]  Detailed characterization of Bayesian IRL. How our model relates to IRL.
 [ ]  Why do other methods not work.
+[ ]  If others work, implement them. Look from specific opening 6 ply forward, so occupancy ratios work. 
 
 [ ]  Qualitlively compare key positions and blunder prediction, so we can discuss searching vs. not searching
 [ ]     Show in demonstrations in jupyter notebooks.   
