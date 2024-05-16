@@ -1,5 +1,6 @@
 import json
 import os
+import pickle
 import re
 from collections import defaultdict
 from os.path import join
@@ -137,8 +138,22 @@ def is_valid_game(game, config_data):
 
 
 def get_states(websites_filepath, file_path_data, config_data, use_ply_range=True, pgn_paths=None):
+    if use_ply_range:
+        config_data = config_data
+        pickle_path = f'data/processed/'
+        os.makedirs(pickle_path, exist_ok=True)
+        filename_unique = f'{config_data["min_elo"]}_{config_data["max_elo"]}_{config_data["n_midgame"]}_{config_data["n_endgame"]}_{config_data["n_boards"]}.pkl'
+        try:
+            with open(join(pickle_path, f'chess_boards_' + filename_unique), 'rb') as file:
+                ply_dict_boards = pickle.load(file)
+            with open(join(pickle_path, f'player_moves' + filename_unique), 'wb') as file:
+                ply_dict_moves = pickle.load(file)
+            return ply_dict_boards, ply_dict_moves
+        except FileNotFoundError:
+            pass
     ply_dict_boards = defaultdict(lambda: []) if use_ply_range else None
     ply_dict_moves = defaultdict(lambda: []) if use_ply_range else None
+
     if config_data['board_translation'] == 'sunfish':
         board_translation = board2sunfish
     else:
@@ -152,6 +167,7 @@ def get_states(websites_filepath, file_path_data, config_data, use_ply_range=Tru
 
     chess_boards, moves = [], []
     i = 0
+    n_games = 0
     while len(chess_boards) < config_data['n_boards']:
         pgn_path = pgn_paths[i]
         print(pgn_path)
@@ -170,8 +186,9 @@ def get_states(websites_filepath, file_path_data, config_data, use_ply_range=Tru
                     pbar.update(pgn.tell() - progress)
                     progress = pgn.tell()
                     if len(chess_boards) > last_len:
-                        print(f'Found {len(chess_boards)}/{config_data["n_boards"]} boards so far')
+                        print(f'Found {len(chess_boards)}/{config_data["n_boards"]} boards so far from {n_games} games')
                         last_len = len(chess_boards)
+                        n_games += 1
                     if size <= progress:
                         break
             i += 1
@@ -179,6 +196,10 @@ def get_states(websites_filepath, file_path_data, config_data, use_ply_range=Tru
     boards = chess_boards
     config_data['n_boards'] = len(boards)
     if use_ply_range:
+        with open(join(pickle_path, f'chess_boards_' + filename_unique), 'wb') as file:
+            pickle.dump(dict(ply_dict_boards), file)
+        with open(join(pickle_path, f'player_moves' + filename_unique), 'wb') as file:
+            pickle.dump(dict(ply_dict_moves), file)
         return ply_dict_boards, ply_dict_moves
     return boards[:config_data['n_boards']], moves[:config_data['n_boards']]
 

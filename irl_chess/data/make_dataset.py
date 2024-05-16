@@ -1,4 +1,5 @@
 import json
+import pickle
 import re
 import os
 import time
@@ -201,16 +202,18 @@ if __name__ == "__main__":
     from irl_chess import get_states
 
     pgn_paths = ['data/raw/lichess_db_standard_rated_2017-11.pgn']
-    csv_path = 'data/processed'
     ply_range = (10, 200)
-    os.makedirs(csv_path, exist_ok=True)
 
     with open('experiment_configs/base_config.json', 'r') as file:
         config = json.load(file)
 
     config['n_midgame'], config['n_endgame'] = ply_range
     chess_board_dict, player_move_dict = get_states(None, None, config, pgn_paths=pgn_paths)
+    pickle_path = f'data/processed/'
+    os.makedirs(pickle_path, exist_ok=True)
+    filename_unique = f'{config["min_elo"]}_{config["max_elo"]}_{config["n_midgame"]}_{config["n_endgame"]}_{config["n_boards"]}.pkl'
 
-    for ply in range(*ply_range):
-        chess_boards = chess_board_dict[ply]
-
+    with open(join(pickle_path, f'chess_boards_' + filename_unique), 'wb') as file:
+        pickle.dump(dict(chess_board_dict), file)
+    with open(join(pickle_path, f'player_moves' + filename_unique), 'wb') as file:
+        pickle.dump(dict(player_move_dict), file)
