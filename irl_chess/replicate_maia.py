@@ -42,7 +42,7 @@ if __name__ == '__main__':
         elos_players.append([])
         maia_elos.append(elo_maia)
         for elo_player in tqdm(range(player_range[0], player_range[1], 100), desc='ELO Players'):
-            model = load_maia_network(elo=elo_maia, parent='irl_chess/maia_chess/')
+            model = load_maia_network(elo=elo_maia, parent='maia_chess/')
             val_df = df[(elo_player < df['opponent_elo']) & (df['white_elo'] < (elo_player + 100))]
             n_boards = val_df.shape[0] if n_boards is None else n_boards
             val_df = val_df[(10 <= val_df['move_ply'])][:n_boards]

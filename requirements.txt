@@ -14,3 +14,10 @@ scipy
 joblib
 GPyOpt
 chess
+seaborn
+pytz
+humanize
+tensorboard
+tensorflow
+tensorboardx
+pyyaml
