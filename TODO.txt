@@ -1,19 +1,38 @@
----- Current tasks ---- X = Done, ? = Unsure, . = Partially ocmplete
-[x]    Get sunfish up and running.
-[x]        Write trainable alpha-beta search function weighted with BIRL heuristics.
-[X]        Combine the two by permuting the weights and using the function to approximate the true ones
-[?]            Evaluate performance (doesn't yeild promising results)
-[ ]                Evaluate heuristics qualitatively for different trained chess engines.
+---- Current tasks ---- X = Done, ? = Unsure, . = Partially complete
+[ ]  Define data set
+        Use maia test set: December 2019. With their preprocessing. 
+        Make trainings set: January 2019
+        Also run maia on other test sets: other to show it does not generalize. 
 
-[X]    Segment Lichess dataset and make it amenable to Bayesian IRL algorithm.
-[X]        Begin with a small sample.
+[ ]  Implement more chess heuristics, including weighing pst, as parameters in the model. Weigh this against observed performance.
+[ ]     Implement BO to make optimization more robust.
+[ ]          Generate plots of optimization function to characterize it.
+
+[ ]  Do the comparison. Produce the plots:
+[ ]      Validation of sunfish method. Convergence plots on Sunfish moves and player moves. 
+[ ]      Accuracy of Maia and Sunfish models at different ELO, trained on different ELO levels
+                Same as in Maia paper. With baselines.
+[ ]      Accuracy over ply. How many moves into the game. 
+[ ]      Accuracy as function of training data set size (sunfish and maia)
+
+[ ]  Detailed characterization of Bayesian IRL. How our model relates to IRL.
+[ ]  Why do other methods not work.
+
+[ ]  Qualitlively compare key positions and blunder prediction, so we can discuss searching vs. not searching
+[ ]     Show in demonstrations in jupyter notebooks.   
+
+
+---- Less important notes
+[ ]  Discussion: Bridging the gap between symbolic and data driven AI to maintain explainability
+[ ]  Go through specific case studies
+[ ]  Show in demonstrations in jupyter notebooks.   
+[ ]  Implement more baselines to validate method
+
 [.]    Go through Berkely Deep RL course
 [.]    Read and understand reading list (see reading list section)
 
-[ ]     Consider GAN like architecture with descriminator for policy moves and data moves 
-            (optimize reward function to distinguish between policy moves and data moves,
-            policy is then informed by that reward function. Sample from that. Gradient step again.)
-                Figure out how this works and if we want to try it. 
+
+
 [ ]    Run the following experiments for actual results:
         - Sunfish moves
             - Lower vs higher ELO
@@ -30,9 +49,6 @@
                 - Maia
             - Test on player games
 
-[ ]    Use pst in evaluation function.
-[ ]    Implement evaluation for king safety, pawn structure, etc.
-[ ]    Implement self-play for sunfish vs sunfish with moderated eval function.
 
 
 
@@ -45,7 +61,6 @@
     Finish projektplan
     Complete Berkely Deep RL course
     Complete reading list and have strong overview of modern IRL methods
-
     Ideally having minimum working prototype 
 
 1st April:
@@ -54,9 +69,10 @@
     Complete Berkely Deep RL course
     Complete reading list and have strong overview of modern IRL methods
 
-
 1st May:
 
+1st June:
+    Aim to be done. Send report to Tue. 
 
 6th June:
     Submission deadline    
@@ -64,14 +80,12 @@
 
 ---- Report TODO ----
     - Write Theory
-        - Introduce RL. Including formal introduction with nomanclature and math.
         - Introduce IRL.
             - Discuss various IRL methods. Limitations of visitation frequency. MAP. BIRL. Compare and contrast.
             - Say many of the same things and in Berkely video
         - Bayesian Optimization: Gaussian process
         - Chess Programming. 
     - Method
-        - Sketch what we aim to do. We will of course change this later. 
 
 ---- Relevant IRL papers reading list ----
 
@@ -87,10 +101,4 @@ Less vital/useful background:
 
 
 ---- Questions for Tue ----
-    - Discuss trajectory from here. Other approaches?
-        - Minimum viable prototype?
-        - GAN architecture. Make Network that tries to maximize difference between performance of data and most recent trained policy. 
-            - Ideas from Tue of representation and feasibility. 
-        - MAP estimation instead of bayesian approach.
-    - Thoughts on whether model trajectories are optimal enough with respect to any reward function we can reasonably model?
 
