@@ -19,7 +19,7 @@ from irl_chess.visualizations import char_to_idxs, plot_R_weights
 # ================= Load configs and prepare output =================
 
 def assert_cwd():
-    assert os.path.basename(os.getcwd()) == 'irl-chess', f"This file {__file__} is not being run from the appopriate\
+    assert os.path.basename(os.getcwd()) == 'irl-chess', f"This file {__file__} is not being run from the appropriate\
             directory {'irl-chess'} but instead {os.getcwd()}"
 
 

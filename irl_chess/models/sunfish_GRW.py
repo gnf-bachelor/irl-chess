@@ -114,7 +114,7 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path, validat
 
             pst_new = get_new_pst(R_new)  # Sunfish uses only pst table for calculations
             actions_new = parallel(delayed(sunfish_move)(state, pst_new, config_data['time_limit'], True)
-                                   for state in tqdm(sunfish_boards, desc='Getting new actions'))
+                                   for state in tqdm(sunfish_boards, desc='Getting new Sunfish actions'))
             # check sunfish moves same color as player
             for k, pos in enumerate(sunfish_boards):
                 player_move_square = player_moves[k].i
@@ -143,7 +143,7 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path, validat
 
         pst_val = get_new_pst(R)
         actions_val = parallel(delayed(sunfish_move)(state, pst_val, config_data['time_limit'], True)
-                               for state, move in tqdm(validation_set, desc='Getting validation actions'))
+                               for state, move in tqdm(validation_set, desc='Getting Sunfish validation actions'))
         acc_temp = []
         for (state, a), a_val in zip(validation_set, actions_val):
             acc_temp.append(a == a_val)
