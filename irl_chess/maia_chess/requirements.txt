@@ -1,0 +1,11 @@
+numpy
+chess
+pytz
+humanize
+tensorboard
+tensorflow
+protobuf
+tensorboardx
+seaborn
+matplotlib
+pyyaml

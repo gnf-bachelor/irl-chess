@@ -31,10 +31,11 @@ if __name__ == '__main__':
     if not os.path.exists(destination):
         download_file(url=url, destination=destination)
 
-    df = pd.read_csv(destination)
-    print(f'Took {time() - t:.2f} seconds to download and load maia dataset')
+    print(f'Took {time() - t:.2f} seconds to download maia dataset')
+
+    df = None
     elos_players, accuracies, maia_elos = [], [], []
-    n_boards = 5000
+    n_boards = 10000
     maia_range = (1100, 2000)   # incl. excl.
     player_range = (1000, 1900) # incl. excl.
 
@@ -44,9 +45,17 @@ if __name__ == '__main__':
         maia_elos.append(elo_maia)
         for elo_player in tqdm(range(player_range[0], player_range[1], 100), desc='ELO Players'):
             model = load_maia_network(elo=elo_maia, parent='irl_chess/maia_chess/')
-            val_df = df[(elo_player < df['opponent_elo']) & (df['white_elo'] < (elo_player + 100))]
-            n_boards = val_df.shape[0] if n_boards is None else n_boards
-            val_df = val_df[(10 <= val_df['move_ply'])][:n_boards]
+            df_path = f'data/processed/maia_test_{elo_player}_{elo_player + 100}_{n_boards}.csv'
+            if os.path.exists(df_path):
+                val_df = pd.read_csv(df_path)
+                print(f'Loaded {df_path}')
+            else:
+                print(f'Sub dataset not found at {df_path}, loading from scratch.')
+                df = pd.read_csv(destination) if df is None else df
+                val_df = df[(elo_player < df['opponent_elo']) & (df['white_elo'] < (elo_player + 100))]
+                val_df = val_df[(10 <= val_df['move_ply'])][:n_boards]
+                val_df.to_csv(df_path, index=False)
+
             acc_sum = 0
             # page 4 of the paper states that moves with less than 30 seconds left have been discarded
             for move_true, fen in tqdm(zip(val_df['move'], val_df['board']), desc='Moves', total=n_boards):

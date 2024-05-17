@@ -4,4 +4,4 @@ from irl_chess.visualizations import *
 from irl_chess.misc_utils import *
 from irl_chess.models import *
 from irl_chess.stat_tools import *
-from maia_chess import *
+from irl_chess.maia_chess import *

@@ -35,7 +35,6 @@ def decompress_zstd(zstd_path, extract_path):
     print(f"Decompressed: {zstd_path} and deleted the zip file!")
 
 
-
 def download_file(url, destination):
     """
     Use the requests package to download an url and save
@@ -122,7 +121,7 @@ def txt_to_csv(filename, overwrite=True):
         for line in tqdm(f.readlines(), 'Converting to csv'):
             if line[0] == '1' or line == ' 0-1\n':
                 row = parse_game(game, included_keys=columns[:-1] + ['TimeControl']) + parse_moves(line)
-                if len(row) == len(columns):    # Only pass valid rows... sadly necessary
+                if len(row) == len(columns):  # Only pass valid rows... sadly necessary
                     data_raw.append(row)
                 game = ''
             elif line.strip():
@@ -193,20 +192,31 @@ def load_lichess_dfs(websites_filepath, file_path_data, n_files, overwrite=False
     return df
 
 
-def make_maia_csv(filepath, n_games):
-    # File too big for python unzip to work, so must be manually downloaded and unzipped
-    pass
+def make_maia_test_csv(filepath='data/maia-chess-testing-set.csv.bz2', n_boards=10000, min_elo=1100, max_elo=1900):
+    t = time.time()
+    df = pd.read_csv(filepath)
+    print(f'Took {time.time() - t} to load big data!')
+    for elo_player in tqdm(range(min_elo, max_elo + 1, 100), desc='ELO Players'):
+        df_path = f'data/processed/maia_test_{elo_player}_{elo_player + 100}_{n_boards}.csv'
+        if os.path.exists(df_path):
+            print(f'{df_path} exists and was not created')
+        else:
+            print(f'Sub dataset not found at {df_path}, loading from scratch.')
+            val_df = df[(elo_player < df['opponent_elo']) & (df['white_elo'] < (elo_player + 100))]
+            val_df = val_df[(10 <= val_df['move_ply'])][:n_boards]
+            val_df.to_csv(df_path, index=False)
 
 
 if __name__ == "__main__":
+    make_maia_test_csv()
     from irl_chess import get_states
-
-    pgn_paths = ['data/raw/lichess_db_standard_rated_2017-11.pgn']
-    ply_range = (10, 200)
-
-    with open('experiment_configs/base_config.json', 'r') as file:
-        config = json.load(file)
-
-    config['n_midgame'], config['n_endgame'] = ply_range
-    chess_board_dict, player_move_dict = get_states(None, None, config, pgn_paths=pgn_paths)
-
+    #
+    # pgn_paths = ['data/raw/lichess_db_standard_rated_2017-11.pgn']
+    # ply_range = (10, 200)
+    #
+    # with open('experiment_configs/base_config.json', 'r') as file:
+    #     config = json.load(file)
+    #
+    # config['n_midgame'], config['n_endgame'] = ply_range
+    # chess_board_dict, player_move_dict = get_states(None, None, config, pgn_paths=pgn_paths)
+    #

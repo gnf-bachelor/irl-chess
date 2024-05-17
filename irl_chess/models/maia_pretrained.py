@@ -8,7 +8,7 @@ import scipy
 from joblib import delayed, Parallel
 from tqdm import tqdm
 
-from maia_chess import load_maia_network
+from irl_chess.maia_chess import load_maia_network
 
 
 def maia_pre_move(state, model, topk=1):

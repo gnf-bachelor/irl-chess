@@ -1,0 +1,2 @@
+
+python ./move_prediction/train_maia.py 'PATH_TO\maia-chess\move_prediction\maia_config.yaml'
