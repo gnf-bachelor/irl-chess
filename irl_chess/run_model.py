@@ -1,11 +1,10 @@
 import os
 from os.path import join
-import chess.pgn
 from irl_chess.misc_utils.utils import union_dicts
-from irl_chess.chess_utils.sunfish_utils import board2sunfish, eval_pos
 from irl_chess.misc_utils.load_save_utils import fix_cwd, load_config, create_result_path, get_states
 
 if __name__ == '__main__':
+    from irl_chess import load_maia_test_data
     fix_cwd()
     base_config_data, model_config_data = load_config()
     config_data = union_dicts(base_config_data, model_config_data)
@@ -41,7 +40,8 @@ if __name__ == '__main__':
         use_ply_range=False,
     )  # Boards in the sunfish format.
 
-    validation_set = list(zip(chess_boards, player_moves))
+    val_df = load_maia_test_data(config_data['min_elo'], config_data['n_boards_val'])
+    validation_set = list(zip(val_df['move'], val_df['board']))
 
     model(
         chess_boards=chess_boards,

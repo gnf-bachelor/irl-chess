@@ -186,7 +186,7 @@ def get_states(websites_filepath, file_path_data, config_data, use_ply_range=Tru
             i += 1
 
     boards = chess_boards
-    config_data['n_boards'] = len(boards)
+    config_data['n_boards'] = min(len(boards), config_data['n_boards'])
     if use_ply_range:
         with open(join(pickle_path, f'chess_boards_' + filename_unique), 'wb') as file:
             pickle.dump(dict(ply_dict_boards), file)
