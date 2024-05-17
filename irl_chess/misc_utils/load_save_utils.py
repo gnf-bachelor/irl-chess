@@ -14,7 +14,6 @@ import pandas as pd
 from tqdm import tqdm
 
 from irl_chess.data.make_dataset import download_lichess_pgn
-from irl_chess.chess_utils.sunfish_utils import board2sunfish, eval_pos, str_to_sunfish_move, sunfish_move_to_str
 from irl_chess.visualizations import char_to_idxs, plot_R_weights
 
 
@@ -88,7 +87,10 @@ def create_result_path(base_config_data, model_config_data, model_result_string,
 def get_boards_between(game, n_start, n_end, board_dict=None, move_dict=None):
     boards, moves = [], []
     board = chess.Board()
-    var = game.variations[0]
+    try:
+        var = game.variations[0]
+    except IndexError:
+        return boards, moves
     for i, move in enumerate(game.mainline_moves()):
         # Search for the pattern in the input string
         match = re.search(pattern_time, var.comment)
@@ -104,12 +106,11 @@ def get_boards_between(game, n_start, n_end, board_dict=None, move_dict=None):
             break
         elif n_start <= i <= n_end:
             flip = not board.turn
-            move_sunfish = str_to_sunfish_move(move, flip)
             boards.append(deepcopy(board))
-            moves.append(move_sunfish)
+            moves.append(move)
             if board_dict is not None and move_dict is not None:
                 board_dict[i].append(deepcopy(board))
-                move_dict[i].append(move_sunfish)
+                move_dict[i].append(move)
         elif n_end < i:
             break
 
@@ -138,12 +139,6 @@ def get_states(websites_filepath, file_path_data, config_data, use_ply_range=Tru
 
     ply_dict_boards = defaultdict(lambda: []) if use_ply_range else None
     ply_dict_moves = defaultdict(lambda: []) if use_ply_range else None
-
-    if config_data['board_translation'] == 'sunfish':
-        board_translation = board2sunfish
-    else:
-        def board_translation(*args):
-            return args[0]
 
     pgn_paths = download_lichess_pgn(websites_filepath=websites_filepath,
                                      file_path_data=file_path_data,
@@ -177,7 +172,7 @@ def get_states(websites_filepath, file_path_data, config_data, use_ply_range=Tru
                     game = chess.pgn.read_game(pgn)
                     if is_valid_game(game, config_data=config_data):
                         boards_, moves_ = get_boards_between(game, config_data['n_midgame'], config_data['n_endgame'], board_dict=ply_dict_boards, move_dict=ply_dict_moves)
-                        chess_boards += [board_translation(board, eval_pos(board)) for board in boards_]
+                        chess_boards += boards_
                         moves += moves_
 
                     pbar.update(pgn.tell() - progress)
@@ -208,9 +203,7 @@ def process_epoch(R, epoch, config_data, out_path, **kwargs):
     # "Data already exists but configs are set to not overwrite"
     # Overwrite is for downloaded data files. .........
 
-    if config_data['save_every'] and epoch % config_data['save_every'] == 0:
-        pd.DataFrame(R.reshape((-1, 1)), columns=['Result']).to_csv(join(out_path, f'{epoch}.csv'),
-                                                                    index=False)
+    pd.DataFrame(R.reshape((-1, 1)), columns=['Result']).to_csv(join(out_path, f'{epoch}.csv'), index=False)
     if epoch and config_data['plot_every'] and (epoch + 1) % config_data['plot_every'] == 0:
         plot_R_weights(config_data=config_data,
                        out_path=out_path,

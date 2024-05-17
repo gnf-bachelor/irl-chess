@@ -8,9 +8,7 @@ import scipy
 from joblib import delayed, Parallel
 from tqdm import tqdm
 
-from irl_chess.chess_utils.sunfish_utils import sunfish2board, sunfish_move_to_str
 from maia_chess import load_maia_network
-import math
 
 
 def maia_pre_move(state, model, topk=1):
@@ -33,7 +31,7 @@ def maia_pre_result_string(model_config_data):
     return f"{time_limit}-{maia_elo}-{topk}"
 
 
-def run_maia_pre(sunfish_boards, player_moves, config_data, out_path, validation_set, model=None, return_model=False):
+def run_maia_pre(chess_boards, player_moves, config_data, out_path, validation_set, model=None, return_model=False):
     start_time = time()
     model = load_maia_network(elo=config_data['maia_elo'],
                               time_limit=config_data['time_limit'],
@@ -45,7 +43,6 @@ def run_maia_pre(sunfish_boards, player_moves, config_data, out_path, validation
     acc_temp = []
     data_save = []
     for (state, a_true), (a_val, score) in zip(validation_set, actions_val):
-        a_true = sunfish_move_to_str(a_true, is_black=not state.turn)
         acc_temp.append(a_true == a_val)
         data_save.append((state, a_true, a_val, score))
     acc = sum(acc_temp) / len(acc_temp)

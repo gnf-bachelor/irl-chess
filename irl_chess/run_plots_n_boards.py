@@ -46,7 +46,7 @@ def run_comparison(run_sunfish=False, pgn_paths=None, move_range=(10, 200), val_
         websites_filepath=websites_filepath,
         file_path_data=file_path_data,
         config_data=base_config_data,
-        use_ply_range=True,
+        use_ply_range=False,
         pgn_paths=pgn_paths
     )  # Boards in the sunfish format.
 
@@ -76,8 +76,7 @@ def run_comparison(run_sunfish=False, pgn_paths=None, move_range=(10, 200), val_
                                            path_result=None) + f'/n_moves_{n_moves}'
 
         val_index = int(val_proportion * len(chess_boards))
-        sunfish_boards_train = [board2sunfish(board, eval_pos(board)) for board in chess_boards[val_index:]]
-        sunfish_boards_test = [board2sunfish(board, eval_pos(board)) for board in chess_boards[:val_index]]
+        chess_boards_train = chess_boards[val_index:]
         chess_boards_test = chess_boards[:val_index]
         player_moves_train = player_moves[val_index:]
         player_moves_test = player_moves[:val_index]
@@ -86,22 +85,21 @@ def run_comparison(run_sunfish=False, pgn_paths=None, move_range=(10, 200), val_
             print(f'Only move up to {n_moves}')
             break
 
-        validation_set_sunfish = list(zip(sunfish_boards_test, player_moves_test))
-        validation_set_maia = list(zip(chess_boards_test, player_moves_test))
+        validation_set = list(zip(chess_boards_test, player_moves_test))
         acc_random, (lower_bound_random, upper_bound_random) = random_moves_acc(chess_boards_test, player_moves_test)
         acc_sunfish = run_sunfish_GRW(
-            sunfish_boards=sunfish_boards_train,
+            chess_boards=chess_boards_train,
             player_moves=player_moves_train,
             config_data=config_data_sunfish,
             out_path=out_path_sunfish,
-            validation_set=validation_set_sunfish
+            validation_set=validation_set
         ) if run_sunfish else None
         acc_maia, maia_model, (lower_bound_maia, upper_bound_maia) = run_maia_pre(
-            sunfish_boards=sunfish_boards_train,
+            chess_boards=chess_boards_train,
             player_moves=player_moves_train,
             config_data=config_data_maia,
             out_path=out_path_maia,
-            validation_set=validation_set_maia,
+            validation_set=validation_set,
             model=maia_model,
             return_model=True
         )
@@ -153,6 +151,6 @@ def run_comparison(run_sunfish=False, pgn_paths=None, move_range=(10, 200), val_
 
 if __name__ == '__main__':
     pgn_paths = ['data/raw/lichess_db_standard_rated_2017-11.pgn']
-    ply_range = (10, 100)
+    ply_range = (10, 101)
 
     run_comparison(run_sunfish=False, move_range=ply_range, pgn_paths=pgn_paths)

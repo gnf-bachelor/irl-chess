@@ -1,4 +1,5 @@
 import copy
+import os
 import pickle
 from os.path import join
 from time import time
@@ -12,7 +13,7 @@ from tqdm import tqdm
 from joblib import Parallel, delayed
 
 from irl_chess import Searcher, pst, piece, plot_R_weights
-from irl_chess.chess_utils.sunfish_utils import board2sunfish, sunfish2board
+from irl_chess.chess_utils.sunfish_utils import board2sunfish, sunfish2board, sunfish_move_to_str
 from irl_chess.visualizations import char_to_idxs
 
 from irl_chess.misc_utils.utils import reformat_list
@@ -42,7 +43,7 @@ def eval_pos(board, R=None):
     return eval
 
 
-def sunfish_move(state, pst, time_limit, move_only=False, run_at_least=1):
+def sunfish_move(state, pst, time_limit, move_only=False, run_at_least=1, ):
     """
     Given a state, p-square table and time limit,
     return the sunfish move.
@@ -84,7 +85,7 @@ def sunfish_native_result_string(model_config_data):
     return f"{delta}-{decay}-{decay_step}-{permute_all}-{time_limit}--{R_start}-{R_true}"
 
 
-def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path, validation_set):
+def run_sunfish_GRW(chess_boards, player_moves, config_data, out_path, validation_set):
     if config_data['move_function'] == "sunfish_move":
         use_player_move = False
     elif config_data['move_function'] == "player_move":
@@ -92,32 +93,40 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path, validat
     else:
         raise Exception(f"The move function {config_data['move_function']} is not implemented yet")
 
+
     permute_idxs = char_to_idxs(config_data['permute_char'])
 
     R = np.array(config_data['R_start'])
     Rs = [R]
+    sunfish_boards = [board2sunfish(board, eval_pos(board, R)) for board in chess_boards]
+    player_moves_sunfish = [str_to_sunfish_move(move, not board.turn) for move, board in zip(player_moves, chess_boards)]
     delta = config_data['delta']
     start_time = time()
 
     last_acc = 0
     accuracies = []
     with (Parallel(n_jobs=config_data['n_threads']) as parallel):
-        actions_true = player_moves if use_player_move else parallel(
+        actions_true = player_moves_sunfish if use_player_move else parallel(
             delayed(sunfish_move)(state, pst, config_data['time_limit'], True)
             for state in tqdm(sunfish_boards, desc='Getting true moves', ))
-        print(f'First 5 true actions: {actions_true[:5]}')
-        for epoch in range(config_data['epochs']):
-            print(f'Epoch {epoch + 1}\n', '-' * 25)
+        for epoch in tqdm(range(config_data['epochs']), desc='Epochs'):
+            weight_path = join(out_path, f'{epoch}.csv')
+            if os.path.exists(weight_path):
+                df = pd.read_csv(weight_path)
+                R = df['Result'].values.flatten()
+                print(f'Results loaded for epoch {epoch+1}, continuing')
+                continue
+
             add = np.zeros(6)
             add[permute_idxs] = np.random.choice([-delta, delta], len(permute_idxs))
             R_new = R + add
 
             pst_new = get_new_pst(R_new)  # Sunfish uses only pst table for calculations
-            actions_new = parallel(delayed(sunfish_move)(state, pst_new, config_data['time_limit'], True)
-                                   for state in tqdm(sunfish_boards, desc='Getting new Sunfish actions'))
+            actions_new = parallel(delayed(sunfish_move)(board, pst_new, config_data['time_limit'], True)
+                                   for board in tqdm(sunfish_boards, desc='Getting new Sunfish actions'))
             # check sunfish moves same color as player
             for k, pos in enumerate(sunfish_boards):
-                player_move_square = player_moves[k].i
+                player_move_square = player_moves_sunfish[k].i
                 sunfish_move_square = actions_new[k].i
                 move_ok = pos.board[player_move_square].isupper() == pos.board[sunfish_move_square].isupper()
                 assert move_ok, 'Wrong color piece moved by sunfish'
@@ -135,22 +144,40 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path, validat
 
             process_epoch(R, epoch, config_data, out_path)  # , accuracies=accuracies)
 
-            print(f'First 5 model actions: {actions_new[:5]}')
             print(f'Current sunfish accuracy: {acc}, best: {last_acc}')
             print(f'Best R: {R}')
             if time() - start_time > config_data['max_hours'] * 60 * 60:
                 break
 
-            if (epoch + 1) % config_data['val_every'] or (epoch - 1) == config_data['epochs']:
-
+            if (epoch + 1) % config_data['val_every'] or (epoch + 1) == config_data['epochs']:
                 pst_val = get_new_pst(R)
-                actions_val = parallel(delayed(sunfish_move)(state, pst_val, config_data['time_limit'], True)
-                                       for state, move in tqdm(validation_set, desc='Getting Sunfish validation actions'))
-                acc_temp = []
-                for (state, a), a_val in zip(validation_set, actions_val):
-                    acc_temp.append(a == a_val)
-                acc = sum(acc_temp) / len(acc_temp)
-                print(f'Validation accuracy: {acc}')
-                df = pd.DataFrame([(state, a_true, a_val) for (state, a_true), a_val in zip(validation_set, actions_val)])
-                df.to_csv(join(out_path, f'validation_output_{epoch}_{acc}.csv'))
+                val_util(validation_set, out_path, config_data, parallel, pst_val, name=epoch)
         return acc
+
+
+def val_sunfish_GRW(validation_set, out_path, config_data, epoch, name=''):
+    with (Parallel(n_jobs=config_data['n_threads']) as parallel):
+        df = pd.read_csv(join(out_path, f'{epoch}.csv'))
+        R = df['Results'].values.flatten()
+        pst_val = get_new_pst(R)
+        val_util(validation_set, out_path, config_data, parallel, pst_val, name)
+
+
+def val_util(validation_set, out_path, config_data, parallel, pst_val, name='',):
+
+    actions_val = parallel(delayed(sunfish_move)(board2sunfish(board, eval_pos(board, None)), pst_val, config_data['time_limit'], True)
+                           for board, move in tqdm(validation_set, desc='Getting Sunfish validation actions'))
+
+    acc_temp = []
+    actions_val_san = []
+    for (state, a), a_val in zip(validation_set, actions_val):
+        a_val = sunfish_move_to_str(a_val, not state.turn)
+        actions_val_san.append(a_val)
+        acc_temp.append(str(a) == a_val)
+        print(a, a_val)
+    acc = sum(acc_temp) / len(acc_temp)
+    print(acc_temp)
+    print(f'Validation accuracy: {acc}')
+    df = pd.DataFrame([(state, a_true, a_val) for (state, a_true), a_val in zip(validation_set, actions_val_san)], columns=['board', 'a_true', 'a_val'])
+    os.makedirs(join(out_path, f'validation_output'), exist_ok=True)
+    df.to_csv(join(out_path, f'validation_output', f'{name}_{acc}.csv'))

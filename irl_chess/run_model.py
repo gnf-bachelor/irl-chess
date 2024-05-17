@@ -30,17 +30,21 @@ if __name__ == '__main__':
 
     websites_filepath = join(os.getcwd(), 'downloads', 'lichess_websites.txt')
     file_path_data = join(os.getcwd(), 'data', 'raw')
+    pgn_paths = ['data/raw/lichess_db_standard_rated_2017-11.pgn']
 
-    sunfish_boards, player_moves = get_states(
+    # Loads in the chess format:
+    chess_boards, player_moves = get_states(
         websites_filepath=websites_filepath,
         file_path_data=file_path_data,
-        config_data=config_data
+        config_data=config_data,
+        pgn_paths=pgn_paths,
+        use_ply_range=False,
     )  # Boards in the sunfish format.
 
-    validation_set = list(zip(sunfish_boards, player_moves))
+    validation_set = list(zip(chess_boards, player_moves))
 
     model(
-        sunfish_boards=sunfish_boards,
+        chess_boards=chess_boards,
         player_moves=player_moves,
         config_data=config_data,
         out_path=out_path,
