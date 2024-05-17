@@ -178,6 +178,7 @@ cython_debug/
 
 kaggle.json
 /data
+!/data/processed/maia_test/*
 wandb
 lightning_logs
 *.ckpt

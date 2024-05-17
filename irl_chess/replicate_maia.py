@@ -22,22 +22,18 @@ def plot_accuracies(accuracies, elos, maia_elos, n_moves):
 
 
 if __name__ == '__main__':
-    from irl_chess import download_file 
-    from irl_chess.maia_chess import load_maia_network
+    from irl_chess import load_maia_network, make_maia_test_csv, load_maia_test_data
     # This must be run from the main irl-chess folder
     t = time()
-    destination = 'data/maia-chess-testing-set.csv.bz2'
-    url = r'https://csslab.cs.toronto.edu/data/chess/kdd/maia-chess-testing-set.csv.bz2'
-    if not os.path.exists(destination):
-        download_file(url=url, destination=destination)
+    destination = 'data/raw/maia-chess-testing-set.csv.bz2'
 
     print(f'Took {time() - t:.2f} seconds to download maia dataset')
 
-    df = None
     elos_players, accuracies, maia_elos = [], [], []
     n_boards = 10000
     maia_range = (1100, 2000)   # incl. excl.
     player_range = (1000, 1900) # incl. excl.
+    make_maia_test_csv(destination, max_elo=player_range[0], min_elo=player_range[1], n_boards=n_boards)
 
     for elo_maia in tqdm(range(maia_range[0], maia_range[1], 100), desc='ELO Maia'):
         accuracies.append([])
@@ -45,16 +41,7 @@ if __name__ == '__main__':
         maia_elos.append(elo_maia)
         for elo_player in tqdm(range(player_range[0], player_range[1], 100), desc='ELO Players'):
             model = load_maia_network(elo=elo_maia, parent='irl_chess/maia_chess/')
-            df_path = f'data/processed/maia_test_{elo_player}_{elo_player + 100}_{n_boards}.csv'
-            if os.path.exists(df_path):
-                val_df = pd.read_csv(df_path)
-                print(f'Loaded {df_path}')
-            else:
-                print(f'Sub dataset not found at {df_path}, loading from scratch.')
-                df = pd.read_csv(destination) if df is None else df
-                val_df = df[(elo_player < df['opponent_elo']) & (df['white_elo'] < (elo_player + 100))]
-                val_df = val_df[(10 <= val_df['move_ply'])][:n_boards]
-                val_df.to_csv(df_path, index=False)
+            val_df = load_maia_test_data(elo_player, n_boards=n_boards)
 
             acc_sum = 0
             # page 4 of the paper states that moves with less than 30 seconds left have been discarded
