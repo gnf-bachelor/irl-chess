@@ -93,7 +93,6 @@ def run_sunfish_GRW(chess_boards, player_moves, config_data, out_path, validatio
     else:
         raise Exception(f"The move function {config_data['move_function']} is not implemented yet")
 
-
     permute_idxs = char_to_idxs(config_data['permute_char'])
 
     R = np.array(config_data['R_start'])
@@ -110,10 +109,11 @@ def run_sunfish_GRW(chess_boards, player_moves, config_data, out_path, validatio
             delayed(sunfish_move)(state, pst, config_data['time_limit'], True)
             for state in tqdm(sunfish_boards, desc='Getting true moves', ))
         for epoch in tqdm(range(config_data['epochs']), desc='Epochs'):
-            weight_path = join(out_path, f'{epoch}.csv')
+            weight_path = join(out_path, f'weights/{epoch}.csv')
             if os.path.exists(weight_path):
                 df = pd.read_csv(weight_path)
                 R = df['Result'].values.flatten()
+                Rs.append(R)
                 print(f'Results loaded for epoch {epoch+1}, continuing')
                 continue
 
@@ -164,18 +164,22 @@ def val_sunfish_GRW(validation_set, out_path, config_data, epoch, name=''):
 
 
 def val_util(validation_set, out_path, config_data, parallel, pst_val, name='',):
-
     actions_val = parallel(delayed(sunfish_move)(board2sunfish(board, eval_pos(board, None)), pst_val, config_data['time_limit'], True)
+                           for board, move in tqdm(validation_set, desc='Getting True Sunfish actions'))
+    actions_true = parallel(delayed(sunfish_move)(board2sunfish(board, eval_pos(board, None)), pst, config_data['time_limit'], True)
                            for board, move in tqdm(validation_set, desc='Getting Sunfish validation actions'))
-
-    acc_temp = []
+    acc_temp_true, acc_temp_player = [], []
     actions_val_san = []
-    for (state, a), a_val in zip(validation_set, actions_val):
+    for (state, a_player), a_val, a_true in zip(validation_set, actions_val, actions_true):
         a_val = sunfish_move_to_str(a_val, not state.turn)
+        a_true = sunfish_move_to_str(a_true, not state.turn)
         actions_val_san.append(a_val)
-        acc_temp.append(str(a) == a_val)
-    acc = sum(acc_temp) / len(acc_temp)
-    print(f'Validation accuracy: {acc}')
-    df = pd.DataFrame([(state, a_true, a_val) for (state, a_true), a_val in zip(validation_set, actions_val_san)], columns=['board', 'a_true', 'a_val'])
+        acc_temp_true.append(str(a_true) == a_val)
+        acc_temp_player.append(str(a_player) == a_val)
+    acc_true = sum(acc_temp_true) / len(acc_temp_true)
+    acc_player = sum(acc_temp_player) / len(acc_temp_player)
+    print(f'Validation accuracy on sunfish: {acc_true}')
+    print(f'Validation accuracy on player moves: {acc_player}')
+    df = pd.DataFrame([(state, a_player, a_true, a_val) for (state, a_player), a_val, a_true in zip(validation_set, actions_val_san, actions_true)], columns=['board', 'a_player', 'a_true', 'a_val'])
     os.makedirs(join(out_path, f'validation_output'), exist_ok=True)
-    df.to_csv(join(out_path, f'validation_output', f'{name}_{acc}.csv'))
+    df.to_csv(join(out_path, f'validation_output', f'{name}_{acc_true}.csv'))

@@ -41,6 +41,7 @@ if __name__ == '__main__':
         config_data=config_data,
         pgn_paths=pgn_paths,
         use_ply_range=False,
+        out_path=out_path,
     )  # Boards in the sunfish format.
 
     val_df = load_maia_test_data(config_data['min_elo'], config_data['n_boards_val'])

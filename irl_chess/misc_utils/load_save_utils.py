@@ -135,7 +135,7 @@ def is_valid_game(game, config_data):
         return False
 
 
-def get_states(websites_filepath, file_path_data, config_data, use_ply_range=True, pgn_paths=None):
+def get_states(websites_filepath, file_path_data, config_data, out_path, use_ply_range=True, pgn_paths=None):
 
     ply_dict_boards = defaultdict(lambda: []) if use_ply_range else None
     ply_dict_moves = defaultdict(lambda: []) if use_ply_range else None
@@ -157,6 +157,15 @@ def get_states(websites_filepath, file_path_data, config_data, use_ply_range=Tru
             return ply_dict_boards, ply_dict_moves
         except FileNotFoundError:
             pass
+    data_save_path = join(out_path, 'boards_and_moves.pkl')
+    try:
+        with open(data_save_path, 'rb') as file:
+            print(f'Found saved data at {data_save_path}')
+            boards, moves = pickle.load(file)
+            return boards, moves
+    except FileNotFoundError:
+        pass
+
     chess_boards, moves = [], []
     i = 0
     n_games = 0
@@ -188,13 +197,18 @@ def get_states(websites_filepath, file_path_data, config_data, use_ply_range=Tru
     boards = chess_boards
     config_data['n_boards'] = min(len(boards), config_data['n_boards'])
     print(f'Using {config_data["n_boards"]} boards')
+    boards, moves = boards[:config_data['n_boards']], moves[:config_data['n_boards']]
+    with open(data_save_path, 'wb') as file:
+        pickle.dump((boards, moves), file)
+
     if use_ply_range:
         with open(join(pickle_path, f'chess_boards_' + filename_unique), 'wb') as file:
             pickle.dump(dict(ply_dict_boards), file)
         with open(join(pickle_path, f'player_moves_' + filename_unique), 'wb') as file1:
             pickle.dump(dict(ply_dict_moves), file1)
         return ply_dict_boards, ply_dict_moves
-    return boards[:config_data['n_boards']], moves[:config_data['n_boards']]
+
+    return boards, moves
 
 
 # ================= Processing results =================
@@ -203,8 +217,10 @@ def process_epoch(R, epoch, config_data, out_path, **kwargs):
     # assert not (not config_data['overwrite'] and os.path.exists(join(out_path, f'{epoch}.csv'))), \
     # "Data already exists but configs are set to not overwrite"
     # Overwrite is for downloaded data files. .........
+    csv_path = join(out_path, 'weights', f'{epoch}.csv')
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    pd.DataFrame(R.reshape((-1, 1)), columns=['Result']).to_csv(csv_path, index=False)
 
-    pd.DataFrame(R.reshape((-1, 1)), columns=['Result']).to_csv(join(out_path, f'{epoch}.csv'), index=False)
     if epoch and config_data['plot_every'] and (epoch + 1) % config_data['plot_every'] == 0:
         plot_R_weights(config_data=config_data,
                        out_path=out_path,
