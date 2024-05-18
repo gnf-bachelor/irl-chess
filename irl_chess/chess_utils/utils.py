@@ -6,7 +6,6 @@ from os.path import join
 import os
 from joblib import Parallel, delayed
 import pandas as pd
-import torch
 import chess
 import numpy as np
 from tqdm import tqdm
@@ -79,7 +78,7 @@ def get_board_arrays(game_moves):
     return positions
 
 
-def board_to_array(board, material_dict=None, tensor=False, dtype=np.int8):
+def board_to_array(board, material_dict=None, dtype=np.int8):
     if material_dict is None:
         material_dict = {i: i for i in range(1, 7)}
     arr = np.zeros(64, dtype=dtype)
@@ -88,7 +87,7 @@ def board_to_array(board, material_dict=None, tensor=False, dtype=np.int8):
         if piece is not None:
             arr[square] = material_dict[piece.piece_type] * (1 if piece.color else -1)
     # arr = arr.reshape((8, 8))     # Need a reason to reshape
-    return arr if not tensor else torch.tensor(arr)
+    return arr
 
 
 def get_midgame_boards(df,
