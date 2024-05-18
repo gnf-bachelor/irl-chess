@@ -142,7 +142,7 @@ def run_sunfish_GRW(chess_boards, player_moves, config_data, out_path, validatio
             if epoch % config_data['decay_step'] == 0 and epoch != 0:
                 delta *= config_data['decay']
 
-            process_epoch(R, epoch, config_data, out_path)  # , accuracies=accuracies)
+            process_epoch(R, epoch, config_data, out_path)
 
             print(f'Current sunfish accuracy: {acc}, best: {last_acc}')
             print(f'Best R: {R}')
@@ -168,18 +168,27 @@ def val_util(validation_set, out_path, config_data, parallel, pst_val, name='',)
                            for board, move in tqdm(validation_set, desc='Getting True Sunfish actions'))
     actions_true = parallel(delayed(sunfish_move)(board2sunfish(board, eval_pos(board, None)), pst, config_data['time_limit'], True)
                            for board, move in tqdm(validation_set, desc='Getting Sunfish validation actions'))
+
     acc_temp_true, acc_temp_player = [], []
-    actions_val_san = []
+    actions_val_san, actions_true_san = [], []
+
     for (state, a_player), a_val, a_true in zip(validation_set, actions_val, actions_true):
         a_val = sunfish_move_to_str(a_val, not state.turn)
         a_true = sunfish_move_to_str(a_true, not state.turn)
+
         actions_val_san.append(a_val)
+        actions_true_san.append(a_true)
+
         acc_temp_true.append(str(a_true) == a_val)
         acc_temp_player.append(str(a_player) == a_val)
+
     acc_true = sum(acc_temp_true) / len(acc_temp_true)
     acc_player = sum(acc_temp_player) / len(acc_temp_player)
     print(f'Validation accuracy on sunfish: {acc_true}')
     print(f'Validation accuracy on player moves: {acc_player}')
-    df = pd.DataFrame([(state, a_player, a_true, a_val) for (state, a_player), a_val, a_true in zip(validation_set, actions_val_san, actions_true)], columns=['board', 'a_player', 'a_true', 'a_val'])
+
+    df = pd.DataFrame([(state, a_player, a_true, a_val) for (state, a_player), a_val, a_true in
+                       zip(validation_set, actions_val_san, actions_true_san)],
+                      columns=['board', 'a_player', 'a_true', 'a_val'])
     os.makedirs(join(out_path, f'validation_output'), exist_ok=True)
-    df.to_csv(join(out_path, f'validation_output', f'{name}_{acc_true}.csv'))
+    df.to_csv(join(out_path, f'validation_output', f'{name}_{acc_true}.csv'), index=False)
