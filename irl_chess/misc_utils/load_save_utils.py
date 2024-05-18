@@ -164,6 +164,7 @@ def get_states(websites_filepath, file_path_data, config_data, out_path, use_ply
             boards, moves = pickle.load(file)
             return boards, moves
     except FileNotFoundError:
+        print(f'No saved data at {data_save_path}')
         pass
 
     chess_boards, moves = [], []

@@ -1,6 +1,6 @@
 jupyter
 scipy
-matplotlib
+matplotlib==3.5.2
 seaborn
 pandas
 numpy
