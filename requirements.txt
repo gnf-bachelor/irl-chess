@@ -20,5 +20,3 @@ pytz
 humanize
 pyyaml
 
-pytorch-lightning
-torch
