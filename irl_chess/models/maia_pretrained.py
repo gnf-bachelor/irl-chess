@@ -35,7 +35,7 @@ def run_maia_pre(chess_boards, player_moves, config_data, out_path, validation_s
     start_time = time()
     model = load_maia_network(elo=config_data['maia_elo'],
                               time_limit=config_data['time_limit'],
-                              parent='maia_chess/') if model is None else model
+                              parent=join('irl_chess', 'maia_chess')) if model is None else model
 
     actions_val = [maia_pre_move(state, model) for state, move in
                    tqdm(validation_set, desc='Getting validation actions')]

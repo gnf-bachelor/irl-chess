@@ -19,7 +19,7 @@ from irl_chess.visualizations import char_to_idxs
 from irl_chess.misc_utils.utils import reformat_list
 from irl_chess.misc_utils.load_save_utils import process_epoch
 from irl_chess.chess_utils.sunfish_utils import get_new_pst, str_to_sunfish_move
-
+from irl_chess.stat_tools.stat_tools import wilson_score_interval
 
 # Assuming white, R is array of piece values
 def eval_pos(board, R=None):
@@ -152,7 +152,9 @@ def run_sunfish_GRW(chess_boards, player_moves, config_data, out_path, validatio
             if (epoch + 1) % config_data['val_every'] or (epoch + 1) == config_data['epochs']:
                 pst_val = get_new_pst(R)
                 val_util(validation_set, out_path, config_data, parallel, pst_val, name=epoch)
-        return acc
+        pst_val = get_new_pst(R)
+        out = val_util(validation_set, out_path, config_data, parallel, pst_val, name=epoch)
+        return out
 
 
 def val_sunfish_GRW(validation_set, out_path, config_data, epoch, name=''):
@@ -160,7 +162,7 @@ def val_sunfish_GRW(validation_set, out_path, config_data, epoch, name=''):
         df = pd.read_csv(join(out_path, f'{epoch}.csv'))
         R = df['Results'].values.flatten()
         pst_val = get_new_pst(R)
-        val_util(validation_set, out_path, config_data, parallel, pst_val, name)
+        return val_util(validation_set, out_path, config_data, parallel, pst_val, name)
 
 
 def val_util(validation_set, out_path, config_data, parallel, pst_val, name='',):
@@ -192,3 +194,4 @@ def val_util(validation_set, out_path, config_data, parallel, pst_val, name='',)
                       columns=['board', 'a_player', 'a_true', 'a_val'])
     os.makedirs(join(out_path, f'validation_output'), exist_ok=True)
     df.to_csv(join(out_path, f'validation_output', f'{name}_{acc_true}.csv'), index=False)
+    return acc_true, wilson_score_interval(sum(acc_temp_true), len(acc_temp_true))

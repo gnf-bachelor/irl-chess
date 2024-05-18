@@ -219,7 +219,7 @@ def process_epoch(R, epoch, config_data, out_path, **kwargs):
     # "Data already exists but configs are set to not overwrite"
     # Overwrite is for downloaded data files. .........
     csv_path = join(out_path, 'weights', f'{epoch}.csv')
-    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    os.makedirs(os.path.dirname(csv_path), exist_ok=True)
     pd.DataFrame(R.reshape((-1, 1)), columns=['Result']).to_csv(csv_path, index=False)
 
     if epoch and config_data['plot_every'] and (epoch + 1) % config_data['plot_every'] == 0:
