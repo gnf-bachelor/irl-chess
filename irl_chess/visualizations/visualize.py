@@ -112,7 +112,7 @@ def plot_R_weights(config_data, out_path, start_weight_idx=0, legend_names=['P',
 
     weights = []
     for i in range(start_weight_idx, epoch+1, ):
-        path = os.path.join(out_path, f'{i}.csv')
+        path = os.path.join(out_path, f'weights/{i}.csv')
         if os.path.exists(path):
             df = pd.read_csv(path, index_col=None)
             weights.append(df.values.flatten())
