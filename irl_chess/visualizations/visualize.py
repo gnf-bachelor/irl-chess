@@ -122,7 +122,7 @@ def plot_R_weights(config_data, out_path, start_weight_idx=0, legend_names=['P',
             break
     weights = np.array(weights)
     # assert weights.shape[0] == epoch+1, f"Error: weights.shape[0]: {weights.shape[0]} is not equal to epoch: {epoch}"
-    X = np.repeat(np.arange(0, weights.shape[0], 1)*save_every + start_weight_idx,
+    X = np.repeat(np.arange(0, weights.shape[0], 1) + start_weight_idx,
                   len(plot_char)).reshape((-1, len(plot_char)))
 
     plt.plot(X, weights[:, plot_char])
