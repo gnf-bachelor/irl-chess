@@ -1,8 +1,13 @@
-chess
+jupyter
+scipy
 matplotlib
+seaborn
 pandas
 numpy
 tqdm
-scipy
-seaborn
+
+chess
+requests
+pyzstd
 joblib
+GPyOpt
