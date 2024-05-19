@@ -150,7 +150,7 @@ def run_sunfish_GRW(chess_boards, player_moves, config_data, out_path, validatio
                 print(f'Reached time limit, exited at epoch {epoch}')
                 break
 
-            if (epoch + 1) % config_data['val_every'] or (epoch + 1) == config_data['epochs']:
+            if (epoch + 1) % config_data['val_every']:
                 pst_val = get_new_pst(R)
                 val_util(validation_set, out_path, config_data, parallel, pst_val, name=epoch)
         pst_val = get_new_pst(R)
