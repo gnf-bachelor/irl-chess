@@ -11,7 +11,7 @@
   "time_limit": 1,
 
   "noise_distribution": "step",
-  "delta": 20,
+  "delta": 40,
   "permute_how_many": -1,
   "decay": 1,
   "decay_step": 30,

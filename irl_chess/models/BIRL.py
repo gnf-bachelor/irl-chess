@@ -1,10 +1,6 @@
-import copy
 import os
-import pickle
 from os.path import join
 from time import time
-
-import chess
 import chess.pgn
 import chess.svg
 import numpy as np
@@ -12,13 +8,12 @@ import pandas as pd
 from tqdm import tqdm
 from joblib import Parallel, delayed
 
-from irl_chess import Searcher, pst, piece, plot_R_weights
-from irl_chess.chess_utils.sunfish_utils import board2sunfish, sunfish2board, sunfish_move_to_str
+from irl_chess import pst
 from irl_chess.visualizations import char_to_idxs
 
 from irl_chess.misc_utils.utils import reformat_list
 from irl_chess.misc_utils.load_save_utils import process_epoch
-from irl_chess.chess_utils.sunfish_utils import get_new_pst, str_to_sunfish_move, eval_pos
+from irl_chess.chess_utils.sunfish_utils import board2sunfish, get_new_pst, str_to_sunfish_move, eval_pos
 from irl_chess.chess_utils.BIRL_utils import pi_alpha_beta_search, pi_alpha_beta_search_par, \
     Qeval_chessBoard, Qeval_chessBoard_par, bookkeeping, perturb_reward, log_prob_dist
 from irl_chess.models.sunfish_GRW import eval_pos, sunfish_move, val_util
@@ -125,7 +120,7 @@ def run_BIRL(chess_boards, player_moves, config_data, out_path, validation_set):
             if time() - start_time > config_data['max_hours'] * 60 * 60:
                 break
 
-            if (epoch + 1) % config_data['val_every'] or (epoch + 1) == config_data['epochs']:
+            if ((epoch + 1) % config_data['val_every']) == 0 or (epoch + 1) == config_data['epochs']:
                 pst_val = get_new_pst(R)
                 val_util(validation_set, out_path, config_data, parallel, pst_val, name=epoch)
         return accuracies
