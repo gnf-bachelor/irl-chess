@@ -230,6 +230,7 @@ def load_maia_test_data(min_elo, n_boards):
 
 
 if __name__ == "__main__":
+    # decompress_zstd('data/raw/lichess_db_standard_rated_2019-01.pgn.zst', 'data/raw')
     make_maia_test_csv()
     from irl_chess import get_states
     #

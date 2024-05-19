@@ -50,13 +50,16 @@ class PriorityQueueWithFIFO(PriorityQueue):
 
 # Evaluates the piece positions according to sunfish
 def eval_pst_only(board):
-    s = str(board()).replace(' ', '').replace('\n', '')
+    s = str(board).replace(' ', '').replace('\n', '')
     eval = 0
-    for i, char in enumerate(s):
-        if char == '.':
+    for i, p in enumerate(s):
+        if p == '.':
             continue
-        else:
-            eval += pst_only[char][i]
+        if p.islower(): # if black piece. Mirror baord. 
+            p = p.upper()
+            eval -= pst_only[p][56 - (i//8)*8 + i%8]
+        else: # else if white piece
+            eval += pst_only[p][i]
     return eval
 
 def evaluate_board(board, R, pst = False, white=True):
@@ -70,18 +73,21 @@ def evaluate_board(board, R, pst = False, white=True):
     :param white: True if viewing from White's perspective. Should be always be left as true since black is trying to minimize.  
     :return:
     """
-    if pst: # I am unsure which function is faster. This one of the eval_pos when using pst and without. We could test it.  
-        #print("I am quite certain there is a bug in how the following function flips the board to evaluate the position")
-        return eval_pos(board, R=R)
+    # Does the exact same as return eval_pos(board, R=R), but does not convert board to sunfish board
+    # It is only about 20% faster, so it does not make much of a difference. 
+    pieces = 'PNBRQK'
+    piece_dict = {p: R[i] for i, p in enumerate(pieces)}
+    s = str(board).replace(' ', '').replace('\n', '')
     eval = 0
-    for WhitePieces in (True, False):
-        keys = {val if WhitePieces else val.lower(): 0 for val in piece.keys()}
-        for char in board.fen().split(" ", 1)[0]: # Do not include turn and castling information. The "b" for black turn is counted as a black rook. Strip the end of the string.
-            if char in keys:
-                keys[char] += 1
-        pos = np.array([val for val in keys.values()])
-        eval += (pos @ R) * (1 if WhitePieces else -1) # Add if 
-    return eval * (1 if white else -1) + (eval_pst_only(board) if pst else 0)
+    for i, p in enumerate(s):
+        if p == '.':
+            continue
+        if p.islower(): # if black piece. Mirror baord. 
+            p = p.upper()
+            eval -= piece_dict[p] + (pst_only[p.upper()][56 - (i//8)*8 + i%8] if pst else 0)
+        else: # else if white piece
+            eval += piece_dict[p] + (pst_only[p][i] if pst else 0)
+    return eval * (1 if white else -1) 
 
 def move_generator(board: chess.Board, depth: int) -> Iterator[chess.Move]:
     # Skip captures on the second pass since we already considered them.
@@ -99,7 +105,7 @@ def no_moves_eval(board: chess.Board, R: np.array, pst: bool, evaluation_functio
     elif board.outcome().winner is None: # The game is tied
         final_score = 0
     else:
-        final_score = (np.sum(R)*100 if board.outcome().winner else -np.sum(R)*100)
+        final_score = (np.sum(R)*100 if board.outcome().winner else -np.sum(R)*100) # Check up on this compared to sunfish. 
     return final_score * (1 if _maximize else -1), deepcopy(board), deque() # This evaluation function should be static. Positive is good for white and negative is good for black.
 
 def alpha_beta_search_k(board: chess.Board,
@@ -109,7 +115,7 @@ def alpha_beta_search_k(board: chess.Board,
                       beta=np.inf,
                       maximize=True,
                       R: np.array = np.zeros(1),
-                      pst: bool = False,
+                      pst: bool = True,
                       evaluation_function=evaluate_board,
                       quiesce: bool = False) -> list[tuple[float, chess.Board, deque]]: 
     """
@@ -187,7 +193,7 @@ def quiescence_search(board: chess.Board,
                       beta=np.inf,
                       maximize=True,
                       R: np.array = np.zeros(1),
-                      pst: bool = False,
+                      pst: bool = True,
                       evaluation_function=evaluate_board) -> list[tuple[float, chess.Board, deque]]:
     """
     When maximize is True the board must be evaluated from the White
@@ -264,9 +270,9 @@ def alpha_beta_search(board: chess.Board,
                       beta=np.inf,
                       maximize=True,
                       R: np.array = np.zeros(1),
-                      pst: bool = False,
+                      pst: bool = True,
                       evaluation_function=evaluate_board,
-                      quiesce: bool = False) -> list[tuple[float, chess.Board, deque]]: 
+                      quiesce: bool = False) -> tuple[float, chess.Board, deque]: 
     
     return alpha_beta_search_k(board, depth, k = 1, alpha=alpha, beta=beta, maximize=maximize, R= R,
                       pst=pst, evaluation_function=evaluation_function, quiesce=quiesce)[0]

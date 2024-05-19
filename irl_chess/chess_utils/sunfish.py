@@ -341,7 +341,7 @@ class Searcher:
             if depth == 0:
                 yield None, pos.score
 
-            # Look for the strongest ove from last time, the hash-move.
+            # Look for the strongest move from last time, the hash-move.
             killer = self.tp_move.get(pos)
 
             # If there isn't one, try to find one with a more shallow search.

@@ -76,7 +76,7 @@ def board2sunfish(board, score):
     if ep == '-':
         ep = 0
     else:
-        ep = square2sunfish(ep)
+        ep = square2sunfish(ep) # Check later. 
 
     kp = 0
 
@@ -121,22 +121,40 @@ def sunfish2board(pos: Position):
 
 # Assuming white, R is array of piece values
 def eval_pos(board, R=None):
+    #assert board.turn == True # Assume it is white's turn. # Fish all of sunfishes rotation mistakes later. 
     pos = board2sunfish(board, 0)
     pieces = 'PNBRQK'
     if R is not None:
-        piece_dict = {p: R[i] for i, p in enumerate(pieces)}
+        piece_dict = {p: R[i] for i, p in enumerate(pieces)} # Brittle in case of more R parameters. Piece values have to be listed first. 
     else:
         piece_dict = piece
     eval = 0
     for row in range(20, 100, 10):
-        for square in range(1 + row, 9 + row):
-            p = pos.board[square]
+        for col in range(1, 9):
+            # White square = (row + col)
+            p = pos.board[(row + col)]
             if p == '.':
                 continue
-            if p.islower():
+            if p.islower(): # if black piece. Mirror baord. 
                 p = p.upper()
-                eval -= piece_dict[p] + pst[p][119 - square]
-            else:
-                eval += piece_dict[p] + pst[p][square]
+                eval -= piece_dict[p] + pst[p][110 - row + col]
+            else: # else if white piece
+                eval += piece_dict[p] + pst[p][(row + col)]
     return eval
 
+# check sunfish moves same color as player
+def check_moved_same_color(sunfish_boards, player_moves_sunfish, actions_new):
+    for k, pos in enumerate(sunfish_boards):
+        player_move_square = player_moves_sunfish[k].i
+        sunfish_move_square = actions_new[k].i
+        move_ok = pos.board[player_move_square].isupper() == pos.board[sunfish_move_square].isupper()
+        assert move_ok, 'Wrong color piece moved by sunfish'
+
+def moves_and_Q_from_result(results, states):
+    moves, _, Q_new_dicts = [], [], {}
+    for state, (move, best_moves, move_dict) in list(zip(states, results)):
+        if move is not None: # When is the move None? This is a problem!
+            moves.append(sunfish_move_to_str(move))
+            Q_new_dicts[state] = {sunfish_move_to_str(move): scores[-1] for move, scores in move_dict.items()
+                                  if move is not None}
+    return moves, Q_new_dicts

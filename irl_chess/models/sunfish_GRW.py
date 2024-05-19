@@ -18,30 +18,8 @@ from irl_chess.visualizations import char_to_idxs
 
 from irl_chess.misc_utils.utils import reformat_list
 from irl_chess.misc_utils.load_save_utils import process_epoch
-from irl_chess.chess_utils.sunfish_utils import get_new_pst, str_to_sunfish_move
-from irl_chess.stat_tools.stat_tools import wilson_score_interval
-
-# Assuming white, R is array of piece values
-def eval_pos(board, R=None):
-    pos = board2sunfish(board, 0)
-    pieces = 'PNBRQK'
-    if R is not None:
-        piece_dict = {p: R[i] for i, p in enumerate(pieces)}
-    else:
-        piece_dict = piece
-    eval = 0
-    for row in range(20, 100, 10):
-        for square in range(1 + row, 9 + row):
-            p = pos.board[square]
-            if p == '.':
-                continue
-            if p.islower():
-                p = p.upper()
-                eval -= piece_dict[p] + pst[p][119 - square]
-            else:
-                eval += piece_dict[p] + pst[p][square]
-    return eval
-
+from irl_chess.chess_utils.sunfish_utils import get_new_pst, str_to_sunfish_move, eval_pos, check_moved_same_color
+from irl_chess.stat_tools import wilson_score_interval
 
 def sunfish_move(state, pst, time_limit, move_only=False, run_at_least=1, ):
     """
@@ -124,12 +102,9 @@ def run_sunfish_GRW(chess_boards, player_moves, config_data, out_path, validatio
             pst_new = get_new_pst(R_new)  # Sunfish uses only pst table for calculations
             actions_new = parallel(delayed(sunfish_move)(board, pst_new, config_data['time_limit'], True)
                                    for board in tqdm(sunfish_boards, desc='Getting new Sunfish actions'))
+            
             # check sunfish moves same color as player
-            for k, pos in enumerate(sunfish_boards):
-                player_move_square = player_moves_sunfish[k].i
-                sunfish_move_square = actions_new[k].i
-                move_ok = pos.board[player_move_square].isupper() == pos.board[sunfish_move_square].isupper()
-                assert move_ok, 'Wrong color piece moved by sunfish'
+            check_moved_same_color(sunfish_boards, player_moves_sunfish, actions_new)
 
             acc = sum([a == a_new for a, a_new in zip(actions_true, actions_new)]) / config_data['n_boards']
             if acc >= last_acc:

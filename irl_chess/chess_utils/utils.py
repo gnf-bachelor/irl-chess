@@ -17,6 +17,34 @@ from irl_chess.visualizations.visualize import plot_R_weights, char_to_idxs
 from irl_chess.chess_utils.alpha_beta_utils import evaluate_board, alpha_beta_search, alpha_beta_search_k, list_first_moves
 from scipy.special import softmax
 
+def perturb_reward(R, config_data, epoch = None):
+    permute_idxs = config_data['permute_idxs']
+    delta = config_data['delta']
+    noise_distribution = config_data['noise_distribution']
+    permute_how_many = config_data['permute_how_many']
+    if noise_distribution is None:
+        noise_distribution = "uniform"
+    if permute_how_many != -1 and permute_how_many: 
+        permute_idxs = np.random.choice(permute_idxs, size=permute_how_many, replace=False)
+    match noise_distribution:
+        case "uniform":
+            noise = np.random.uniform(-delta, delta, permute_idxs.shape)
+        case "step":
+            noise = np.random.choice([-delta, delta], permute_idxs.shape)
+        case "gaussian":
+            noise = np.random.normal(0, delta, permute_idxs.shape)
+    R_new = R.copy()
+    # Add noise to the specified indices
+    R_new[permute_idxs] += noise
+    if epoch is not None: noise_decay(config_data, epoch)
+    return R_new
+
+def noise_decay(config_data, epoch):
+    if epoch % config_data['decay_step'] == 0 and epoch != 0:
+        delta = config_data['delta']
+        delta *= config_data['decay']
+        config_data['delta'] = delta
+
 # Thankfully this function is no longer necessary as the package is pip installable. 
 def vscode_fix():
     if 'TERM_PROGRAM' in os.environ.keys() and os.environ['TERM_PROGRAM'] == 'vscode':
@@ -178,6 +206,13 @@ def softmax_choice(x):
 def log_prob_dist(R, energy, alpha, prior=lambda R: 1):
     log_prob = alpha * energy + np.log(prior(R))
     return log_prob
+
+
+
+
+
+
+
 
 
 def policy_walk(R, boards, moves, delta=1e-3, epochs=10, depth=3, alpha=2e-2, permute_end_idx=-1, permute_all=True,
