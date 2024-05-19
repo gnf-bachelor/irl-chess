@@ -147,6 +147,7 @@ def run_sunfish_GRW(chess_boards, player_moves, config_data, out_path, validatio
             print(f'Current sunfish accuracy: {acc}, best: {last_acc}')
             print(f'Best R: {R}')
             if time() - start_time > config_data['max_hours'] * 60 * 60:
+                print(f'Reached time limit, exited at epoch {epoch}')
                 break
 
             if (epoch + 1) % config_data['val_every'] or (epoch + 1) == config_data['epochs']:
