@@ -17,5 +17,6 @@
     "permute_char": ["N", "B", "R", "Q"],
     "model": "sunfish_GRW",
     "move_function": "player_move",
-    "board_translation": "none"
+    "board_translation": "none",
+    "move_percentage_data": false
 }
