@@ -126,12 +126,9 @@ def run_sunfish_GRW(chess_boards, player_moves, config_data, out_path, validatio
             pst_new = get_new_pst(R_new)  # Sunfish uses only pst table for calculations
             actions_new = parallel(delayed(sunfish_move)(board, pst_new, config_data['time_limit'], True)
                                    for board in tqdm(sunfish_boards, desc='Getting new Sunfish actions'))
+            
             # check sunfish moves same color as player
-            for k, pos in enumerate(sunfish_boards):
-                player_move_square = player_moves_sunfish[k].i
-                sunfish_move_square = actions_new[k].i
-                move_ok = pos.board[player_move_square].isupper() == pos.board[sunfish_move_square].isupper()
-                assert move_ok, 'Wrong color piece moved by sunfish'
+            check_moved_same_color(sunfish_boards, player_moves_sunfish, actions_new)
 
             acc = sum([a == a_new for a, a_new in zip(actions_true, actions_new)]) / config_data['n_boards']
             if acc >= last_acc:

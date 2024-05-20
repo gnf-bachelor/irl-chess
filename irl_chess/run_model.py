@@ -24,7 +24,9 @@ if __name__ == '__main__':
         case "maia_pretrained":
             from irl_chess.models.maia_pretrained import run_maia_pre as model, \
                 maia_pre_result_string as model_result_string
-
+        case "BIRL":
+            from irl_chess.models.BIRL import run_BIRL as model, \
+                BIRL_result_string as model_result_string
         case _:
             raise Exception(f"No model found with the name {config_data['model']}")
 
@@ -32,7 +34,7 @@ if __name__ == '__main__':
 
     websites_filepath = join(os.getcwd(), 'downloads', 'lichess_websites.txt')
     file_path_data = join(os.getcwd(), 'data', 'raw')
-    pgn_paths = ['data/raw/lichess_db_standard_rated_2017-11.pgn']
+    pgn_paths = ['data/raw/lichess_db_standard_rated_2019-01.pgn']
 
     # Loads in the chess format:
     chess_boards, player_moves = get_states(
