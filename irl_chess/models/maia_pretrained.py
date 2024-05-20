@@ -38,11 +38,13 @@ def run_maia_pre(chess_boards, player_moves, config_data, out_path, validation_s
                               parent=join('irl_chess', 'maia_chess')) if model is None else model
 
     actions_val = [maia_pre_move(state, model) for state, move in
-                   tqdm(validation_set, desc='Getting validation actions')]
+                   tqdm(validation_set, desc='Getting Maia validation actions')]
 
     acc_temp = []
     data_save = []
     for (state, a_true), (a_val, score) in zip(validation_set, actions_val):
+        a_true = str(a_true)
+        a_val = str(a_val)
         acc_temp.append(a_true == a_val)
         data_save.append((state, a_true, a_val, score))
     acc = sum(acc_temp) / len(acc_temp)

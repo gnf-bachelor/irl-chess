@@ -21,6 +21,7 @@ from irl_chess.misc_utils.load_save_utils import process_epoch
 from irl_chess.chess_utils.sunfish_utils import get_new_pst, str_to_sunfish_move
 from irl_chess.stat_tools.stat_tools import wilson_score_interval
 
+
 # Assuming white, R is array of piece values
 def eval_pos(board, R=None):
     pos = board2sunfish(board, 0)
@@ -98,7 +99,8 @@ def run_sunfish_GRW(chess_boards, player_moves, config_data, out_path, validatio
     R = np.array(config_data['R_start'])
     Rs = [R]
     sunfish_boards = [board2sunfish(board, eval_pos(board, R)) for board in chess_boards]
-    player_moves_sunfish = [str_to_sunfish_move(move, not board.turn) for move, board in zip(player_moves, chess_boards)]
+    player_moves_sunfish = [str_to_sunfish_move(move, not board.turn) for move, board in
+                            zip(player_moves, chess_boards)]
     delta = config_data['delta']
     start_time = time()
 
@@ -114,7 +116,7 @@ def run_sunfish_GRW(chess_boards, player_moves, config_data, out_path, validatio
                 df = pd.read_csv(weight_path)
                 R = df['Result'].values.flatten()
                 Rs.append(R)
-                print(f'Results loaded for epoch {epoch+1}, continuing')
+                print(f'Results loaded for epoch {epoch + 1}, continuing')
                 continue
 
             add = np.zeros(6)
@@ -150,7 +152,7 @@ def run_sunfish_GRW(chess_boards, player_moves, config_data, out_path, validatio
                 print(f'Reached time limit, exited at epoch {epoch}')
                 break
 
-            if (epoch + 1) % config_data['val_every']:
+            if (epoch + 1) % config_data['val_every'] == 0:
                 pst_val = get_new_pst(R)
                 val_util(validation_set, out_path, config_data, parallel, pst_val, name=epoch)
         pst_val = get_new_pst(R)
@@ -158,19 +160,21 @@ def run_sunfish_GRW(chess_boards, player_moves, config_data, out_path, validatio
         return out
 
 
-def val_sunfish_GRW(validation_set, out_path, config_data, epoch, name=''):
+def val_sunfish_GRW(validation_set, out_path, config_data, epoch, use_player_moves, name=''):
     with (Parallel(n_jobs=config_data['n_threads']) as parallel):
-        df = pd.read_csv(join(out_path, f'{epoch}.csv'))
-        R = df['Results'].values.flatten()
+        df = pd.read_csv(join(out_path, 'weights', f'{epoch}.csv'))
+        R = df['Result'].values.flatten()
         pst_val = get_new_pst(R)
-        return val_util(validation_set, out_path, config_data, parallel, pst_val, name)
+        return val_util(validation_set, out_path, config_data, parallel, pst_val, use_player_moves,name)
 
 
-def val_util(validation_set, out_path, config_data, parallel, pst_val, name='',):
-    actions_val = parallel(delayed(sunfish_move)(board2sunfish(board, eval_pos(board, None)), pst_val, config_data['time_limit'], True)
-                           for board, move in tqdm(validation_set, desc='Getting True Sunfish actions'))
-    actions_true = parallel(delayed(sunfish_move)(board2sunfish(board, eval_pos(board, None)), pst, config_data['time_limit'], True)
-                           for board, move in tqdm(validation_set, desc='Getting Sunfish validation actions'))
+def val_util(validation_set, out_path, config_data, parallel, pst_val, use_player_moves, name=''):
+    actions_val = parallel(
+        delayed(sunfish_move)(board2sunfish(board, eval_pos(board, None)), pst_val, config_data['time_limit'], True)
+        for board, move in tqdm(validation_set, desc='Getting True Sunfish actions'))
+    actions_true = parallel(
+        delayed(sunfish_move)(board2sunfish(board, eval_pos(board, None)), pst, config_data['time_limit'], True)
+        for board, move in tqdm(validation_set, desc='Getting Sunfish validation actions')) if not use_player_moves else actions_val
 
     acc_temp_true, acc_temp_player = [], []
     actions_val_san, actions_true_san = [], []
@@ -187,12 +191,13 @@ def val_util(validation_set, out_path, config_data, parallel, pst_val, name='',)
 
     acc_true = sum(acc_temp_true) / len(acc_temp_true)
     acc_player = sum(acc_temp_player) / len(acc_temp_player)
-    print(f'Validation accuracy on sunfish: {acc_true}')
+    if not use_player_moves:
+        print(f'Validation accuracy on sunfish: {acc_true}')
     print(f'Validation accuracy on player moves: {acc_player}')
 
     df = pd.DataFrame([(state, a_player, a_true, a_val) for (state, a_player), a_val, a_true in
                        zip(validation_set, actions_val_san, actions_true_san)],
-                      columns=['board', 'a_player', 'a_true', 'a_val'])
+                      columns=['board', 'a_player', 'a_true' if use_player_moves else 'a_val_copy', 'a_val'])
     os.makedirs(join(out_path, f'validation_output'), exist_ok=True)
     df.to_csv(join(out_path, f'validation_output', f'{name}_{acc_true}.csv'), index=False)
-    return acc_true, wilson_score_interval(sum(acc_temp_true), len(acc_temp_true))
+    return acc_player, wilson_score_interval(sum(acc_temp_player), len(acc_temp_player))

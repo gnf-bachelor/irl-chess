@@ -144,6 +144,7 @@ def get_states(websites_filepath, file_path_data, config_data, out_path, use_ply
                                      file_path_data=file_path_data,
                                      overwrite=config_data['overwrite'],
                                      n_files=config_data['n_files']) if pgn_paths is None else pgn_paths
+    data_save_path = join(out_path, 'boards_and_moves.pkl')
     if use_ply_range:
         config_data = config_data
         pickle_path = f'data/processed/'
@@ -157,15 +158,15 @@ def get_states(websites_filepath, file_path_data, config_data, out_path, use_ply
             return ply_dict_boards, ply_dict_moves
         except FileNotFoundError:
             pass
-    data_save_path = join(out_path, 'boards_and_moves.pkl')
-    try:
-        with open(data_save_path, 'rb') as file:
-            print(f'Found saved data at {data_save_path}')
-            boards, moves = pickle.load(file)
-            return boards, moves
-    except FileNotFoundError:
-        print(f'No saved data at {data_save_path}')
-        pass
+    else:
+        try:
+            with open(data_save_path, 'rb') as file:
+                print(f'Found saved data at {data_save_path}')
+                boards, moves = pickle.load(file)
+                return boards, moves
+        except FileNotFoundError:
+            print(f'No saved data at {data_save_path}')
+            pass
 
     chess_boards, moves = [], []
     i = 0
