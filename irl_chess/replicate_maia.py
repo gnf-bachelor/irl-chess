@@ -17,8 +17,8 @@ def plot_accuracies(accuracies_maia, accuracies_sunfish, elos, maia_elos, n_move
     plt.xlabel('Player ELOs')
     plt.ylabel('Accuracy')
     plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
-    os.makedirs('results/plots', exist_ok=True)
-    plt.savefig(f'results/plots/maia_replication_accuracy_{maia_elos[0]}_{maia_elos[-1]}_{n_moves}.png')
+    os.makedirs('results/plots/maia_replication_accuracy', exist_ok=True)
+    plt.savefig(f'results/plots/maia_replication_accuracy/{maia_elos[0]}_{maia_elos[-1]}_{n_moves}.png')
     plt.show()
     plt.close()
 
@@ -34,11 +34,11 @@ if __name__ == '__main__':
     print(f'Took {time() - t:.2f} seconds to download maia dataset')
 
     elos_players, accuracies_maia, accuracies_sunfish, maia_elos = [], [], [], []
-    n_boards = 10000
+    n_boards = 5000
     maia_range = (1100, 2000)  # incl. excl.
     sunfish_elo_epoch = {1100: 100, 1900: 100}
     player_range = (1000, 1900)  # incl. excl.
-    make_maia_test_csv(destination, max_elo=player_range[0], min_elo=player_range[1], n_boards=n_boards)
+    make_maia_test_csv(destination, min_elo=player_range[0], max_elo=player_range[1], n_boards=n_boards)
     config_data_base, config_data_sunfish = load_config()
 
     for elo_maia in tqdm(range(maia_range[0], maia_range[1], 100), desc='ELO Maia'):
