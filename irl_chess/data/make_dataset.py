@@ -190,6 +190,20 @@ def load_lichess_dfs(websites_filepath, file_path_data, n_files, overwrite=False
     df.dropna(inplace=True)
     return df
 
+def load_maia_test_data(min_elo, n_boards):
+    df_path = f'data/processed/maia_test/{min_elo}_{min_elo + 100}_{n_boards}.csv'
+    dirname = os.path.dirname(df_path)
+    if os.path.exists(dirname):
+        for filename in os.listdir(dirname):
+            if filename.endswith('.csv'):
+                min_, max_, n_boards_ = [int(el) for el in filename[:-4].split('_')]
+                if min_ == min_elo and n_boards <= n_boards_:
+                    val_df = pd.read_csv(join(dirname, filename))
+                    return val_df[:n_boards]
+
+    make_maia_test_csv(min_elo=min_elo, max_elo=min_elo + 100, n_boards=n_boards)
+    val_df = pd.read_csv(df_path)
+    return val_df
 
 if __name__ == "__main__":
     n_files = np.inf
