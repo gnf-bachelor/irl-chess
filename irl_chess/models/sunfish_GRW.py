@@ -13,7 +13,8 @@ from tqdm import tqdm
 from joblib import Parallel, delayed
 
 from irl_chess import Searcher, pst, piece, plot_R_weights
-from irl_chess.chess_utils.sunfish_utils import board2sunfish, sunfish2board, sunfish_move_to_str
+from irl_chess.chess_utils.sunfish_utils import board2sunfish, sunfish2board, sunfish_move_to_str, \
+    check_moved_same_color
 from irl_chess.visualizations import char_to_idxs
 
 from irl_chess.misc_utils.utils import reformat_list
