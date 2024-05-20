@@ -194,3 +194,4 @@ results/*
 
 # exception to the rule
 !results/.gitkeep 
+/maia_chess

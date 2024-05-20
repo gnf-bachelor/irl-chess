@@ -12,7 +12,7 @@ import chess.svg
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-
+from irl_chess.chess_utils.sunfish_utils import board2sunfish, str_to_sunfish_move
 from irl_chess.data.make_dataset import download_lichess_pgn
 from irl_chess.visualizations import char_to_idxs, plot_R_weights
 
@@ -136,6 +136,16 @@ def is_valid_game(game, config_data):
 
 
 def get_states(websites_filepath, file_path_data, config_data, out_path, use_ply_range=True, pgn_paths=None):
+    if config_data['move_percentage_data']:
+        with open('data/move_percentages/moves_1000-1200_fixed', 'r') as f:
+            moves_dict = json.load(f)
+        n_boards = config_data['n_boards']
+        assert n_boards <= len(moves_dict), 'Number of boards exceeds number of positions.'
+        sunfish_boards = [board2sunfish(fen, 0) for fen in list(moves_dict.keys())[:n_boards]]
+        move_dicts = [move_dict for fen, move_dict in list(moves_dict.items())[:n_boards]]
+        player_moves = [max(move_dict, key=lambda k: move_dict[k][0] - (k == 'sum')) for move_dict in move_dicts]
+        player_moves = [str_to_sunfish_move(move, False) for move in player_moves]
+        return sunfish_boards, player_moves
 
     ply_dict_boards = defaultdict(lambda: []) if use_ply_range else None
     ply_dict_moves = defaultdict(lambda: []) if use_ply_range else None
