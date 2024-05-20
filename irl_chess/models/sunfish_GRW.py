@@ -110,7 +110,7 @@ def run_sunfish_GRW(chess_boards, player_moves, config_data, out_path, validatio
     with (Parallel(n_jobs=config_data['n_threads']) as parallel):
         actions_true = player_moves_sunfish if use_player_move else parallel(
             delayed(sunfish_move)(state, pst, config_data['time_limit'], True)
-            for state in tqdm(sunfish_boards, desc='Getting true moves', ))
+            for state in tqdm(sunfish_boards, desc='Getting true Sunfish moves', ))
         for epoch in tqdm(range(config_data['epochs']), desc='Epochs'):
             weight_path = join(out_path, f'weights/{epoch}.csv')
             if os.path.exists(weight_path):
