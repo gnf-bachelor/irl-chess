@@ -198,7 +198,7 @@ def make_maia_test_csv(filepath='data/raw/maia-chess-testing-set.csv.bz2', n_boa
         download_file(url=url, destination=filepath)
 
     df = None
-    for elo_player in tqdm(range(min_elo, max_elo + 1, 100), desc='ELO Players'):
+    for elo_player in tqdm(range(min_elo, max_elo + 1, 100), desc='ELO Players data loading'):
         df_path = f'data/processed/maia_test/{elo_player}_{elo_player + 100}_{n_boards}.csv'
         os.makedirs(os.path.dirname(df_path), exist_ok=True)
         if os.path.exists(df_path):
