@@ -7,7 +7,7 @@
   "max_elo": 1200,
   "n_midgame": 15,
   "n_endgame": 30,
-  "n_boards": 500,
+  "n_boards": 5000,
   "n_threads": -2,
   "move_function": "player_move",
   "move_percentage_data": false
