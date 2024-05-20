@@ -197,16 +197,16 @@ def make_maia_test_csv(filepath='data/raw/maia-chess-testing-set.csv.bz2', n_boa
     if not os.path.exists(filepath):
         download_file(url=url, destination=filepath)
 
-
+    df = None
     for elo_player in tqdm(range(min_elo, max_elo + 1, 100), desc='ELO Players'):
         df_path = f'data/processed/maia_test/{elo_player}_{elo_player + 100}_{n_boards}.csv'
         os.makedirs(os.path.dirname(df_path), exist_ok=True)
         if os.path.exists(df_path):
             print(f'{df_path} exists and was not created')
         else:
-            print(f'Sub dataset not found at {df_path}, loading from scratch.')
+            print(f'Sub dataset not found at {df_path}, {"loading from scratch." if df is None else "creating it now"}')
             t = time.time()
-            df = pd.read_csv(filepath)
+            df = pd.read_csv(filepath) if df is None else df
             print(f'Loaded big data in {time.time() - t}')
             val_df = df[(elo_player < df['opponent_elo']) & (df['white_elo'] < (elo_player + 100))]
             val_df = val_df[(10 <= val_df['move_ply'])][:n_boards]
