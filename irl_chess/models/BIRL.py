@@ -13,10 +13,10 @@ from irl_chess.visualizations import char_to_idxs
 
 from irl_chess.misc_utils.utils import reformat_list
 from irl_chess.misc_utils.load_save_utils import process_epoch
-from irl_chess.chess_utils.sunfish_utils import board2sunfish, get_new_pst, str_to_sunfish_move, eval_pos
+from irl_chess.chess_utils.sunfish_utils import board2sunfish, get_new_pst, str_to_sunfish_move, eval_pos, sunfish_move, eval_pos_pst
 from irl_chess.chess_utils.BIRL_utils import pi_alpha_beta_search, pi_alpha_beta_search_par, \
-    Qeval_chessBoard, Qeval_chessBoard_par, bookkeeping, perturb_reward, log_prob_dist
-from irl_chess.models.sunfish_GRW import eval_pos, sunfish_move, val_util
+    Qeval_chessBoard, Qeval_chessBoard_par, sunfish_search_par, bookkeeping, perturb_reward, log_prob_dist, Qeval_sunfishBoard_par
+from irl_chess.models.sunfish_GRW import eval_pos, val_util
 
 def BIRL_result_string(model_config_data):
     chess_policy = model_config_data['chess_policy']
@@ -49,12 +49,10 @@ def run_BIRL(chess_boards, player_moves, config_data, out_path, validation_set):
         states = chess_boards
         actions = player_moves
     elif config_data['chess_policy'] == "sunfish":
-        states = [board2sunfish(board, eval_pos(board, R)) for board in chess_boards]
-        if use_player_move:
-            player_moves_sunfish = [str_to_sunfish_move(move, not board.turn) for move, board in zip(player_moves, chess_boards)]
-            actions = [max(move_dict, key=lambda k: move_dict[k][0] - (k == 'sum')) for move_dict in player_moves]
-        else:
-            actions = [sunfish_move(state, pst, config_data['time_limit'], True) for state in tqdm(states, desc='Getting true moves', )]
+        from irl_chess.chess_utils.BIRL_utils import sunfish_search_par as PolicyIteration, \
+                Qeval_sunfishBoard_par as Qeval
+        states = [board2sunfish(board, 0) for board in chess_boards] # sunfish scores are relative, so setting them to 0 is fine. 
+        actions = [str_to_sunfish_move(move, not board.turn) for move, board in zip(player_moves, chess_boards)]
     else:
         raise Exception(f"The policy {config_data['chess_policy']} is not implemented yet")
 
@@ -68,6 +66,7 @@ def run_BIRL(chess_boards, player_moves, config_data, out_path, validation_set):
     # Interpret following the policy as arriving at the same final board. 
     pi, a_pi, pi_new = [None] * len(states), [None] * len(states), [None] * len(states) 
     Qpi_policy_R    = np.zeros(len(states)) # Qpi(s,pi,R)
+    Qpi_action_R    = np.zeros(len(states)) # Qpi(s,a ,R) # Just a placeholder 
     Qpi_action_Rnew = np.zeros(len(states)) # Qpi(s,a ,R~)
     Qpi_policy_Rnew = np.zeros(len(states)) # Qpi(s,pi,R~)
     QpiNew_policy_Rnew = np.zeros(len(states)) # Qpi~(s,pi~,R~)
@@ -78,7 +77,7 @@ def run_BIRL(chess_boards, player_moves, config_data, out_path, validation_set):
         
         # Calculate initially. 
         pi, Qpi_policy_R, pi_moves = PolicyIteration(states, pi, None, Qpi_policy_R, R, config_data, parallel)
-        a_pi, _, _ = PolicyIteration(states, a_pi, actions, Qpi_policy_R, R, config_data, parallel) # We can't guarantee that alpha-beta search fully explores move a and so we calculate it again.
+        a_pi, _, _ = PolicyIteration(states, a_pi, actions, Qpi_action_R, R, config_data, parallel) # We can't guarantee that alpha-beta search fully explores move a and so we calculate it again.
         bookkeeping(accuracies, actions, pi_moves, energies, Qpi_policy_R, Rs, R)
 
         for epoch in tqdm(range(config_data['epochs']), desc='Epochs'):
@@ -92,15 +91,14 @@ def run_BIRL(chess_boards, player_moves, config_data, out_path, validation_set):
             
             R_new = perturb_reward(R, config_data, epoch)
             # Evaluate perterbued reward function
-            Qpi_action_Rnew = Qeval(Qpi_action_Rnew, a_pi, states, R_new, parallel, pst = config_data['pst'])
-            Qpi_policy_Rnew = Qeval(Qpi_policy_Rnew, pi, states, R_new, parallel, pst = config_data['pst']) # This the standard Q-value there, the policy should be optimal. 
+            Qpi_action_Rnew = Qeval(a_pi, states, R_new, parallel, pst = config_data['pst'])
+            Qpi_policy_Rnew = Qeval(pi, states, R_new, parallel, pst = config_data['pst']) # This the standard Q-value there, the policy should be optimal. 
             # np.corrcoef(Qpi_action_Rnew, Qpi_policy_Rnew) # We expect these to be highly correlated, as one move probably doesn't change much.  
 
             # Switch stochastically accept the new reward function and the new policy
             if np.any(Qpi_policy_Rnew < Qpi_action_Rnew): # if the new reward function explains the data action better than the policy action for any state
                 pi_new, QpiNew_policy_Rnew, pi_new_moves = PolicyIteration(states, pi_new, None, QpiNew_policy_Rnew, R_new, config_data, parallel)
                 log_prob = min(0, log_prob_dist(R_new, np.sum(QpiNew_policy_Rnew), alpha=config_data['alpha']) - log_prob_dist(R, np.sum(Qpi_policy_R), alpha=config_data['alpha']))
-
                 if log_prob > -1e3 and np.random.random() < np.exp(log_prob):
                     print(f'Changed weights and policy! From {R}\n to {R_new}\n Probability was: {np.exp(log_prob)}')
                     R = np.copy(R_new)
@@ -120,7 +118,8 @@ def run_BIRL(chess_boards, player_moves, config_data, out_path, validation_set):
             if time() - start_time > config_data['max_hours'] * 60 * 60:
                 break
 
-            if ((epoch + 1) % config_data['val_every']) == 0 or (epoch + 1) == config_data['epochs']:
-                pst_val = get_new_pst(R)
-                val_util(validation_set, out_path, config_data, parallel, pst_val, name=epoch)
+            # Maybe validate
+            # if ((epoch + 1) % config_data['val_every']) == 0 or (epoch + 1) == config_data['epochs']:
+            #     pst_val = get_new_pst(R)
+            #     val_util(validation_set, out_path, config_data, parallel, pst_val, name=epoch)
         return accuracies
