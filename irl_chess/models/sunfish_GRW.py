@@ -86,6 +86,7 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path):
     else:
         raise Exception(f"The move function {config_data['move_function']} is not implemented yet")
 
+    np.set_printoptions(suppress=True)
     permute_idxs = char_to_idxs(config_data['permute_char'])
     metric = config_data['metric']
 
@@ -97,7 +98,7 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path):
     accuracies = []
     with (Parallel(n_jobs=config_data['n_threads']) as parallel):
         actions_true = player_moves if use_player_move else parallel(
-            delayed(sunfish_move)(state, pst, config_data['time_limit'], True)
+            delayed(sunfish_move)(state, pst, config_data['time_limit'], move_only=True)
             for state in tqdm(sunfish_boards, desc='Getting true moves', ))
 
         for epoch in range(config_data['epochs']):
@@ -107,7 +108,7 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path):
             R_new = R + add
 
             pst_new = get_new_pst(R_new)  # Sunfish uses only pst table for calculations
-            results = parallel(delayed(sunfish_move)(state, pst_new, config_data['time_limit'], False)
+            results = parallel(delayed(sunfish_move)(state, pst_new, config_data['time_limit'], move_only=False)
                                                             for state in tqdm(sunfish_boards, desc='Getting new actions'))
 
             moves, best_moves_lists, move_dicts = [], [], []
@@ -132,7 +133,7 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path):
             acc3 = sum([a in a_new for a, a_new in list(zip(actions_true, actions_new))]) / config_data['n_boards']
 
             print(acc1, acc2, acc3)
-            acc = acc3
+            acc = acc1
             if acc >= last_acc:
                 R = copy.copy(R_new)
                 last_acc = copy.copy(acc)

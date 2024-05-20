@@ -11,17 +11,8 @@ from joblib import Parallel, delayed
 from irl_chess import Searcher, pst, piece
 from irl_chess.chess_utils.sunfish_utils import board2sunfish, sunfish2board, top_k_moves
 from irl_chess.visualizations import char_to_idxs
-from irl_chess.chess_utils.sunfish_utils import get_new_pst, str_to_sunfish_move, sunfish_move_to_str
+from irl_chess.chess_utils.sunfish_utils import get_new_pst, str_to_sunfish_move, sunfish_move_to_str, moves_and_Q_from_result
 from irl_chess.models.sunfish_GRW import eval_pos, sunfish_move
-
-def moves_and_Q_from_result(results, states):
-    moves, _, Q_new_dicts = [], [], {}
-    for state, (move, best_moves, move_dict) in list(zip(states, results)):
-        if move is not None:
-            moves.append(sunfish_move_to_str(move))
-            Q_new_dicts[state] = {sunfish_move_to_str(move): scores[-1] for move, scores in move_dict.items()
-                                  if move is not None}
-    return moves, Q_new_dicts
 
 # Probability of switching, on Q_numerator and Q_denominator
 def joint_probability(Qn, Qd, a=1/1000):

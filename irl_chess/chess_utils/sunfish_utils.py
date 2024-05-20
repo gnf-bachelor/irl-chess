@@ -164,3 +164,12 @@ def top_k_moves(move_dict, k, verbose=False, uci=False):
         return [sunfish_move_to_str(move) for i, move in enumerate(move_dict) if i in top_moves_idxs]
     return [move for i, move in enumerate(move_dict) if i in top_moves_idxs]
 
+def moves_and_Q_from_result(results, states):
+    moves, _, Q_new_dicts = [], [], {}
+    for state, (move, best_moves, move_dict) in list(zip(states, results)):
+        if move is not None:
+            moves.append(sunfish_move_to_str(move))
+            Q_new_dicts[state] = {sunfish_move_to_str(move): scores[-1] for move, scores in move_dict.items()
+                                  if move is not None}
+    return moves, Q_new_dicts
+
