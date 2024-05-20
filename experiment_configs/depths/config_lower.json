@@ -9,5 +9,6 @@
   "n_endgame": 30,
   "n_boards": 500,
   "n_threads": -2,
-  "move_function": "player_move"
+  "move_function": "player_move",
+  "move_percentage_data": false
 }

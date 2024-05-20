@@ -3,18 +3,18 @@
     "n_files": 3,
     "time_control": false,
     "metric": "best move list",
-    "min_elo": 1200,
+    "min_elo": 1000,
     "max_elo": 1500,
     "n_midgame": 15,
     "n_endgame": 30,
-    "n_boards": 500,
-    "epochs": 10,
-    "n_threads": -2,
+    "n_boards": 1000,
+    "epochs": 500,
+    "n_threads": 48,
     "save_every": 50,
     "plot_every": 50,
     "plot_char": ["P", "N", "B", "R", "Q"],
     "permute_char": ["N", "B"],
     "model": "sunfish_GRW",
     "move_function": "sunfish_move",
-    "move_percentage_data": true
+    "move_percentage_data": false
 }
