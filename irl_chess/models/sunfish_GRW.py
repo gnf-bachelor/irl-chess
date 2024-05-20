@@ -152,9 +152,9 @@ def run_sunfish_GRW(chess_boards, player_moves, config_data, out_path, validatio
 
             if (epoch + 1) % config_data['val_every'] == 0:
                 pst_val = get_new_pst(R)
-                val_util(validation_set, out_path, config_data, parallel, pst_val, name=epoch)
+                val_util(validation_set, out_path, config_data, parallel, pst_val, use_player_moves=use_player_move, name=epoch)
         pst_val = get_new_pst(R)
-        out = val_util(validation_set, out_path, config_data, parallel, pst_val, name=epoch)
+        out = val_util(validation_set, out_path, config_data, parallel, pst_val, use_player_moves=use_player_move, name=epoch)
         return out
 
 
