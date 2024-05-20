@@ -109,6 +109,17 @@ def is_valid_game(game, config_data):
 
 
 def get_states(websites_filepath, file_path_data, config_data):
+    if config_data['move_percentage_data']:
+        with open('data/move_percentages/moves_1000-1200_fixed', 'r') as f:
+            moves_dict = json.load(f)
+        n_boards = config_data['n_boards']
+        assert n_boards <= len(moves_dict), 'Number of boards exceeds number of positions.'
+        sunfish_boards = [board2sunfish(fen, 0) for fen in list(moves_dict.keys())[:n_boards]]
+        move_dicts = [move_dict for fen, move_dict in list(moves_dict.items())[:n_boards]]
+        player_moves = [max(move_dict, key=lambda k: move_dict[k][0] - (k == 'sum')) for move_dict in move_dicts]
+        player_moves = [str_to_sunfish_move(move, False) for move in player_moves]
+        return sunfish_boards, player_moves
+
     if config_data['move_function'] == "sunfish_move":
         board_translation = board2sunfish
     elif config_data['move_function'] == "player_move":

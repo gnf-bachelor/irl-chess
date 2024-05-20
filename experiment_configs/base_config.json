@@ -8,7 +8,7 @@
     "n_midgame": 15,
     "n_endgame": 30,
     "n_boards": 500,
-    "epochs": 50,
+    "epochs": 10,
     "n_threads": -2,
     "save_every": 50,
     "plot_every": 50,
