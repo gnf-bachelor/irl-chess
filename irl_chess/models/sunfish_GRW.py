@@ -151,5 +151,7 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path):
             print(f'Best R: {R}')
 
         result_path = os.path.join(out_path, 'Rs_and_accs')
+        if not os.path.exists(result_path):
+            os.makedirs(result_path)
         np.save(os.path.join(result_path, 'Rs'), np.array(Rs))
         np.save(os.path.join(result_path, 'Accs'), np.array(accuracies))
