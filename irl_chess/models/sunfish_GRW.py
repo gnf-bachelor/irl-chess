@@ -14,67 +14,13 @@ from joblib import Parallel, delayed
 
 from irl_chess import Searcher, pst, piece, plot_R_weights
 from irl_chess.chess_utils.sunfish_utils import board2sunfish, sunfish2board, sunfish_move_to_str, \
-    check_moved_same_color
+    check_moved_same_color, sunfish_move
 from irl_chess.visualizations import char_to_idxs
 
 from irl_chess.misc_utils.utils import reformat_list
 from irl_chess.misc_utils.load_save_utils import process_epoch
-from irl_chess.chess_utils.sunfish_utils import get_new_pst, str_to_sunfish_move
+from irl_chess.chess_utils.sunfish_utils import get_new_pst, str_to_sunfish_move, check_moved_same_color, eval_pos
 from irl_chess.stat_tools.stat_tools import wilson_score_interval
-
-
-# Assuming white, R is array of piece values
-def eval_pos(board, R=None):
-    pos = board2sunfish(board, 0)
-    pieces = 'PNBRQK'
-    if R is not None:
-        piece_dict = {p: R[i] for i, p in enumerate(pieces)}
-    else:
-        piece_dict = piece
-    eval = 0
-    for row in range(20, 100, 10):
-        for square in range(1 + row, 9 + row):
-            p = pos.board[square]
-            if p == '.':
-                continue
-            if p.islower():
-                p = p.upper()
-                eval -= piece_dict[p] + pst[p][119 - square]
-            else:
-                eval += piece_dict[p] + pst[p][square]
-    return eval
-
-
-def sunfish_move(state, pst, time_limit, move_only=False, run_at_least=1, ):
-    """
-    Given a state, p-square table and time limit,
-    return the sunfish move.
-    :param state:
-    :param pst:
-    :param time_limit:
-    :return:
-    """
-    searcher = Searcher(pst)
-    start = time()
-    best_move = None
-    count = 0
-    count_gamma = 0
-    for depth, gamma, score, move in searcher.search([state]):
-        count += 1
-        if score >= gamma:
-            best_move = move
-            count_gamma += 1
-        if time() - start > time_limit and count_gamma >= 1 and (count >= run_at_least):
-            break
-    if best_move is None:
-        print(f"best move is: {best_move} and count is {count}")
-        print(state.board)
-    assert best_move is not None, f"No best move found, this probably means an invalid position was passed to the \
-                                   searcher"
-    if move_only:
-        return best_move
-    return best_move, searcher.best_moves, searcher.move_dict
-
 
 def sunfish_native_result_string(model_config_data):
     delta = model_config_data['delta']
@@ -154,7 +100,7 @@ def run_sunfish_GRW(chess_boards, player_moves, config_data, out_path, validatio
                 pst_val = get_new_pst(R)
                 val_util(validation_set, out_path, config_data, parallel, pst_val, use_player_moves=use_player_move, name=epoch)
         pst_val = get_new_pst(R)
-        out = val_util(validation_set, out_path, config_data, parallel, pst_val, name=epoch, use_player_moves=use_player_move)
+        out = val_util(validation_set, out_path, config_data, parallel, pst_val, use_player_moves=use_player_move, name=epoch)
         return out
 
 
@@ -163,7 +109,7 @@ def val_sunfish_GRW(validation_set, out_path, config_data, epoch, use_player_mov
         df = pd.read_csv(join(out_path, 'weights', f'{epoch}.csv'))
         R = df['Result'].values.flatten()
         pst_val = get_new_pst(R)
-        return val_util(validation_set, out_path, config_data, parallel, pst_val, use_player_moves,name)
+        return val_util(validation_set, out_path, config_data, parallel, pst_val, use_player_moves, name)
 
 
 def val_util(validation_set, out_path, config_data, parallel, pst_val, use_player_moves, name=''):
@@ -190,8 +136,8 @@ def val_util(validation_set, out_path, config_data, parallel, pst_val, use_playe
     acc_true = sum(acc_temp_true) / len(acc_temp_true)
     acc_player = sum(acc_temp_player) / len(acc_temp_player)
     if not use_player_moves:
-        print(f'Validation accuracy on sunfish: {acc_true}')
-    print(f'Validation accuracy on player moves: {acc_player}')
+        print(f'Sunfish Validation accuracy on Sunfish: {acc_true}')
+    print(f'Sunfish Validation accuracy on player moves: {acc_player}')
 
     df = pd.DataFrame([(state, a_player, a_true, a_val) for (state, a_player), a_val, a_true in
                        zip(validation_set, actions_val_san, actions_true_san)],

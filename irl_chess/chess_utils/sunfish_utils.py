@@ -2,10 +2,54 @@ import chess
 import numpy as np
 from tqdm import tqdm
 import copy
+from time import time
 
-from irl_chess.chess_utils.sunfish import Position, Move, Searcher, render, pst, piece
-from irl_chess.chess_utils.sunfish import pst_only
+from irl_chess.chess_utils.sunfish import Position, Move, Searcher, render, pst, pst_only, pst_only_padded, piece
 
+def sunfish_move(state, pst, time_limit, move_only=False, max_depth=1000, run_at_least=1, min_depth=1, return_best_board_found_tuple = False):
+    """
+    Given a state, p-square table and time limit,
+    return the sunfish move.
+    :param state:
+    :param pst:
+    :param time_limit:
+    :return:
+    """
+    searcher = Searcher(pst, max_depth=max_depth)
+    start = time()
+    best_move = None
+    count = 0
+    count_gamma = 0
+    for depth, gamma, score, move in searcher.search([state]):
+        count += 1
+        if score >= gamma:
+            best_move = move
+            count_gamma += 1
+        if time() - start > time_limit and count_gamma >= 1 and (count >= run_at_least) and depth >= min_depth:
+            break
+    if best_move is None:
+        print(f"best move is: {best_move} and count is {count}")
+        print(state.board)
+    assert best_move is not None, f"No best move found, this probably means an invalid position was passed to the \
+                                   searcher"
+    if move_only: # Should clean this up such that it returns (best_move, info) where info is dictionary with all the auxillary information. 
+        return best_move
+    elif return_best_board_found_tuple:
+        return best_move, searcher.best_moves, searcher.move_dict, sunfish_best_board(state, pst, searcher.tp_move)
+    else: 
+        return best_move, searcher.best_moves, searcher.move_dict
+
+def sunfish_best_board(state, pst, tp_move: dict):
+    state_depth = 0
+    while state in tp_move:
+        best_move = tp_move[state]
+        next_state = state.move(best_move, pst)
+        state = next_state
+        state_depth += 1
+    assert state_depth > 0
+    # print(state_depth)
+    score = eval_pos_pst(state, pst)*(-1 if state_depth % 2 else 1) # Keep trach of whether it is white's or black's turn
+    return state, score, bool(state_depth % 2) # state, score, opposite players turn or not
 
 def sunfish_move_to_str(move: Move, is_black:bool):
     i, j = move.i, move.j
@@ -68,8 +112,6 @@ def board2sunfish(board, score):
         if char in '123456789':
             board_string = board_string.replace(char, int(char) * '.')
 
-    score = score
-
     wc = ('Q' in castling, 'K' in castling)
     bc = ('q' in castling, 'k' in castling)
 
@@ -121,15 +163,21 @@ def sunfish2board(pos: Position):
 
 # Assuming white, R is array of piece values
 def eval_pos(board, R=None):
-    #assert board.turn == True # Assume it is white's turn. # Fish all of sunfishes rotation mistakes later. 
-    pos = board2sunfish(board, 0)
+    if isinstance(board, chess.Board):
+        #assert board.turn == True # Assume it is white's turn. # Fish all of sunfishes rotation mistakes later. 
+        pos = board2sunfish(board, 0)
+    elif isinstance(board, Position):
+        pos = board
+    else:
+        raise TypeError
     pieces = 'PNBRQK'
     if R is not None:
         piece_dict = {p: R[i] for i, p in enumerate(pieces)} # Brittle in case of more R parameters. Piece values have to be listed first. 
     else:
         piece_dict = piece
     eval = 0
-    for row in range(20, 100, 10):
+    # pst is of size 8x8 (rows, columns) not padded.
+    for row in range(20, 100, 10):  
         for col in range(1, 9):
             # White square = (row + col)
             p = pos.board[(row + col)]
@@ -137,9 +185,32 @@ def eval_pos(board, R=None):
                 continue
             if p.islower(): # if black piece. Mirror baord. 
                 p = p.upper()
-                eval -= piece_dict[p] + pst[p][110 - row + col]
+                eval -= piece_dict[p] + pst_only_padded[p][110 - row + col]
             else: # else if white piece
-                eval += piece_dict[p] + pst[p][(row + col)]
+                eval += piece_dict[p] + pst_only_padded[p][(row + col)]
+    return eval
+
+def eval_pos_pst(board, pst):
+    if isinstance(board, chess.Board):
+        #assert board.turn == True # Assume it is white's turn. # Fish all of sunfishes rotation mistakes later. 
+        pos = board2sunfish(board, 0)
+    elif isinstance(board, Position):
+        pos = board
+    else:
+        raise TypeError
+    eval = 0
+    # pst is of size 120 12x10 (rows, columns) padded.
+    for row in range(20, 100, 10):  
+        for col in range(1, 9):
+            # White square = (row + col)
+            p = pos.board[(row + col)]
+            if p == '.':
+                continue
+            if p.islower(): # if black piece. Mirror baord. 
+                p = p.upper()
+                eval -= pst[p][110 - row + col]
+            else: # else if white piece
+                eval += pst[p][(row + col)]
     return eval
 
 # check sunfish moves same color as player
@@ -153,8 +224,8 @@ def check_moved_same_color(sunfish_boards, player_moves_sunfish, actions_new):
 def moves_and_Q_from_result(results, states):
     moves, _, Q_new_dicts = [], [], {}
     for state, (move, best_moves, move_dict) in list(zip(states, results)):
-        if move is not None: # When is the move None? This is a problem!
-            moves.append(sunfish_move_to_str(move))
-            Q_new_dicts[state] = {sunfish_move_to_str(move): scores[-1] for move, scores in move_dict.items()
-                                  if move is not None}
+        assert move is not None, "Move should never be None here"
+        moves.append(sunfish_move_to_str(move))
+        Q_new_dicts[state] = {sunfish_move_to_str(move): scores[-1] for move, scores in move_dict.items()
+                                if move is not None}
     return moves, Q_new_dicts

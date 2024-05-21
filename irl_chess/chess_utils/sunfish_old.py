@@ -12,7 +12,7 @@ from collections import namedtuple, defaultdict
 #from functools import partial
 #print = partial(print, flush=True)
 
-version = "sunfish 2024 BIRL"
+version = "sunfish 2023"
 
 ###############################################################################
 # Piece-Square tables. Tune these to change sunfish's behaviour
@@ -76,7 +76,7 @@ pst = {
 }
 
 # pst eval added for black
-pst_only = copy.deepcopy(pst) # Do not change this
+pst_only = copy.deepcopy(pst)
 # for piece_str in pst.keys():
 #     piece_array = -np.array(pst[piece_str]).reshape((8, 8))[np.arange(7, -1, -1)]
 #     pst_only[piece_str.lower()] = tuple(piece_array.reshape((-1)))
@@ -88,13 +88,6 @@ for k, table in pst.items():
     padrow = lambda row: (0,) + tuple(x + piece[k] for x in row) + (0,)
     pst[k] = sum((padrow(table[i * 8 : i * 8 + 8]) for i in range(8)), ())
     pst[k] = (0,) * 20 + pst[k] + (0,) * 20
-
-pst_only_padded = copy.deepcopy(pst_only)
-# Process pst_only in the same way
-for k, table in pst_only_padded.items():
-    padrow = lambda row: (0,) + tuple(row) + (0,)
-    pst_only_padded[k] = sum((padrow(table[i * 8 : i * 8 + 8]) for i in range(8)), ())
-    pst_only_padded[k] = (0,) * 20 + pst_only_padded[k] + (0,) * 20
 
 ###############################################################################
 # Global constants
@@ -289,13 +282,12 @@ Entry = namedtuple("Entry", "lower upper")
 
 
 class Searcher:
-    def __init__(self, search_pst, max_depth=1000):
+    def __init__(self, search_pst):
         self.tp_score = {}
         self.tp_move = {}
         self.history = set()
         self.nodes = 0
         self.search_pst = search_pst
-        self.max_depth = max_depth
 
     def bound(self, pos, gamma, depth, root_position, can_null=True):
         """ Let s* be the "true" score of the sub-tree we are searching.
@@ -318,7 +310,7 @@ class Searcher:
 
         # Look in the table if we have already searched this position before.
         # We also need to be sure, that the stored search was over the same
-        # nodes as the current search.
+        # nodes as the maia_pretrained search.
         entry = self.tp_score.get((pos, depth, can_null), Entry(-MATE_UPPER, MATE_UPPER))
         if entry.lower >= gamma: return entry.lower
         if entry.upper < gamma: return entry.upper
@@ -349,7 +341,7 @@ class Searcher:
             if depth == 0:
                 yield None, pos.score
 
-            # Look for the strongest ove from last time, the hash-move.
+            # Look for the strongest move from last time, the hash-move.
             killer = self.tp_move.get(pos)
 
             # If there isn't one, try to find one with a more shallow search.
@@ -363,7 +355,7 @@ class Searcher:
             # promotions). Otherwise we do all moves. This is called quiescent search.
             val_lower = QS - depth * QS_A
 
-            # Only play the move if it would be included at the current val-limit,
+            # Only play the move if it would be included at the maia_pretrained val-limit,
             # since otherwise we'd get search instability.
             # We will search it again in the main loop below, but the tp will fix
             # things for us.
@@ -373,7 +365,7 @@ class Searcher:
             # Then all the other moves
             for val, move in sorted(((pos.value(m, self.search_pst), m) for m in pos.gen_moves()), reverse=True):
                 # Quiescent search
-                if val < val_lower and pos != root_position:
+                if val < val_lower:
                     break
 
                 # If the new score is less than gamma, the opponent will for sure just
@@ -385,8 +377,7 @@ class Searcher:
                     yield move, pos.score + val if val < MATE_LOWER else MATE_UPPER
                     # We can also break, since we have ordered the moves by value,
                     # so it can't get any better than this.
-                    if pos != root_position:
-                        break
+                    break
 
                 yield move, -self.bound(pos.move(move, self.search_pst), 1 - gamma, depth - 1, root_position)
 
@@ -399,7 +390,6 @@ class Searcher:
                     self.move_dict[move] = [score]
                 else:
                     self.move_dict[move].append(score)
-
 
             if best >= gamma:
                 # Save the move for pv construction and killer heuristic
@@ -454,7 +444,7 @@ class Searcher:
         # In finished games, we could potentially go far enough to cause a recursion
         # limit exception. Hence we bound the ply. We also can't start at 0, since
         # that's quiscent search, and we don't always play legal moves there.
-        for depth in range(1, self.max_depth + 1):  # We never search the full 1000, we simply set a time limit!!!
+        for depth in range(1, 1000):  # We never search the full 1000, we simply set a time limit!!!
             # The inner loop is a binary search on the score of the position.
             # Inv: lower <= score <= upper
             # 'while lower != upper' would work, but it's too much effort to spend
