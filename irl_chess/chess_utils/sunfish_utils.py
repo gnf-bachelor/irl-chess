@@ -55,7 +55,7 @@ def str_to_sunfish_move(move, flip):
 
 
 # Takes a board object and returns the position
-# in the format sunfish uses. Mangler score.
+# in the format sunfish uses.
 def board2sunfish(board, score):
     if isinstance(board, str):
         fen = board

@@ -118,7 +118,7 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path):
                 best_moves_lists.append(best_moves)
                 move_dicts.append(move_dict)
 
-            actions_new = [top_k_moves(move_dict, 5) for move_dict in move_dicts]
+            #actions_new = [top_k_moves(move_dict, 5) for move_dict in move_dicts]
 
             assert all([move in best_moves_list for move, best_moves_list in list(zip(moves, best_moves_lists))]), 'best move not in list'
 
@@ -130,10 +130,10 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path):
             #     assert move_ok, 'Wrong color piece moved by sunfish'
 
             acc1 = sum([a == a_new for a, a_new in list(zip(actions_true, moves))]) / config_data['n_boards']
-            acc2 = sum([a in a_new for a, a_new in list(zip(actions_true, best_moves_lists))]) / config_data['n_boards']
-            acc3 = sum([a in a_new for a, a_new in list(zip(actions_true, actions_new))]) / config_data['n_boards']
+            #acc2 = sum([a in a_new for a, a_new in list(zip(actions_true, best_moves_lists))]) / config_data['n_boards']
+            #acc3 = sum([a in a_new for a, a_new in list(zip(actions_true, actions_new))]) / config_data['n_boards']
 
-            print(acc1, acc2, acc3)
+            print(acc1)
             acc = acc1
             if acc >= last_acc:
                 R = copy.copy(R_new)
