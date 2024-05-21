@@ -23,7 +23,7 @@ def load_maia_network(elo, lc0_path=None, models_dir_path=None, time_limit=None,
     models_dir_path = join(os.getcwd(), parent, "move_prediction", "model_files", str(elo)) if models_dir_path is None else models_dir_path
 
     model, config = load_model_config(config_dir_path=models_dir_path, lc0Path=lc0_path, lc0_depth=1)
-    print('Model loaded successfully!')
+    print('Maia Model loaded successfully!')
     model.limits.time = time_limit if time_limit is not None else 1
     return model
 

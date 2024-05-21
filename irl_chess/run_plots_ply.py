@@ -28,7 +28,7 @@ def result_path(config, move_min, val_prop, run_sunfish, sunfish_epoch, using_ma
     return f"results/plots/maia_per_ply_{config['min_elo']}-{config['max_elo']}-{config['maia_elo']}-{config['n_boards']}-{move_min}-{val_prop}-{run_sunfish}-{sunfish_epoch}-{using_maia_val_data}"
 
 
-def run_comparison(run_sunfish=False, pgn_paths=None, move_range=(10, 200), val_proportion=0.2, sunfish_epoch=100,
+def run_comparison(run_sunfish=False, pgn_paths=None, move_range=(10, 100), val_proportion=0.2, sunfish_epoch=90,
                    using_maia_val_data=False):
     # SHOULD ONLY USE ALREADY TRAINED SUNFISH FOR N_BOARDS TO MAKE SENSE!!!
     from irl_chess import run_sunfish_GRW, sunfish_native_result_string, run_maia_pre, maia_pre_result_string, \
