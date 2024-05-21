@@ -136,8 +136,8 @@ def val_util(validation_set, out_path, config_data, parallel, pst_val, use_playe
     acc_true = sum(acc_temp_true) / len(acc_temp_true)
     acc_player = sum(acc_temp_player) / len(acc_temp_player)
     if not use_player_moves:
-        print(f'Validation accuracy on sunfish: {acc_true}')
-    print(f'Validation accuracy on player moves: {acc_player}')
+        print(f'Sunfish Validation accuracy on Sunfish: {acc_true}')
+    print(f'Sunfish Validation accuracy on player moves: {acc_player}')
 
     df = pd.DataFrame([(state, a_player, a_true, a_val) for (state, a_player), a_val, a_true in
                        zip(validation_set, actions_val_san, actions_true_san)],
