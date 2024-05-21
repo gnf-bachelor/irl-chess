@@ -35,10 +35,10 @@ if __name__ == '__main__':
 
     elos_players, accuracies_maia, accuracies_sunfish, maia_elos = [], [], [], []
     n_boards = 5000
-    maia_range = (1100, 2000)  # incl. excl.
-    sunfish_elo_epoch = {1100: 100, 1900: 100}
+    maia_range = (1300, 2000)  # incl. excl.
+    sunfish_elo_epoch = {1100: 100, 1300: 90, 1500: 90, 1700: 90, 1900: 100}
     player_range = (1000, 1900)  # incl. excl.
-    make_maia_test_csv(destination, min_elo=player_range[0], max_elo=player_range[1], n_boards=n_boards)
+    # make_maia_test_csv(destination, min_elo=player_range[0], max_elo=player_range[1], n_boards=n_boards)
     config_data_base, config_data_sunfish = load_config()
 
     for elo_maia in tqdm(range(maia_range[0], maia_range[1], 100), desc='ELO Maia'):
@@ -53,13 +53,15 @@ if __name__ == '__main__':
             acc_sum = 0
             # page 4 of the paper states that moves with less than 30 seconds left have been discarded
             validation_set = list(zip([chess.Board(fen=fen) for fen in val_df['board']], val_df['move']))
-            for board, move_true in tqdm(validation_set, desc='Moves', total=n_boards):
+            for board, move_true in tqdm(validation_set, desc='Maia Moves', total=n_boards):
                 move_maia = model.getTopMovesCP(board, 1)[0][0]
                 acc_sum += move_maia == move_true
             accuracies_maia[-1].append(acc_sum / val_df.shape[0])
             elos_players[-1].append(elo_player)
 
             if elo_maia in sunfish_elo_epoch.keys():
+                config_data_base['min_elo'] = elo_maia
+                config_data_base['max_elo'] = elo_maia + 100
                 out_path = create_result_path(config_data_base,
                                               model_config_data=config_data_sunfish,
                                               model_result_string=sunfish_native_result_string)
