@@ -9,21 +9,21 @@
 [ ]          Generate plots of optimization function to characterize it.
 
 [.]  Do the comparison. Produce the plots:
-[.]      Validation of sunfish method. Convergence plots (100 epochs) on Sunfish moves and player moves.
-        [X] Run 1100,1900 on player and sunfish moves
-        [ ] Run 1300, 1500, 1700
-[.]      Accuracy of Maia and Sunfish models at different ELO, trained on different ELO levels
-                Same as in Maia paper. With baselines.
-        [X] Maia model only plot
-        [.] Add Sunfish
-[.]      Accuracy over ply. How many moves into the game. 
-        [X] Implement script to run plots
-        [X] Run on models at 1100, 1900
-        [ ] Run 1300, 1500, 1700
-[ ]      Accuracy as function of training data set size (sunfish and maia)
-        [ ] Set up Maia training 
-        [ ] Set up Sunfish training
-        [ ] Plot
+        [.]      Validation of sunfish method. Convergence plots (100 epochs) on Sunfish moves and player moves.
+                [X] Run 1100,1900 on player and sunfish moves
+                [X] Run 1300, 1500, 1700
+        [.]      Accuracy of Maia and Sunfish models at different ELO, trained on different ELO levels
+                        Same as in Maia paper. With baselines.
+                [X] Maia model only plot
+                [.] Add Sunfish
+        [.]      Accuracy over ply. How many moves into the game. 
+                [X] Implement script to run plots
+                [X] Run on models at 1100, 1900
+                [X] Run 1300, 1500, 1700
+        [ ]      Accuracy as function of training data set size (sunfish and maia)
+                [ ] Set up Maia training 
+                [ ] Set up Sunfish training
+                [ ] Plot
 
 [ ]  Detailed characterization of Bayesian IRL. How our model relates to IRL.
 [ ]  Why do other methods not work.
