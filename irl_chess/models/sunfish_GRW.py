@@ -1,5 +1,6 @@
 import copy
 from time import time
+import os
 import chess
 import chess.pgn
 import chess.svg
@@ -101,7 +102,7 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path):
             delayed(sunfish_move)(state, pst, config_data['time_limit'], move_only=True)
             for state in tqdm(sunfish_boards, desc='Getting true moves', ))
 
-        for epoch in range(config_data['epochs']):
+        for epoch in range(config_data['epochs'] + 1):
             print(f'Epoch {epoch + 1}\n', '-' * 25)
             add = np.zeros(6)
             add[permute_idxs] = np.random.choice([-delta, delta], len(permute_idxs))
@@ -148,3 +149,7 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path):
 
             print(f'Current accuracy: {acc}, best: {last_acc}')
             print(f'Best R: {R}')
+
+        result_path = os.path.join(out_path, 'Rs_and_accs')
+        np.save(os.path.join(result_path, 'Rs'), np.array(Rs))
+        np.save(os.path.join(result_path, 'Accs'), np.array(accuracies))

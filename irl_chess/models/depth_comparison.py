@@ -1,21 +1,16 @@
 import os
 from os.path import join
-import chess.pgn
-import numpy as np
+import pandas as pd
+import time
 import json
-import requests
-from bs4 import BeautifulSoup
-from requests_html import HTMLSession
 from joblib import Parallel, delayed
 from tqdm import tqdm
-from irl_chess.misc_utils.utils import union_dicts
-from irl_chess.chess_utils.sunfish_utils import board2sunfish, eval_pos, sunfish_move_to_str, str_to_sunfish_move, get_new_pst
+from irl_chess.chess_utils.sunfish_utils import sunfish_move_to_str, str_to_sunfish_move, get_new_pst
 from irl_chess.chess_utils.sunfish import piece, pst
 from irl_chess.models.sunfish_GRW import sunfish_move
-from collections import defaultdict
 from irl_chess.misc_utils.load_save_utils import fix_cwd, load_config, get_board_after_n, get_states
 
-def load_maia(min_elo, n_boards):
+def load_maia_test_data(min_elo, n_boards):
     df_path = f'data/processed/maia_test/{min_elo}_{min_elo + 100}_{n_boards}.csv'
     dirname = os.path.dirname(df_path)
     if os.path.exists(dirname):
@@ -25,6 +20,7 @@ def load_maia(min_elo, n_boards):
                 if min_ == min_elo and n_boards <= n_boards_:
                     val_df = pd.read_csv(join(dirname, filename))
                     return val_df[:n_boards]
+
     return "File doesn't exist"
 
 with open('experiment_configs\\depths\\config_lower.json', 'r') as file:
@@ -33,7 +29,7 @@ with open('experiment_configs\\depths\\config_lower.json', 'r') as file:
 with open('experiment_configs\\depths\\config_upper.json', 'r') as file:
     config_upper = json.load(file)
 
-val_df = load_maia(config_upper['min_elo'], config_upper['n_boards'])
+val_df = load_maia_test_data(config_upper['min_elo'], config_upper['n_boards'])
 
 # %%
 
