@@ -58,15 +58,12 @@ def run_BIRL(chess_boards, player_moves, config_data, out_path, validation_set):
 
     config_data['permute_idxs'] = np.array(char_to_idxs(config_data['permute_char']))
     R = np.array(config_data['R_start'], dtype=float)
-    Rs = [R]
     start_time = time()
-
     # ============================================ Algorithm Start ==================================================
-    # Define variables. If a veriable is modified, it is passed as input and overwritten by being assigned to the output, with the exception of bookkeeping().
+    # Define variables for clarity. All other functions are functional and do not modify their inputs.
     # Interpret following the policy as arriving at the same final board. 
     pi, a_pi, pi_new = [None] * len(states), [None] * len(states), [None] * len(states) 
     Qpi_policy_R    = np.zeros(len(states)) # Qpi(s,pi,R)
-    Qpi_action_R    = np.zeros(len(states)) # Qpi(s,a ,R) # Just a placeholder 
     Qpi_action_Rnew = np.zeros(len(states)) # Qpi(s,a ,R~)
     Qpi_policy_Rnew = np.zeros(len(states)) # Qpi(s,pi,R~)
     QpiNew_policy_Rnew = np.zeros(len(states)) # Qpi~(s,pi~,R~)
@@ -76,8 +73,8 @@ def run_BIRL(chess_boards, player_moves, config_data, out_path, validation_set):
     with (Parallel(n_jobs=config_data['n_threads']) as parallel):
         
         # Calculate initially. 
-        pi, Qpi_policy_R, pi_moves = PolicyIteration(states, pi, None, Qpi_policy_R, R, config_data, parallel)
-        a_pi, _, _ = PolicyIteration(states, a_pi, actions, Qpi_action_R, R, config_data, parallel) # We can't guarantee that alpha-beta search fully explores move a and so we calculate it again.
+        pi, Qpi_policy_R, pi_moves = PolicyIteration(states, None, R, config_data, parallel)
+        a_pi, _, _ = PolicyIteration(states, actions, R, config_data, parallel) # We can't guarantee that alpha-beta search fully explores move a and so we calculate it again.
         bookkeeping(accuracies, actions, pi_moves, energies, Qpi_policy_R, Rs, R)
 
         for epoch in tqdm(range(config_data['epochs']), desc='Epochs'):
@@ -97,13 +94,13 @@ def run_BIRL(chess_boards, player_moves, config_data, out_path, validation_set):
 
             # Switch stochastically accept the new reward function and the new policy
             if np.any(Qpi_policy_Rnew < Qpi_action_Rnew): # if the new reward function explains the data action better than the policy action for any state
-                pi_new, QpiNew_policy_Rnew, pi_new_moves = PolicyIteration(states, pi_new, None, QpiNew_policy_Rnew, R_new, config_data, parallel)
+                pi_new, QpiNew_policy_Rnew, pi_new_moves = PolicyIteration(states, None, R_new, config_data, parallel)
                 log_prob = min(0, log_prob_dist(R_new, np.sum(QpiNew_policy_Rnew), alpha=config_data['alpha']) - log_prob_dist(R, np.sum(Qpi_policy_R), alpha=config_data['alpha']))
                 if log_prob > -1e3 and np.random.random() < np.exp(log_prob):
                     print(f'Changed weights and policy! From {R}\n to {R_new}\n Probability was: {np.exp(log_prob)}')
                     R = np.copy(R_new)
                     pi, Qpi_policy_R, pi_moves = pi_new.copy(), np.copy(QpiNew_policy_Rnew), pi_new_moves.copy()
-                    a_pi, _, _ = PolicyIteration(states, a_pi, actions, Qpi_policy_R, R, config_data, parallel)
+                    a_pi, _, _ = PolicyIteration(states, actions,R, config_data, parallel)
             else:
                 log_prob = min(0, log_prob_dist(R_new, np.sum(Qpi_policy_Rnew), alpha=config_data['alpha']) - log_prob_dist(R, np.sum(Qpi_policy_R), alpha=config_data['alpha']))
                 if log_prob > -1e3 and np.random.random() < np.exp(log_prob):
