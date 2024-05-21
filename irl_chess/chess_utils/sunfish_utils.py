@@ -6,7 +6,7 @@ from time import time
 
 from irl_chess.chess_utils.sunfish import Position, Move, Searcher, render, pst, pst_only, pst_only_padded, piece
 
-def sunfish_move(state, pst, time_limit, max_depth=1000, move_only=False, run_at_least=1, min_depth=1, return_best_board_found_tuple = False):
+def sunfish_move(state, pst, time_limit, move_only=False, max_depth=1000, run_at_least=1, min_depth=1, return_best_board_found_tuple = False):
     """
     Given a state, p-square table and time limit,
     return the sunfish move.
