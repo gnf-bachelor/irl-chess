@@ -15,8 +15,9 @@ from irl_chess.visualizations import sunfish_palette_name
 def plot_accuracies_over_elo(accuracies, player_elos, model_elos, n_boards, model_names):
     plot_dict = defaultdict(lambda: [[], []])
     for model_elo, model_name, accuracy, elo in zip(model_elos, model_names, accuracies, player_elos):
-        plot_dict[f'{model_name[0].upper() + model_name[1:]} ELO {model_elo}'][0].append(accuracy)
-        plot_dict[f'{model_name[0].upper() + model_name[1:]} ELO {model_elo}'][1].append(elo)
+        name = f'{model_name[0].upper() + model_name[1:]} ELO {model_elo}' if model_elo else model_name
+        plot_dict[name][0].append(accuracy)
+        plot_dict[name][1].append(elo)
 
     palette_maia = sns.color_palette("flare", len(set(plot_dict)))
     palette_sunfish = sns.color_palette(sunfish_palette_name, len(set(plot_dict)))
@@ -46,7 +47,7 @@ if __name__ == '__main__':
     n_boards = 5000
     model_names = ['sunfish', 'maia', ]
     maia_range = (1100, 1800)  # incl. excl.
-    sunfish_elo_epoch = {'default': 0, }# 1100: 100, 1900: 100,
+    sunfish_elo_epoch = {'Default Sunfish': 0, }# 1100: 100, 1900: 100,
     player_range = (1100, 2000)  # incl. excl.
     # make_maia_test_csv(destination, min_elo=player_range[0], max_elo=player_range[1], n_boards=n_boards)
     config_data_base, config_data_sunfish = load_config('sunfish_GRW')
@@ -93,7 +94,7 @@ if __name__ == '__main__':
                     out_path = create_result_path(config_data_base,
                                                   model_config_data=config_data_sunfish,
                                                   model_result_string=sunfish_native_result_string)
-                    if elo_model == 'default':
+                    if elo_model == 'Default Sunfish':
                         out_path = join(os.path.dirname(out_path), 'default_sunfish')
                         default_weight_path = join(out_path, 'weights')
                         os.makedirs(default_weight_path, exist_ok=True)
