@@ -1,39 +1,123 @@
 ---- Current tasks ---- X = Done, ? = Unsure, . = Partially complete
 [X]  Define data set
         Use maia test set: December 2019. With their preprocessing. 
-        Make trainings set: January 2019
-        Also run maia on other test sets: other to show it does not generalize. 
+        Make training set: January 2019
+        [X] Also run maia on other test sets: other to show it does generalize. 
 
-[ ]  Implement more chess heuristics, including weighing pst, as parameters in the model. Weigh this against observed performance.
-[ ]     Implement BO to make optimization more robust.
-[ ]          Generate plots of optimization function to characterize it.
+[ ]  Implement more chess heuristics 
+        [ ] Weight p-squared tables for each piece (Gabriel)
+                [ ] Make it possible to do any combination, say king and rest
+        [ ] Piece activity (log(avail_actions)) (Gabriel)
+        [ ] King safety (Nikolaj)
+        [X] Pawn structure
+
+[ ] Run BIRL model on sunfish moves (Gabriel)
+        [ ] Plot accuracy, reward and energy over epochs
+                [ ] For sunfish policy
+                [ ] For ALpha-Beta policy
 
 [.]  Do the comparison. Produce the plots:
-        [.]      Validation of sunfish method. Convergence plots (100 epochs) on Sunfish moves and player moves.
-                [X] Run 1100,1900 on player and sunfish moves
-                [X] Run 1300, 1500, 1700
-        [.]      Accuracy of Maia and Sunfish models at different ELO, trained on different ELO levels
+        [.]      Validation of sunfish GRW method. Convergence plots (100 epochs) on Sunfish moves and player moves.
+                [ ] Material and depth
+                        [ ] 1100, 1900
+                [ ] Material weighting (Fabian, Gabriel)
+                        [ ] Using Alpha-Beta search (Gabriel)
+                                [ ] On sunfish moves
+                        [ ] Color code weight plots corretly
+                        [X] Starting from 100, 100..
+                                [X] Run 1100,1900 on player and sunfish moves
+                                [X] Run 1300, 1500, 1700
+                        [ ] From Sunfish init
+                                [ ] 1100, 1300, 1500, 1700, 1900 on player moves
+                [ ] P-squared table (Split plots into material and pst values) (Gabriel, Fabian)
+                        [ ] 2 values: material and pst
+                                [ ] From Sunfish init
+                                        [ ] ELO 1100, 1900
+                        [ ] Varying all pst values, fixed material
+                                [ ] 1100, 1300, 1900
+                        [ ] Variable material, (pawn strucuture), king pst and rest of pst
+                                [ ] 1100, 1900
+                        [ ] All material, all pst
+                                [ ] 1100, 1900
+        [.]      Accuracy of Maia and Sunfish models at different ELO, trained on different ELO levels (Fabian)
                         Same as in Maia paper. With baselines.
                 [X] Maia model only plot
-                [.] Add Sunfish
-        [.]      Accuracy over ply. How many moves into the game. 
+                [.] Add Sunfish from 100, 100
+                [ ] Add Sunfish from Sunfish init 
+        [.]      Accuracy over ply. How many moves into the game. (Fabian)
                 [X] Implement script to run plots
-                [X] Run on models at 1100, 1900
-                [X] Run 1300, 1500, 1700
-        [ ]      Accuracy as function of training data set size (sunfish and maia)
+                [ ] From 100,100...
+                        [X] Run on models at 1100, 1900
+                        [X] Run 1300, 1500, 1700
+                [ ] From Sunfish init
+                        [ ] Run 1100, 1500, 1700
+        [ ]      Accuracy as function of training data set size (sunfish and maia) (Probably not, Gabriel)
                 [ ] Set up Maia training 
                 [ ] Set up Sunfish training
                 [ ] Plot
 
-[ ]  Detailed characterization of Bayesian IRL. How our model relates to IRL.
-[ ]  Why do other methods not work.
-[ ]  If others work, implement them. Look from specific opening 6 ply forward, so occupancy ratios work. 
+Report:
+[ ] Theory
+        [ ]  Overview of IRL:
+                [ ] Describe main categories
+                        [ ] Detailed characterization of Bayesian IRL. How our model relates to IRL.
+                        [ ] MAP
+                                [ ] Maximum entropy
+                                [ ] Maximum margin planning
+                        [ ] Cat 3
+                [ ] Explain what methods are inapplicable to out domain and why
+        [ ] Chess programming (Nikolaj)
+                [ ] Historical overview
+                        [ ] Simple engines
+                        [ ] Searching
+                                [ ] Deep blue
+                                [ ] Stockfish
+                        [ ] Neural Networks
+                                [ ] Stockfish
+                                [ ] Leela chess zero (Alpha Zero)
+                                [ ] Maia (Human like/Help humans improve)
+[ ] Data (Fabian)
+        [ ] Overview of online chess data in 2024
+                [ ] Plot amount of data available over time
+        [ ] Define valid positions
+                [ ] Parameters out
+                [ ] Test/train split
+        [ ] Show distribution of [ELO, TimeControl] in train/test
+[ ] Methodology    
+        [ ] BIRL
+        [ ] Sunfish GRW
+        [ ] Maia
+        [ ] Explain code set up
+                [ ] How to replicate results
+[ ] Results
+        [ ] For a specific position show what players at different ELOs do
+                        [ ] Using occupancy ratios 
+                        [ ] Show how different models 
+                        [ ] Use as example for all models
+        [ ] BIRL plots
+        [ ] Sunfish plots
+                [ ] Computational cost of plots
+        [ ] Maia plots
 
+[ ] Discussion
+        [ ] Computational costs of methods
+        [ ] Why BIRL fails
+                [ ] BIRL Priors are uniform
+                [ ] Parameterising reward function
+                [ ] Why Leela chess feature vectors won't work (still fails)
+        [ ] How sunfish
+[ ] Conclusion
+        [ ] What can we conclusively say
+[ ]  Future work
+        [ ] Look from specific opening 6 ply forward, so occupancy ratios work. 
+        [ ] 
 [ ]  Qualitlively compare key positions and blunder prediction, so we can discuss searching vs. not searching
 [ ]     Show in demonstrations in jupyter notebooks.   
 
 
 ---- Less important notes
+[ ]     Implement BO to make optimization more robust.
+[ ]          Generate plots of optimization function to characterize it.
 [ ]  Discussion: Bridging the gap between symbolic and data driven AI to maintain explainability
 [ ]  Go through specific case studies
 [ ]  Show in demonstrations in jupyter notebooks.   
@@ -41,27 +125,6 @@
 
 [.]    Go through Berkely Deep RL course
 [.]    Read and understand reading list (see reading list section)
-
-
-
-[ ]    Run the following experiments for actual results:
-        - Sunfish moves
-            - Lower vs higher ELO
-                - Sunfish
-                - (Maia?)
-        - Player game moves
-            - Lower vs higher ELO
-                - Sunfish
-                - Maia
-            - Test on player games
-        - Player puzzle moves
-            - Lower vs higher ELO
-                - Sunfish
-                - Maia
-            - Test on player games
-
-
-
 
 
 ---- Tentative timeline ----
