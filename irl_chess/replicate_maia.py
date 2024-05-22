@@ -64,7 +64,7 @@ if __name__ == '__main__':
             os.makedirs(os.path.dirname(csv_path), exist_ok=True)
 
         for elo_model in tqdm(model_range, desc=f'ELO {model_name}'):
-            model = load_maia_network(elo=elo_model, parent='irl_chess/maia_chess/')
+            model = load_maia_network(elo=elo_model, parent='irl_chess/maia_chess/') if model_name == 'maia' else None
             for elo_player in tqdm(player_elos_iter, desc='ELO Players'):
                 count += 1
                 if count < len(accuracies):
