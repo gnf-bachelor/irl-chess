@@ -16,6 +16,9 @@ def plot_accuracies_over_elo(accuracies, player_elos, model_elos, n_boards, mode
         plot_dict[f'{model_name} ELO {model_elo}'][1].append(elo)
     for name, (accs, elos_, ) in plot_dict.items():
         plt.plot(elos_, accs, label=name)
+        lower, upper = wilson_score_interval(np.array(accs) * n_boards, n_boards, )
+        plt.fill_between(elos_, lower, upper, alpha=0.2)
+
 
     plt.title('Model Accuracy by Player ELO')
     plt.xlabel('Player ELOs')
@@ -34,7 +37,7 @@ if __name__ == '__main__':
 
     elos_players, accuracies, model_names_list, model_elos = [], [], [], []
 
-    n_boards = 5000
+    n_boards = 10
     model_names = ['sunfish', 'maia', ]
     maia_range = (1100, 2000)  # incl. excl.
     sunfish_elo_epoch = {1100: 100, 1900: 100}
