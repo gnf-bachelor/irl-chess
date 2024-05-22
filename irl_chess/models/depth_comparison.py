@@ -32,6 +32,7 @@ if __name__ == '__main__':
     while os.getcwd()[-9:] != 'irl-chess':
         os.chdir('../')
 
+    print(os.getcwd())
     with open('experiment_configs\\depths\\config.json', 'r') as file:
         config = json.load(file)
 
