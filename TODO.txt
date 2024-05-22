@@ -42,11 +42,11 @@
         [.]      Accuracy of Maia and Sunfish models at different ELO, trained on different ELO levels (Fabian)
                         Same as in Maia paper. With baselines.
                 [X] Maia model only plot
-                [.] Add Sunfish from 100, 100
+                [X] Add Sunfish from 100, 100
                 [ ] Add Sunfish from Sunfish init 
         [.]      Accuracy over ply. How many moves into the game. (Fabian)
                 [X] Implement script to run plots
-                [ ] From 100,100...
+                [X] From 100,100...
                         [X] Run on models at 1100, 1900
                         [X] Run 1300, 1500, 1700
                 [ ] From Sunfish init
