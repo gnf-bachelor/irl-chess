@@ -1,6 +1,7 @@
 import os
 from os.path import join
 import pandas as pd
+import copy
 import time
 import json
 from joblib import Parallel, delayed
@@ -31,24 +32,43 @@ if __name__ == '__main__':
     os.chdir('../')
     os.chdir('../')
 
-    with open('experiment_configs\\depths\\config_lower.json', 'r') as file:
-        config_lower = json.load(file)
+    with open('experiment_configs\\depths\\config.json', 'r') as file:
+        config = json.load(file)
 
-    with open('experiment_configs\\depths\\config_upper.json', 'r') as file:
-        config_upper = json.load(file)
+    elos = config['elos']
+    n_boards = config['n_boards']
 
-    val_df_lower = load_maia_test_data(config_lower['min_elo'], config_lower['n_boards'])
-    sunfish_boards_lower = val_df_lower['board'].apply(lambda x: board2sunfish(x, 0))
-    player_moves_lower = val_df_lower['move']
+    if config['data'] == 'maia':
+        val_df_lower = load_maia_test_data(elos[0], n_boards)
+        sunfish_boards_lower = val_df_lower['board'].apply(lambda x: board2sunfish(x, 0))
+        player_moves_lower = val_df_lower['move']
 
-    val_df_upper = load_maia_test_data(config_upper['min_elo'], config_upper['n_boards'])
-    sunfish_boards_upper = val_df_upper['board'].apply(lambda x: board2sunfish(x, 0))
-    player_moves_upper = val_df_upper['move']
+        val_df_upper = load_maia_test_data(elos[1], n_boards)
+        sunfish_boards_upper = val_df_upper['board'].apply(lambda x: board2sunfish(x, 0))
+        player_moves_upper = val_df_upper['move']
 
-    n_threads = config_lower['n_threads']
-    n_boards = config_lower['n_boards']
+    elif config['data'] == 'lichess':
+        config_data_lower = copy.copy(config) | {'min_elo': elos[0], 'max_elo': elos[0] + 100}
+        config_data_upper = copy.copy(config) | {'min_elo': elos[1], 'max_elo': elos[1] + 100}
+
+        websites_filepath = join(os.getcwd(), 'downloads', 'lichess_websites.txt')
+        file_path_data = join(os.getcwd(), 'data', 'raw')
+
+        sunfish_boards_lower, player_moves_lower = get_states(websites_filepath=websites_filepath,
+                                                  file_path_data=file_path_data,
+                                                  config_data=config_data_lower)  # Boards in the sunfish format.
+
+        sunfish_boards_upper, player_moves_upper = get_states(websites_filepath=websites_filepath,
+                                                  file_path_data=file_path_data,
+                                                  config_data=config_data_upper)  # Boards in the sunfish format.
+
+        player_moves_lower = [sunfish_move_to_str(move) for move in player_moves_lower]
+        player_moves_upper = [sunfish_move_to_str(move) for move in player_moves_upper]
+
+
+    n_threads = config['n_threads']
     with Parallel(n_jobs=n_threads) as parallel:
-        depths = [1,2,3]
+        depths = config['depths']
         depth_scores_lower = [0] * len(depths)
         depth_scores_upper = [0] * len(depths)
         for i, depth in enumerate(depths):
@@ -59,7 +79,7 @@ if __name__ == '__main__':
                                      for player_move, state in tqdm(list(zip(player_moves_upper, sunfish_boards_upper))))
             depth_scores_lower[i] = sum(correct_lower)/n_boards
             depth_scores_upper[i] = sum(correct_upper)/n_boards
-    lower_min_elo = config_lower['min_elo']
-    upper_min_elo = config_upper['min_elo']
+    lower_min_elo = config_data_lower['min_elo']
+    upper_min_elo = config_data_upper['min_elo']
     print(f'Depth scores for ELO {lower_min_elo}-{lower_min_elo + 100}: {depth_scores_lower}')
     print(f'Depth scores for ELO {upper_min_elo}-{upper_min_elo + 100}: {depth_scores_upper}')

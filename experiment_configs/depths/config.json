@@ -3,11 +3,13 @@
   "R_true": [100, 280, 320, 479, 929, 60000],
   "overwrite": false,
   "n_files": 3,
-  "min_elo": 1800,
+  "elos": [1400, 1800],
   "n_midgame": 15,
   "n_endgame": 30,
-  "n_boards": 500,
+  "n_boards": 100,
   "n_threads": -2,
   "move_function": "player_move",
-  "move_percentage_data": false
+  "move_percentage_data": false,
+  "data": "lichess",
+  "depths": [1,2,3]
 }
