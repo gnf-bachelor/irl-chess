@@ -18,6 +18,7 @@ def plot_accuracies_over_elo(accuracies, player_elos, model_elos, n_boards, mode
 
     palette_maia = sns.color_palette("flare", len(set(plot_dict)))
     palette_sunfish = sns.color_palette("crest", len(set(plot_dict)))
+    plt.grid(axis='y', zorder=0)
     for idx, (name, (accs, elos_)) in enumerate(plot_dict.items()):
         plt.plot(elos_, accs, label=name, color=palette_maia[idx] if 'maia' in name else palette_sunfish[idx])
         lower, upper = wilson_score_interval(np.array(accs) * n_boards, n_boards)
