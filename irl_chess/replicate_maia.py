@@ -1,5 +1,6 @@
 import os
 from collections import defaultdict
+from os.path import join
 
 import chess
 import numpy as np
@@ -7,23 +8,32 @@ import pandas as pd
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 from time import time
+import seaborn as sns
+from irl_chess.visualizations import sunfish_palette_name
 
 
 def plot_accuracies_over_elo(accuracies, player_elos, model_elos, n_boards, model_names):
     plot_dict = defaultdict(lambda: [[], []])
     for model_elo, model_name, accuracy, elo in zip(model_elos, model_names, accuracies, player_elos):
-        plot_dict[f'{model_name} ELO {model_elo}'][0].append(accuracy)
-        plot_dict[f'{model_name} ELO {model_elo}'][1].append(elo)
-    for name, (accs, elos_, ) in plot_dict.items():
-        plt.plot(elos_, accs, label=name)
+        name = f'{model_name[0].upper() + model_name[1:]} ELO {model_elo}' if model_elo else model_name
+        plot_dict[name][0].append(accuracy)
+        plot_dict[name][1].append(elo)
+
+    palette_maia = sns.color_palette("flare", len(set(plot_dict)))
+    palette_sunfish = sns.color_palette(sunfish_palette_name, len(set(plot_dict)))
+    plt.grid(axis='y', zorder=0)
+    for idx, (name, (accs, elos_)) in enumerate(plot_dict.items()):
+        plt.plot(elos_, accs, label=name, color=palette_maia[idx] if 'maia' in name.lower() else palette_sunfish[idx])
+        lower, upper = wilson_score_interval(np.array(accs) * n_boards, n_boards)
+        plt.fill_between(elos_, lower, upper, color=palette_maia[idx] if 'maia' in name.lower() else palette_sunfish[idx], alpha=0.1)
 
     plt.title('Model Accuracy by Player ELO')
-    plt.xlabel('Player ELOs')
+    plt.xlabel('Player ELO')
     plt.ylabel('Accuracy')
     plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
-    os.makedirs(f'results/plots/models_over_elo', exist_ok=True)
+    os.makedirs(f'results/plots/models_by_elo', exist_ok=True)
     plt.tight_layout()
-    plt.savefig(f'results/plots/models_over_elo/{model_elos[0]}_{model_elos[-1]}_{n_boards}.png')
+    plt.savefig(f'results/plots/models_by_elo/models_by_elo_{model_elos[0]}_{model_elos[-1]}_{n_boards}.svg')
     plt.show()
     plt.close()
 
@@ -36,11 +46,11 @@ if __name__ == '__main__':
 
     n_boards = 5000
     model_names = ['sunfish', 'maia', ]
-    maia_range = (1100, 2000)  # incl. excl.
-    sunfish_elo_epoch = {1100: 100, 1900: 100}
+    maia_range = (1100, 1800)  # incl. excl.
+    sunfish_elo_epoch = {'Default Sunfish': 0, }# 1100: 100, 1900: 100,
     player_range = (1100, 2000)  # incl. excl.
     # make_maia_test_csv(destination, min_elo=player_range[0], max_elo=player_range[1], n_boards=n_boards)
-    config_data_base, config_data_sunfish = load_config()
+    config_data_base, config_data_sunfish = load_config('sunfish_GRW')
 
     range_maia = [el for el in range(maia_range[0], maia_range[1], 100)]
     range_sunfish = [el for el in sunfish_elo_epoch.keys()]
@@ -68,7 +78,6 @@ if __name__ == '__main__':
             for elo_player in tqdm(player_elos_iter, desc='ELO Players'):
                 count += 1
                 if count < len(accuracies):
-                    print(count, len(accuracies))
                     continue
                 val_df = load_maia_test_data(elo_player, n_boards=n_boards)
                 validation_set = list(zip([chess.Board(fen=fen) for fen in val_df['board']], val_df['move']))
@@ -80,19 +89,28 @@ if __name__ == '__main__':
                         acc_sum += move_maia == move_true
                     acc_model = (acc_sum / val_df.shape[0])
                 elif model_name == 'sunfish':
-                    config_data_base['min_elo'] = elo_model
-                    config_data_base['max_elo'] = elo_model + 100
                     config_data_base['model'] = "sunfish_GRW"
                     config_data_base['move_function'] = "player_move"
                     out_path = create_result_path(config_data_base,
                                                   model_config_data=config_data_sunfish,
                                                   model_result_string=sunfish_native_result_string)
+                    if elo_model == 'Default Sunfish':
+                        out_path = join(os.path.dirname(out_path), 'default_sunfish')
+                        default_weight_path = join(out_path, 'weights')
+                        os.makedirs(default_weight_path, exist_ok=True)
+                        R_default = np.array(config_data_sunfish['R_true'])
+                        df = pd.DataFrame(R_default.T, columns=['Result'])
+                        df.to_csv(join(default_weight_path, '0.csv'))
+                    else:
+                        config_data_base['min_elo'] = elo_model
+                        config_data_base['max_elo'] = elo_model + 100
                     acc_model, _ = val_sunfish_GRW(
                         validation_set,
                         use_player_moves=True,
                         config_data=union_dicts(config_data_base, config_data_sunfish),
                         epoch=sunfish_elo_epoch[elo_model],
-                        out_path=out_path
+                        out_path=out_path,
+                        name=n_boards
                     )
                 else:
                     print('Invalid model, will crash')
