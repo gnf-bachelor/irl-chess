@@ -5,7 +5,7 @@
 #BSUB -n 24
 #BSUB -R "rusage[mem=1G]"
 #BSUB -R "span[hosts=1]"
-#BSUB -W 10:00
+#BSUB -W 16:00
 ### -- send notification at start --
 #BSUB -B
 ### -- send notification at completion--

@@ -101,7 +101,14 @@ def is_valid_game(game, config_data):
         elo_check_black = config_data['min_elo'] < int(game.headers['BlackElo']) < config_data['max_elo']
         # Add 1 to length check to ensure there is a valid move in the position returned
         length_check = len(list(game.mainline_moves())) > config_data['n_endgame'] + 1
-        return elo_check_white and elo_check_black and length_check
+
+        time_check = True
+        if 'timecontrol' in config_data:
+            time_low, time_high = config_data['timecontrol']
+            time = game.headers['TimeControl'].split('+')[0]
+            if time.isnumeric():
+                time_check = time_low < int(time) < time_high
+        return elo_check_white and elo_check_black and length_check and time_check
     except KeyError:
         return False
     except ValueError:
