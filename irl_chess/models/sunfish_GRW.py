@@ -114,13 +114,18 @@ def val_sunfish_GRW(validation_set, out_path, config_data, epoch, use_player_mov
 
 def val_util(validation_set, out_path, config_data, parallel, pst_val, use_player_moves, name):
     csv_path = join(out_path, 'validation_output', f'{name}.csv')
-    os.makedirs(os.path.dirname(csv_path), exist_ok=True)
-    actions_val = parallel(
-        delayed(sunfish_move)(board2sunfish(board, eval_pos(board, None)), pst_val, config_data['time_limit'], True)
-        for board, move in tqdm(validation_set, desc='Getting True Sunfish actions'))
-    actions_true = parallel(
-        delayed(sunfish_move)(board2sunfish(board, eval_pos(board, None)), pst, config_data['time_limit'], True)
-        for board, move in tqdm(validation_set, desc='Getting Sunfish validation actions')) if not use_player_moves else actions_val
+    if os.path.exists(csv_path):
+        df = pd.read_csv(csv_path)
+        actions_val = list(df['a_val'])
+        actions_true = list(df['a_true'])
+    else:
+        os.makedirs(os.path.dirname(csv_path), exist_ok=True)
+        actions_val = parallel(
+            delayed(sunfish_move)(board2sunfish(board, eval_pos(board, None)), pst_val, config_data['time_limit'], True)
+            for board, move in tqdm(validation_set, desc='Getting True Sunfish actions'))
+        actions_true = parallel(
+            delayed(sunfish_move)(board2sunfish(board, eval_pos(board, None)), pst, config_data['time_limit'], True)
+            for board, move in tqdm(validation_set, desc='Getting Sunfish validation actions')) if not use_player_moves else actions_val
 
     acc_temp_true, acc_temp_player = [], []
     actions_val_san, actions_true_san = [], []

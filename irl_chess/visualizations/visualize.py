@@ -7,6 +7,7 @@ from os.path import join
 from matplotlib import pyplot as plt
 
 sunfish_palette_name = 'mako'
+maia_palette_name = 'flare'
 
 def char_to_idxs(plot_char: list[str]):
     char_to_idxs = {"P": 0, "N": 1, "B": 2, "R": 3, "Q": 4, "K": 5}

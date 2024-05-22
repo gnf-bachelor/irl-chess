@@ -19,13 +19,20 @@ def plot_accuracies_over_elo(accuracies, player_elos, model_elos, n_boards, mode
         plot_dict[name][0].append(accuracy)
         plot_dict[name][1].append(elo)
 
-    palette_maia = sns.color_palette("flare", len(set(plot_dict)))
-    palette_sunfish = sns.color_palette(sunfish_palette_name, len(set(plot_dict)))
+    n_maia_colors = len([name for name in plot_dict.keys() if 'maia' in name.lower()])
+    n_sunfish_colors = len([name for name in plot_dict.keys() if 'maia' not in name.lower()])
+    palette_maia = sns.color_palette("flare", n_maia_colors)
+    palette_sunfish = sns.color_palette(sunfish_palette_name, n_sunfish_colors)
+
     plt.grid(axis='y', zorder=0)
+    idxs = [0, 0]
     for idx, (name, (accs, elos_)) in enumerate(plot_dict.items()):
-        plt.plot(elos_, accs, label=name, color=palette_maia[idx] if 'maia' in name.lower() else palette_sunfish[idx])
+        is_maia = 'maia' in name.lower()
+        color = palette_maia[idxs[is_maia]] if is_maia else palette_sunfish[idxs[is_maia]]
+        plt.plot(elos_, accs, label=name, color=color)
         lower, upper = wilson_score_interval(np.array(accs) * n_boards, n_boards)
-        plt.fill_between(elos_, lower, upper, color=palette_maia[idx] if 'maia' in name.lower() else palette_sunfish[idx], alpha=0.1)
+        plt.fill_between(elos_, lower, upper, color=color, alpha=0.1)
+        idxs[is_maia] += 1
 
     plt.title('Model Accuracy by Player ELO')
     plt.xlabel('Player ELO')
@@ -46,8 +53,8 @@ if __name__ == '__main__':
 
     n_boards = 5000
     model_names = ['sunfish', 'maia', ]
-    maia_range = (1100, 1800)  # incl. excl.
-    sunfish_elo_epoch = {'Default Sunfish': 0, }# 1100: 100, 1900: 100,
+    maia_range = (1100, 2000)  # incl. excl.
+    sunfish_elo_epoch = {1100: 100, 1900: 100,} # {'Default Sunfish': 0, }
     player_range = (1100, 2000)  # incl. excl.
     # make_maia_test_csv(destination, min_elo=player_range[0], max_elo=player_range[1], n_boards=n_boards)
     config_data_base, config_data_sunfish = load_config('sunfish_GRW')
@@ -77,7 +84,7 @@ if __name__ == '__main__':
             model = load_maia_network(elo=elo_model, parent='irl_chess/maia_chess/') if model_name == 'maia' else None
             for elo_player in tqdm(player_elos_iter, desc='ELO Players'):
                 count += 1
-                if count < len(accuracies):
+                if count <= len(accuracies):
                     continue
                 val_df = load_maia_test_data(elo_player, n_boards=n_boards)
                 validation_set = list(zip([chess.Board(fen=fen) for fen in val_df['board']], val_df['move']))

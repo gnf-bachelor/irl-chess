@@ -7,11 +7,13 @@ import chess
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 from tqdm import tqdm
 
 from irl_chess import load_maia_test_data
 from irl_chess.chess_utils import sunfish_move_to_str
 from irl_chess.stat_tools import wilson_score_interval
+from irl_chess.visualizations import maia_palette_name, sunfish_palette_name
 
 
 def random_moves_acc(boards, moves):
@@ -49,7 +51,7 @@ def run_comparison(run_sunfish=False, pgn_paths=None, move_range=(10, 100), val_
     websites_filepath = join(os.getcwd(), 'downloads', 'lichess_websites.txt')
     file_path_data = join(os.getcwd(), 'data', 'raw')
     out_path_sunfish = create_result_path(base_config_data, m_config_data, sunfish_native_result_string)
-    out_path_maia = create_result_path(base_config_data, config_data_maia, maia_pre_result_string)
+    out_path_maia = create_result_path(base_config_data, config_data_maia, maia_pre_result_string) + '-maia'
 
     if using_maia_val_data:
         val_df = load_maia_test_data(base_config_data['min_elo'], base_config_data['n_boards'])
@@ -137,7 +139,7 @@ def run_comparison(run_sunfish=False, pgn_paths=None, move_range=(10, 100), val_
             config_data=config_data_sunfish,
             out_path=out_path_sunfish,
             validation_set=validation_set,
-            name=f'n_moves_{n_moves}'
+            name=f'n_moves/{n_moves}'
         ) if run_sunfish else (None, (None, None))
 
         acc_random_list.append(acc_random)
@@ -150,19 +152,24 @@ def run_comparison(run_sunfish=False, pgn_paths=None, move_range=(10, 100), val_
         lower_bound_random_list.append(lower_bound_random)
         upper_bound_random_list.append(upper_bound_random)
 
+
+        alpha = 0.1
+        sunfish_palette = sns.color_palette(sunfish_palette_name, 2)
+        maia_palette = sns.color_palette(maia_palette_name, 2)
+        random_palette = sns.color_palette("viridis", 2)
         if run_sunfish:
-            plt.plot(range(move_range[0], n_moves + 1), acc_sunfish_list, label='Sunfish GRW\nAccuracy', color='r')
+            plt.plot(range(move_range[0], n_moves + 1), acc_sunfish_list, label='Sunfish GRW\nAccuracy', color=sunfish_palette[0])
             plt.fill_between(range(move_range[0], n_moves + 1), lower_bound_sunfish_list, upper_bound_sunfish_list,
-                             alpha=0.2, color='r', label='Wilson CI')
+                             alpha=alpha, color=sunfish_palette[0], label='Wilson CI')
 
         plt.plot(range(move_range[0], n_moves + 1), acc_maia_list,
-                 label=f'Maia {config_data_maia["maia_elo"]}\nAccuracy', color='b')
+                 label=f'Maia {config_data_maia["maia_elo"]}\nAccuracy', color=maia_palette[0])
         plt.fill_between(range(move_range[0], n_moves + 1), lower_bound_maia_list, upper_bound_maia_list,
-                         alpha=0.2, color='b', label='Wilson CI')
+                         alpha=alpha, color=maia_palette[0], label='Wilson CI')
 
-        plt.plot(range(move_range[0], n_moves + 1), acc_random_list, label='Random\nAccuracy', color='y')
+        plt.plot(range(move_range[0], n_moves + 1), acc_random_list, label='Random\nAccuracy', color=random_palette[-1])
         plt.fill_between(range(move_range[0], n_moves + 1), lower_bound_random_list, upper_bound_random_list,
-                         alpha=0.2, color='y', label='Wilson CI')
+                         alpha=alpha, color=random_palette[-1], label='Wilson CI')
 
         plt.title(
             f'Sunfish GRW Accuracy vs Maia {config_data_maia["maia_elo"]} \nAccuracy from {move_range[0]} to {n_moves} moves into a game')
@@ -189,7 +196,7 @@ def run_comparison(run_sunfish=False, pgn_paths=None, move_range=(10, 100), val_
 
 if __name__ == '__main__':
     pgn_paths = ['data/raw/lichess_db_standard_rated_2017-11.pgn']
-    ply_range = (10, 80)
+    ply_range = (10, 81)
     # Set the param epochs in the base config to specify epochs for sunfish
     # Also remember to set the move function to player move as this is used for validation
     run_comparison(run_sunfish=True, move_range=ply_range, pgn_paths=pgn_paths, using_maia_val_data=True)
