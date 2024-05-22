@@ -7,6 +7,7 @@ import pandas as pd
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 from time import time
+import seaborn as sns
 
 
 def plot_accuracies_over_elo(accuracies, player_elos, model_elos, n_boards, model_names):
@@ -14,11 +15,13 @@ def plot_accuracies_over_elo(accuracies, player_elos, model_elos, n_boards, mode
     for model_elo, model_name, accuracy, elo in zip(model_elos, model_names, accuracies, player_elos):
         plot_dict[f'{model_name} ELO {model_elo}'][0].append(accuracy)
         plot_dict[f'{model_name} ELO {model_elo}'][1].append(elo)
-    for name, (accs, elos_, ) in plot_dict.items():
-        plt.plot(elos_, accs, label=name)
-        lower, upper = wilson_score_interval(np.array(accs) * n_boards, n_boards, )
-        plt.fill_between(elos_, lower, upper, alpha=0.2)
 
+    palette_maia = sns.color_palette("flare", len(set(plot_dict)))
+    palette_sunfish = sns.color_palette("crest", len(set(plot_dict)))
+    for idx, (name, (accs, elos_)) in enumerate(plot_dict.items()):
+        plt.plot(elos_, accs, label=name, color=palette_maia[idx] if 'maia' in name else palette_sunfish[idx])
+        lower, upper = wilson_score_interval(np.array(accs) * n_boards, n_boards)
+        plt.fill_between(elos_, lower, upper, color=palette_maia[idx] if 'maia' in name else palette_sunfish[idx], alpha=0.1)
 
     plt.title('Model Accuracy by Player ELO')
     plt.xlabel('Player ELOs')
@@ -71,7 +74,6 @@ if __name__ == '__main__':
             for elo_player in tqdm(player_elos_iter, desc='ELO Players'):
                 count += 1
                 if count < len(accuracies):
-                    print(count, len(accuracies))
                     continue
                 val_df = load_maia_test_data(elo_player, n_boards=n_boards)
                 validation_set = list(zip([chess.Board(fen=fen) for fen in val_df['board']], val_df['move']))
