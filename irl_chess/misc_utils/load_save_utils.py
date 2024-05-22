@@ -37,11 +37,12 @@ def fix_cwd():
         assert_cwd()
 
 
-def load_config():
+def load_config(model=None):
     assert_cwd()
     path_config = join(os.getcwd(), 'experiment_configs', 'base_config.json')
     with open(path_config, 'r') as file:
         base_config_data = json.load(file)
+    base_config_data["model"] = base_config_data["model"] if model is None else model
     path_model_config = join(os.path.dirname(path_config), base_config_data["model"], 'config.json')
     with open(path_model_config, 'r') as file:
         model_config_data = json.load(file)
