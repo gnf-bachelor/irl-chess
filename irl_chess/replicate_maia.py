@@ -1,5 +1,6 @@
 import os
 from collections import defaultdict
+from os.path import join
 
 import chess
 import numpy as np
@@ -43,12 +44,12 @@ if __name__ == '__main__':
     elos_players, accuracies, model_names_list, model_elos = [], [], [], []
 
     n_boards = 5000
-    model_names = ['maia', 'sunfish', ]
+    model_names = ['sunfish', 'maia', ]
     maia_range = (1100, 1800)  # incl. excl.
-    sunfish_elo_epoch = {1100: 100, 1900: 100}
+    sunfish_elo_epoch = {'default': 0, }# 1100: 100, 1900: 100,
     player_range = (1100, 2000)  # incl. excl.
     # make_maia_test_csv(destination, min_elo=player_range[0], max_elo=player_range[1], n_boards=n_boards)
-    config_data_base, config_data_sunfish = load_config()
+    config_data_base, config_data_sunfish = load_config('sunfish_GRW')
 
     range_maia = [el for el in range(maia_range[0], maia_range[1], 100)]
     range_sunfish = [el for el in sunfish_elo_epoch.keys()]
@@ -87,19 +88,28 @@ if __name__ == '__main__':
                         acc_sum += move_maia == move_true
                     acc_model = (acc_sum / val_df.shape[0])
                 elif model_name == 'sunfish':
-                    config_data_base['min_elo'] = elo_model
-                    config_data_base['max_elo'] = elo_model + 100
                     config_data_base['model'] = "sunfish_GRW"
                     config_data_base['move_function'] = "player_move"
                     out_path = create_result_path(config_data_base,
                                                   model_config_data=config_data_sunfish,
                                                   model_result_string=sunfish_native_result_string)
+                    if elo_model == 'default':
+                        out_path = join(os.path.dirname(out_path), 'default_sunfish')
+                        default_weight_path = join(out_path, 'weights')
+                        os.makedirs(default_weight_path, exist_ok=True)
+                        R_default = np.array(config_data_sunfish['R_true'])
+                        df = pd.DataFrame(R_default.T, columns=['Result'])
+                        df.to_csv(join(default_weight_path, '0.csv'))
+                    else:
+                        config_data_base['min_elo'] = elo_model
+                        config_data_base['max_elo'] = elo_model + 100
                     acc_model, _ = val_sunfish_GRW(
                         validation_set,
                         use_player_moves=True,
                         config_data=union_dicts(config_data_base, config_data_sunfish),
                         epoch=sunfish_elo_epoch[elo_model],
-                        out_path=out_path
+                        out_path=out_path,
+                        name=n_boards
                     )
                 else:
                     print('Invalid model, will crash')
