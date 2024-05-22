@@ -34,7 +34,7 @@ if __name__ == '__main__':
 
     elos_players, accuracies, model_names_list, model_elos = [], [], [], []
 
-    n_boards = 1000
+    n_boards = 5000
     model_names = ['sunfish', 'maia', ]
     maia_range = (1100, 2000)  # incl. excl.
     sunfish_elo_epoch = {1100: 100, 1900: 100}
