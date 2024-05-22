@@ -104,7 +104,7 @@ def run_sunfish_GRW(chess_boards, player_moves, config_data, out_path, validatio
         return out
 
 
-def val_sunfish_GRW(validation_set, out_path, config_data, epoch, use_player_moves, name=''):
+def val_sunfish_GRW(validation_set, out_path, config_data, epoch, use_player_moves, name):
     with (Parallel(n_jobs=config_data['n_threads']) as parallel):
         df = pd.read_csv(join(out_path, 'weights', f'{epoch}.csv'))
         R = df['Result'].values.flatten()
@@ -112,7 +112,9 @@ def val_sunfish_GRW(validation_set, out_path, config_data, epoch, use_player_mov
         return val_util(validation_set, out_path, config_data, parallel, pst_val, use_player_moves, name)
 
 
-def val_util(validation_set, out_path, config_data, parallel, pst_val, use_player_moves, name=''):
+def val_util(validation_set, out_path, config_data, parallel, pst_val, use_player_moves, name):
+    csv_path = join(out_path, 'validation_output', f'{name}.csv')
+    os.makedirs(os.path.dirname(csv_path), exist_ok=True)
     actions_val = parallel(
         delayed(sunfish_move)(board2sunfish(board, eval_pos(board, None)), pst_val, config_data['time_limit'], True)
         for board, move in tqdm(validation_set, desc='Getting True Sunfish actions'))
@@ -141,7 +143,6 @@ def val_util(validation_set, out_path, config_data, parallel, pst_val, use_playe
 
     df = pd.DataFrame([(state, a_player, a_true, a_val) for (state, a_player), a_val, a_true in
                        zip(validation_set, actions_val_san, actions_true_san)],
-                      columns=['board', 'a_player', 'a_true' if use_player_moves else 'a_val_copy', 'a_val'])
-    os.makedirs(join(out_path, f'validation_output'), exist_ok=True)
-    df.to_csv(join(out_path, f'validation_output', f'{name}_{acc_true}.csv'), index=False)
+                      columns=['board', 'a_player', 'a_true', 'a_val'])
+    df.to_csv(csv_path, index=False)
     return acc_player, wilson_score_interval(sum(acc_temp_player), len(acc_temp_player))

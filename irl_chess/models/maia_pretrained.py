@@ -33,12 +33,21 @@ def maia_pre_result_string(model_config_data):
 
 def run_maia_pre(chess_boards, player_moves, config_data, out_path, validation_set, model=None, return_model=False):
     start_time = time()
-    model = load_maia_network(elo=config_data['maia_elo'],
-                              time_limit=config_data['time_limit'],
-                              parent=join('irl_chess', 'maia_chess')) if model is None else model
+    csv_path = join(out_path, 'validation_output.csv')
+    if os.path.exists(csv_path):
+        print(f'Reading Maia validation output from {csv_path}.')
+        df = pd.read_csv(csv_path)
+        actions_val = zip(list(df['action val'] if 'action val' in df.columns else '2'), list(df['score'] if 'score' in df.columns else '3'))
+    else:
+        print('No Maia validation data found')
+        os.makedirs(out_path, exist_ok=True)
 
-    actions_val = [maia_pre_move(state, model) for state, move in
-                   tqdm(validation_set, desc='Getting Maia validation actions')]
+        model = load_maia_network(elo=config_data['maia_elo'],
+                                  time_limit=config_data['time_limit'],
+                                  parent=join('irl_chess', 'maia_chess')) if model is None else model
+
+        actions_val = [maia_pre_move(state, model) for state, move in
+                       tqdm(validation_set, desc='Getting Maia validation actions')]
 
     acc_temp = []
     data_save = []
@@ -49,9 +58,8 @@ def run_maia_pre(chess_boards, player_moves, config_data, out_path, validation_s
         data_save.append((state, a_true, a_val, score))
     acc = sum(acc_temp) / len(acc_temp)
     print(f'Maia validation accuracy: {acc}')
-    df = pd.DataFrame(data_save)
-    os.makedirs(out_path, exist_ok=True)
-    df.to_csv(join(out_path, 'validation_output.csv'))
+    df = pd.DataFrame(data_save, columns=['state', 'action true', 'action val', 'score'])
+    df.to_csv(csv_path, index=False)
     print(f'Finished getting Maia moves in {time() - start_time:.3f} seconds')
     if return_model:
         from irl_chess import wilson_score_interval

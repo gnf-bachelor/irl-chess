@@ -8,6 +8,7 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 from time import time
 import seaborn as sns
+from irl_chess.visualizations import sunfish_palette_name
 
 
 def plot_accuracies_over_elo(accuracies, player_elos, model_elos, n_boards, model_names):
@@ -17,7 +18,7 @@ def plot_accuracies_over_elo(accuracies, player_elos, model_elos, n_boards, mode
         plot_dict[f'{model_name[0].upper() + model_name[1:]} ELO {model_elo}'][1].append(elo)
 
     palette_maia = sns.color_palette("flare", len(set(plot_dict)))
-    palette_sunfish = sns.color_palette("crest", len(set(plot_dict)))
+    palette_sunfish = sns.color_palette(sunfish_palette_name, len(set(plot_dict)))
     plt.grid(axis='y', zorder=0)
     for idx, (name, (accs, elos_)) in enumerate(plot_dict.items()):
         plt.plot(elos_, accs, label=name, color=palette_maia[idx] if 'maia' in name else palette_sunfish[idx])

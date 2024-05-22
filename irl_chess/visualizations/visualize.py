@@ -1,10 +1,12 @@
 import os
 import numpy as np
 import pandas as pd
+import seaborn as sns
 
 from os.path import join
 from matplotlib import pyplot as plt
 
+sunfish_palette_name = 'mako'
 
 def char_to_idxs(plot_char: list[str]):
     char_to_idxs = {"P": 0, "N": 1, "B": 2, "R": 3, "Q": 4, "K": 5}
@@ -104,6 +106,7 @@ def plot_R_weights(config_data, out_path, start_weight_idx=0, legend_names=['P',
                    **kwargs):
     accuracies = kwargs['accuracies'] if 'accuracies' in kwargs else None
     bayesian_args = kwargs['bayesian_args'] if 'bayesian_args' in kwargs else None
+    filename_addition = kwargs['filename_addition'] if 'filename_addition' in kwargs else ''
     plot_char = char_to_idxs(config_data['plot_char'])
     R_true = np.array(config_data.get('R_true', [100, 280, 320, 479, 929, 60000]))
 
@@ -124,16 +127,19 @@ def plot_R_weights(config_data, out_path, start_weight_idx=0, legend_names=['P',
     # assert weights.shape[0] == epoch+1, f"Error: weights.shape[0]: {weights.shape[0]} is not equal to epoch: {epoch}"
     X = np.repeat(np.arange(0, weights.shape[0], 1) + start_weight_idx,
                   len(plot_char)).reshape((-1, len(plot_char)))
-
-    plt.plot(X, weights[:, plot_char])
-    plt.hlines(R_true[plot_char], 0, X[-1, -1], linestyles='--')
-    plt.title('Sunfish weights over time')
+    colors = sns.color_palette(sunfish_palette_name, n_colors=len(plot_char))
+    for x, y, color, plot_char in zip(X.T, weights[:, plot_char].T, colors, plot_char):
+        plt.plot(x, y, c=color, label=legend_names[plot_char])
+        plt.hlines(R_true[plot_char], 0, x[-1], colors=color, linestyles='--')
+    plt.title(f'Sunfish weights over time for ELO {config_data["min_elo"]}-{config_data["max_elo"]} on '
+              f'{"player" if "player" in config_data["move_function"] else "sunfish"} moves')
     plt.xlabel('Epochs')
     plt.ylabel('Weight values')
-    plt.legend([legend_names[idx] for idx in plot_char])
-    plt.savefig(join(plot_path, f'weights_{epoch}.png'))
+    plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
+    plt.tight_layout()
+    plt.savefig(join(plot_path, f'weights_{epoch}{filename_addition}.svg'))
     plt.show()
-    plt.cla()
+    plt.close()
 
     if accuracies is not None:
         accuracies = np.array(accuracies)
@@ -143,7 +149,7 @@ def plot_R_weights(config_data, out_path, start_weight_idx=0, legend_names=['P',
         plt.xlabel('Epochs')
         plt.ylabel('Accuracy')
         plt.legend(['Accuracy', 'Accuracy Prev'])
-        plt.savefig(join(plot_path, f'accuracies_{epoch}.png'))
+        plt.savefig(join(plot_path, f'accuracies_{epoch}.svg'))
         plt.show()
         plt.cla()
 

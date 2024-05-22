@@ -36,7 +36,7 @@ def run_comparison(run_sunfish=False, pgn_paths=None, move_range=(10, 100), val_
         union_dicts, create_result_path, get_states, board2sunfish, eval_pos
 
     val_proportion = val_proportion if run_sunfish else 1
-    base_config_data, m_config_data = load_config()
+    base_config_data, m_config_data = load_config('sunfish_GRW')
     config_data_sunfish = union_dicts(base_config_data, m_config_data)
 
     # base_config_data['n_midgame'] = move_range[0]
@@ -136,7 +136,8 @@ def run_comparison(run_sunfish=False, pgn_paths=None, move_range=(10, 100), val_
             use_player_moves=True,
             config_data=config_data_sunfish,
             out_path=out_path_sunfish,
-            validation_set=validation_set
+            validation_set=validation_set,
+            name=f'n_moves_{n_moves}'
         ) if run_sunfish else (None, (None, None))
 
         acc_random_list.append(acc_random)
