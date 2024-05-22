@@ -29,8 +29,8 @@ def correct_at_depth(player_move, state, depth):
     return player_move == sunfish_move_to_str(move)
 
 if __name__ == '__main__':
-    os.chdir('../')
-    os.chdir('../')
+    while os.getcwd()[-9:] != 'irl-chess':
+        os.chdir('../')
 
     with open('experiment_configs\\depths\\config.json', 'r') as file:
         config = json.load(file)
