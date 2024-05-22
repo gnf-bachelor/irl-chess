@@ -13,8 +13,8 @@ import seaborn as sns
 def plot_accuracies_over_elo(accuracies, player_elos, model_elos, n_boards, model_names):
     plot_dict = defaultdict(lambda: [[], []])
     for model_elo, model_name, accuracy, elo in zip(model_elos, model_names, accuracies, player_elos):
-        plot_dict[f'{model_name} ELO {model_elo}'][0].append(accuracy)
-        plot_dict[f'{model_name} ELO {model_elo}'][1].append(elo)
+        plot_dict[f'{model_name[0].upper() + model_name[1:]} ELO {model_elo}'][0].append(accuracy)
+        plot_dict[f'{model_name[0].upper() + model_name[1:]} ELO {model_elo}'][1].append(elo)
 
     palette_maia = sns.color_palette("flare", len(set(plot_dict)))
     palette_sunfish = sns.color_palette("crest", len(set(plot_dict)))
@@ -25,12 +25,12 @@ def plot_accuracies_over_elo(accuracies, player_elos, model_elos, n_boards, mode
         plt.fill_between(elos_, lower, upper, color=palette_maia[idx] if 'maia' in name else palette_sunfish[idx], alpha=0.1)
 
     plt.title('Model Accuracy by Player ELO')
-    plt.xlabel('Player ELOs')
+    plt.xlabel('Player ELO')
     plt.ylabel('Accuracy')
     plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
     os.makedirs(f'results/plots/models_over_elo', exist_ok=True)
     plt.tight_layout()
-    plt.savefig(f'results/plots/models_over_elo/{model_elos[0]}_{model_elos[-1]}_{n_boards}.png')
+    plt.savefig(f'results/plots/models_over_elo/{model_elos[0]}_{model_elos[-1]}_{n_boards}.svg')
     plt.show()
     plt.close()
 
@@ -41,8 +41,8 @@ if __name__ == '__main__':
 
     elos_players, accuracies, model_names_list, model_elos = [], [], [], []
 
-    n_boards = 10
-    model_names = ['sunfish', 'maia', ]
+    n_boards = 5000
+    model_names = ['maia', 'sunfish', ]
     maia_range = (1100, 2000)  # incl. excl.
     sunfish_elo_epoch = {1100: 100, 1900: 100}
     player_range = (1100, 2000)  # incl. excl.
