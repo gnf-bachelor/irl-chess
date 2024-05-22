@@ -1,0 +1,19 @@
+{
+    "overwrite": false,
+    "n_files": 3,
+    "time_control": false,
+    "metric": "best move list",
+    "min_elo": 1200,
+    "max_elo": 1500,
+    "n_midgame": 15,
+    "n_endgame": 30,
+    "n_boards": 500,
+    "epochs": 50,
+    "n_threads": -2,
+    "save_every": 50,
+    "plot_every": 50,
+    "plot_char": ["P", "N", "B", "R", "Q"],
+    "permute_char": ["N", "B"],
+    "model": "bayesian_optimisation",
+    "move_function": "player_move"
+}
