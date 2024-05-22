@@ -39,7 +39,7 @@ def run_maia_pre(chess_boards, player_moves, config_data, out_path, validation_s
         df = pd.read_csv(csv_path)
         actions_val = list(zip(list(df['action val'] if 'action val' in df.columns else df['2']), list(df['score'] if 'score' in df.columns else df['3'])))
     else:
-        print('No Maia validation data found')
+        print(f'No Maia validation data found {csv_path}')
         os.makedirs(out_path, exist_ok=True)
 
         model = load_maia_network(elo=config_data['maia_elo'],
