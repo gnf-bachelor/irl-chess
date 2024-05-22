@@ -21,17 +21,17 @@ def plot_accuracies_over_elo(accuracies, player_elos, model_elos, n_boards, mode
     palette_sunfish = sns.color_palette(sunfish_palette_name, len(set(plot_dict)))
     plt.grid(axis='y', zorder=0)
     for idx, (name, (accs, elos_)) in enumerate(plot_dict.items()):
-        plt.plot(elos_, accs, label=name, color=palette_maia[idx] if 'maia' in name else palette_sunfish[idx])
+        plt.plot(elos_, accs, label=name, color=palette_maia[idx] if 'maia' in name.lower() else palette_sunfish[idx])
         lower, upper = wilson_score_interval(np.array(accs) * n_boards, n_boards)
-        plt.fill_between(elos_, lower, upper, color=palette_maia[idx] if 'maia' in name else palette_sunfish[idx], alpha=0.1)
+        plt.fill_between(elos_, lower, upper, color=palette_maia[idx] if 'maia' in name.lower() else palette_sunfish[idx], alpha=0.1)
 
     plt.title('Model Accuracy by Player ELO')
     plt.xlabel('Player ELO')
     plt.ylabel('Accuracy')
     plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
-    os.makedirs(f'results/plots/models_over_elo', exist_ok=True)
+    os.makedirs(f'results/plots/models_by_elo', exist_ok=True)
     plt.tight_layout()
-    plt.savefig(f'results/plots/models_over_elo/{model_elos[0]}_{model_elos[-1]}_{n_boards}.svg')
+    plt.savefig(f'results/plots/models_by_elo/models_by_elo_{model_elos[0]}_{model_elos[-1]}_{n_boards}.svg')
     plt.show()
     plt.close()
 
@@ -44,7 +44,7 @@ if __name__ == '__main__':
 
     n_boards = 5000
     model_names = ['maia', 'sunfish', ]
-    maia_range = (1100, 2000)  # incl. excl.
+    maia_range = (1100, 1800)  # incl. excl.
     sunfish_elo_epoch = {1100: 100, 1900: 100}
     player_range = (1100, 2000)  # incl. excl.
     # make_maia_test_csv(destination, min_elo=player_range[0], max_elo=player_range[1], n_boards=n_boards)
