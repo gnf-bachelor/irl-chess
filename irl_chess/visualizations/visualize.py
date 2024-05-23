@@ -136,7 +136,7 @@ def plot_R_weights(config_data, out_path, start_weight_idx=0, legend_names=['P',
     plot_char = char_to_idxs(config_data['plot_char'])
     if plot_char:
         RP_plot_path = os.path.join(plot_path, 'RP')
-        os.makedirs(RPplot_path, exist_ok=True)
+        os.makedirs(RP_plot_path, exist_ok=True)
         weights = load_weights(out_path, 'Result', start_weight_idx=start_weight_idx, epoch=epoch)
         RP_true = np.array(config_data.get('RP_true', [100, 280, 320, 479, 929, 60000]))
         plot_weights(weights, RP_true, start_weight_idx, plot_char, legend_names, config_data, RP_plot_path, epoch+1,
