@@ -2,15 +2,15 @@
   "time_limit": 200,
   "R_true": [100, 280, 320, 479, 929, 60000],
   "overwrite": false,
-  "n_files": 3,
+  "n_files": 6,
   "elos": [1100, 1900],
   "n_midgame": 15,
   "n_endgame": 30,
-  "n_boards": 1500,
+  "n_boards": 10000,
   "n_threads": 24,
   "move_function": "player_move",
   "move_percentage_data": false,
-  "data": "lichess",
+  "data": "maia",
   "depths": [1,2,3,4,5,6,7],
   "timecontrol": [180, 600]
 }
