@@ -192,7 +192,7 @@ def load_lichess_dfs(websites_filepath, file_path_data, n_files, overwrite=False
     return df
 
 
-def make_maia_test_csv(filepath='data/raw/maia-chess-testing-set.csv.bz2', n_boards=10000, min_elo=1100, max_elo=1900):
+def make_maia_test_csv(filepath='data/raw/maia-chess-testing-set.csv.bz2', n_boards=10000, min_elo=1100, max_elo=1900, return_full_df=False):
     url = r'https://csslab.cs.toronto.edu/data/chess/kdd/maia-chess-testing-set.csv.bz2'
     if not os.path.exists(filepath):
         download_file(url=url, destination=filepath)
@@ -208,10 +208,13 @@ def make_maia_test_csv(filepath='data/raw/maia-chess-testing-set.csv.bz2', n_boa
             t = time.time()
             df = pd.read_csv(filepath) if df is None else df
             print(f'Loaded big data in {time.time() - t}')
-            val_df = df[(elo_player < df['opponent_elo']) & (df['white_elo'] < (elo_player + 100))]
+            val_df = df[(elo_player < df['opponent_elo']) & (df['opponent_elo'] < (elo_player + 100)) &
+                        (elo_player < df['white_elo']) & (df['white_elo'] < (elo_player + 100))]
             val_df = val_df[(10 <= val_df['move_ply'])][:n_boards]
             val_df.to_csv(df_path, index=False)
-
+    if return_full_df:
+        df = pd.read_csv(filepath) if df is None else df
+        return df
 
 def load_maia_test_data(min_elo, n_boards):
     df_path = f'data/processed/maia_test/{min_elo}_{min_elo + 100}_{n_boards}.csv'
