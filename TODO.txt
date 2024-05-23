@@ -76,13 +76,16 @@ Report:
                                 [ ] Stockfish
                                 [ ] Leela chess zero (Alpha Zero)
                                 [ ] Maia (Human like/Help humans improve)
-[ ] Data (Fabian)
-        [ ] Overview of online chess data in 2024
-                [ ] Plot amount of data available over time
-        [ ] Define valid positions
-                [ ] Parameters out
-                [ ] Test/train split
-        [ ] Show distribution of [ELO, TimeControl] in train/test
+[.] Data (Fabian)
+        [X] Overview of online chess data in 2024
+                [X] Plot amount of data available over time
+        [X] Define valid positions
+                [X] Time, ELO
+                [X] Test/train split
+        [X] Show distribution of [ELO, move ply] in train/test
+                [X] In Maia test set
+                [X] In 1100, 1900 ELO bin
+        [ ] Re-read and add stuff!!
 [ ] Methodology    
         [ ] BIRL
         [ ] Sunfish GRW
@@ -105,6 +108,7 @@ Report:
                 [ ] BIRL Priors are uniform
                 [ ] Parameterising reward function
                 [ ] Why Leela chess feature vectors won't work (still fails)
+        [ ] Bridging the gap between symbolic and data driven AI to maintain explainability
         [ ] How sunfish
 [ ] Conclusion
         [ ] What can we conclusively say
@@ -118,7 +122,6 @@ Report:
 ---- Less important notes
 [ ]     Implement BO to make optimization more robust.
 [ ]          Generate plots of optimization function to characterize it.
-[ ]  Discussion: Bridging the gap between symbolic and data driven AI to maintain explainability
 [ ]  Go through specific case studies
 [ ]  Show in demonstrations in jupyter notebooks.   
 [ ]  Implement more baselines to validate method
