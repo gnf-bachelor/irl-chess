@@ -147,7 +147,7 @@ def run_comparison(run_sunfish=False, pgn_paths=None, move_range=(10, 100), val_
             out_path=out_path_sunfish,
             validation_set=validation_set,
             name=f'n_moves/{n_moves}'
-            ) if run_sunfish else (None, (None, None))
+        ) if run_sunfish else (None, (None, None))
 
         acc_random_list.append(acc_random)
         acc_sunfish_list.append(acc_sunfish)
@@ -158,48 +158,55 @@ def run_comparison(run_sunfish=False, pgn_paths=None, move_range=(10, 100), val_
         upper_bound_maia_list.append(upper_bound_maia)
         lower_bound_random_list.append(lower_bound_random)
         upper_bound_random_list.append(upper_bound_random)
-
-
-        alpha = 0.1
-        sunfish_palette = sns.color_palette(sunfish_palette_name, 2)
-        maia_palette = sns.color_palette(maia_palette_name, 2)
-        random_palette = sns.color_palette("viridis", 2)
-        if run_sunfish:
-            plt.plot(range(move_range[0], n_moves + 1), acc_sunfish_list,
-                     label=f'Sunfish {"" if using_default_sunfish else "GRW"}\nAccuracy', color=sunfish_palette[0])
-            plt.fill_between(range(move_range[0], n_moves + 1), lower_bound_sunfish_list, upper_bound_sunfish_list,
-                             alpha=alpha, color=sunfish_palette[0], label='Wilson CI')
-
-        plt.plot(range(move_range[0], n_moves + 1), acc_maia_list,
-                 label=f'Maia {config_data_maia["maia_elo"]}\nAccuracy', color=maia_palette[0])
-        plt.fill_between(range(move_range[0], n_moves + 1), lower_bound_maia_list, upper_bound_maia_list,
-                         alpha=alpha, color=maia_palette[0], label='Wilson CI')
-
-        plt.plot(range(move_range[0], n_moves + 1), acc_random_list, label='Random\nAccuracy', color=random_palette[-1])
-        plt.fill_between(range(move_range[0], n_moves + 1), lower_bound_random_list, upper_bound_random_list,
-                         alpha=alpha, color=random_palette[-1], label='Wilson CI')
-
-        plt.title(
-            f'Sunfish {"" if using_default_sunfish else "GRW"} Accuracy vs Maia {config_data_maia["maia_elo"]} \nAccuracy from {move_range[0]} to {n_moves} moves into a game')
-        plt.xlabel('Number of moves into game')
-        plt.ylabel('Accuracy')
-        plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
-        plt.tight_layout()
-
-        plt.savefig(plot_path)
         while time() - t < 1:
             sleep(.1)
+        plot_ply(acc_lists, plot_path, run_sunfish, move_range, using_default_sunfish, n_moves, config_data_maia, csv_path)
 
-        df_out = pd.DataFrame(
-            np.array(acc_lists).T,
-            columns=['random', 'random_lower', 'random_upper', 'sunfish', 'sunfish_lower', 'sunfish_upper', 'maia',
-                     'maia_lower', 'maia_upper', ])
-        df_out.to_csv(csv_path, index=False)
-
-        plt.show()
-        plt.close()
         print(f'Using sunfish with following config:')
         print(config_data_sunfish)
+    plot_path = join(plot_path_base, f'{move_range[1]-1}.svg')
+    plot_ply(acc_lists, plot_path, run_sunfish, move_range, using_default_sunfish, move_range[1]-1, config_data_maia, csv_path)
+
+
+def plot_ply(acc_lists, plot_path, run_sunfish, move_range, using_default_sunfish, n_moves, config_data_maia, csv_path):
+    [acc_random_list, lower_bound_random_list, upper_bound_random_list, acc_sunfish_list, lower_bound_sunfish_list,
+     upper_bound_sunfish_list, acc_maia_list, lower_bound_maia_list, upper_bound_maia_list] = acc_lists
+    alpha = 0.1
+    sunfish_palette = sns.color_palette(sunfish_palette_name, 2)
+    maia_palette = sns.color_palette(maia_palette_name, 2)
+    random_palette = sns.color_palette("viridis", 2)
+    if run_sunfish:
+        plt.plot(range(move_range[0], n_moves + 1), acc_sunfish_list,
+                 label=f'Sunfish {"" if using_default_sunfish else "GRW"}\nAccuracy', color=sunfish_palette[0])
+        plt.fill_between(range(move_range[0], n_moves + 1), lower_bound_sunfish_list, upper_bound_sunfish_list,
+                         alpha=alpha, color=sunfish_palette[0], label='Wilson CI')
+
+    plt.plot(range(move_range[0], n_moves + 1), acc_maia_list,
+             label=f'Maia {config_data_maia["maia_elo"]}\nAccuracy', color=maia_palette[0])
+    plt.fill_between(range(move_range[0], n_moves + 1), lower_bound_maia_list, upper_bound_maia_list,
+                     alpha=alpha, color=maia_palette[0], label='Wilson CI')
+
+    plt.plot(range(move_range[0], n_moves + 1), acc_random_list, label='Random\nAccuracy', color=random_palette[-1])
+    plt.fill_between(range(move_range[0], n_moves + 1), lower_bound_random_list, upper_bound_random_list,
+                     alpha=alpha, color=random_palette[-1], label='Wilson CI')
+
+    plt.title(
+        f'Sunfish {"" if using_default_sunfish else "GRW"} Accuracy vs Maia {config_data_maia["maia_elo"]} \nAccuracy from {move_range[0]} to {n_moves} moves into a game')
+    plt.xlabel('Number of moves into game')
+    plt.ylabel('Accuracy')
+    plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
+    plt.tight_layout()
+
+    plt.savefig(plot_path)
+    print(f'Saved to {plot_path}')
+    df_out = pd.DataFrame(
+        np.array(acc_lists).T,
+        columns=['random', 'random_lower', 'random_upper', 'sunfish', 'sunfish_lower', 'sunfish_upper', 'maia',
+                 'maia_lower', 'maia_upper', ])
+    df_out.to_csv(csv_path, index=False)
+
+    plt.show()
+    plt.close()
 
 
 if __name__ == '__main__':
@@ -208,4 +215,4 @@ if __name__ == '__main__':
     # Set the param epochs in the base config to specify epochs for sunfish
     # Also remember to set the move function to player move as this is used for validation
     run_comparison(run_sunfish=True, move_range=ply_range, pgn_paths=pgn_paths, using_maia_val_data=True,
-                   using_default_sunfish=True)
+                   using_default_sunfish=False)
