@@ -17,33 +17,74 @@ from irl_chess.visualizations.visualize import plot_R_weights, char_to_idxs
 from irl_chess.chess_utils.alpha_beta_utils import evaluate_board, alpha_beta_search, alpha_beta_search_k, list_first_moves
 from scipy.special import softmax
 
-def perturb_reward(R, config_data, epoch = None):
-    permute_idxs = config_data['permute_idxs']
+def perturb_reward(RP, config_data, Rpst = None, RH = None, epoch = None):
+    P_permute_idxs = config_data['P_permute_idxs']
+    pst_permute_idxs = config_data['pst_permute_idxs']
+    H_permute_idxs = config_data['H_permute_idxs']
     delta = config_data['delta']
+    delta_pst = delta/200 # Seems reasonable. Prioritize having only one delta parameter.
+    delta_H = delta/200 # Seems reasonable too
     noise_distribution = config_data['noise_distribution']
-    permute_how_many = config_data['permute_how_many']
+    permute_how_many = config_data.get('permute_how_many', -1) # Default (-1) is to permute all.
     if noise_distribution is None:
         noise_distribution = "uniform"
-    if permute_how_many != -1 and permute_how_many: 
-        permute_idxs = np.random.choice(permute_idxs, size=permute_how_many, replace=False)
+    P_permute_idxs, pst_permute_idxs, H_permute_idxs = permute_indices(P_permute_idxs, pst_permute_idxs, H_permute_idxs, permute_how_many)
     match noise_distribution:
         case "uniform":
-            noise = np.random.uniform(-delta, delta, permute_idxs.shape)
+            gen_noise = lambda delta, idxs: np.random.uniform(-delta, delta, size=idxs.shape)
         case "step":
-            noise = np.random.choice([-delta, delta], permute_idxs.shape)
+            gen_noise = lambda delta, idxs: np.random.choice([-delta, delta], size=idxs.shape)
         case "gaussian":
-            noise = np.random.normal(0, delta, permute_idxs.shape)
-    R_new = R.copy()
+            gen_noise = lambda delta, idxs: np.random.normal(0, delta, size=idxs.shape)
+
+    noise_P = gen_noise(delta, P_permute_idxs)
+    noise_pst = gen_noise(delta_pst, pst_permute_idxs)
+    noise_H = gen_noise(delta_H, H_permute_idxs)
+    RP_new = RP.copy()
+    Rpst_new = None
+    RH_new = None
     # Add noise to the specified indices
-    R_new[permute_idxs] += noise
+    RP_new[P_permute_idxs] += noise_P
+    if Rpst is not None:
+        Rpst_new = Rpst.copy()
+        Rpst_new[pst_permute_idxs] += noise_pst
+    if RH is not None:  
+        RH_new = RH.copy()
+        RH_new[H_permute_idxs] += noise_H
     if epoch is not None: noise_decay(config_data, epoch)
-    return R_new
+    return RP_new, Rpst_new, RH_new # It is better to keep the return types consistent, even though it might return None
 
 def noise_decay(config_data, epoch):
     if epoch % config_data['decay_step'] == 0 and epoch != 0:
         delta = config_data['delta']
-        delta *= config_data['decay']
+        delta *= config_data['decay'] # Decay is multiplicative. 
         config_data['delta'] = delta
+
+def permute_indices(P_permute_idxs, pst_permute_idxs, H_permute_idxs, permute_how_many):
+    total_permute = len(P_permute_idxs) + len(pst_permute_idxs) + len(H_permute_idxs)
+    if permute_how_many != -1 and permute_how_many and not (permute_how_many >= total_permute):
+        # If we are not permuting all, we need to choose which indices to permute.
+        num_P_idxs = np.random.hypergeometric(len(P_permute_idxs), len(pst_permute_idxs) + len(H_permute_idxs), permute_how_many)
+        if (permute_how_many - num_P_idxs) > 0:
+            num_pst_idxs = np.random.hypergeometric(len(pst_permute_idxs), len(H_permute_idxs), permute_how_many - num_P_idxs)
+            num_H_idxs = permute_how_many - num_P_idxs - num_pst_idxs
+        else:
+            num_pst_idxs = 0
+            num_H_idxs = 0
+        new_P_permute_idxs = np.random.choice(P_permute_idxs, size=num_P_idxs, replace=False)
+        new_pst_permute_idxs = np.random.choice(pst_permute_idxs, size=num_pst_idxs, replace=False)
+        new_H_permute_idxs = np.random.choice(H_permute_idxs, size=num_H_idxs, replace=False)
+        return new_P_permute_idxs, new_pst_permute_idxs, new_H_permute_idxs
+    else:
+        return P_permute_idxs, pst_permute_idxs, H_permute_idxs
+
+def permute_indices2(P_permute_idxs, pst_permute_idxs, H_permute_idxs, permute_how_many):
+        chosen_idx = np.random.choice(np.arange(len(P_permute_idxs) + len(pst_permute_idxs) + len(H_permute_idxs)),
+                            size=permute_how_many, replace=False)
+        new_P_permute_idxs = chosen_idx[chosen_idx < len(P_permute_idxs)]
+        new_pst_permute_idxs = chosen_idx[(chosen_idx >= len(P_permute_idxs)) & (chosen_idx < len(P_permute_idxs) + len(pst_permute_idxs))]
+        new_H_permute_idxs = chosen_idx[chosen_idx >= len(P_permute_idxs) + len(pst_permute_idxs)]
+        return new_P_permute_idxs, new_pst_permute_idxs, new_H_permute_idxs
 
 # Thankfully this function is no longer necessary as the package is pip installable. 
 def vscode_fix():

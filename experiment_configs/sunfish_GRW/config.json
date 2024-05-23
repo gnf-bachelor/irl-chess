@@ -1,10 +1,8 @@
 {
+  "noise_distribution": "step",
   "delta": 20.0,
   "decay": 1,
   "decay_step": 30,
   "time_limit": 1,
-  "permute_all": true,
-  "R_true": [100, 280, 320, 479, 929, 60000],
-  "R_start": [100, 1000, 1000, 1000, 1000, 60000],
   "version": "v0_multi"
 }

@@ -12,10 +12,6 @@
 
   "noise_distribution": "step",
   "delta": 40,
-  "permute_how_many": -1,
   "decay": 1,
-  "decay_step": 30,
-  "R_start": [100, 100, 100, 100, 100, 60000],
-  "R_true": [100, 280, 320, 479, 929, 60000]
-  
+  "decay_step": 30
 }

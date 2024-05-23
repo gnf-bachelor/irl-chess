@@ -23,16 +23,14 @@ def BIRL_result_string(model_config_data):
     delta = model_config_data['delta']
     decay = model_config_data['decay']
     decay_step = model_config_data['decay_step']
-    permute_how_many = model_config_data['permute_how_many']
-    R_true = reformat_list(model_config_data['R_true'], '_')
-    R_start = reformat_list(model_config_data['R_start'], '_')
+    noise_distribution = model_config_data['noise_distribution']
     if chess_policy == "alpha_beta":
         depth = model_config_data['depth']
         quisce = model_config_data["quiesce"]
-        return f"{chess_policy}-{int(delta)}-{decay}-{decay_step}-{permute_how_many}-{depth}-{quisce}--{R_start}-{R_true}"
+        return f"{chess_policy}-{noise_distribution}-{int(delta)}-{decay}-{decay_step}-{depth}-{quisce}"
     elif chess_policy == "sunfish":
         time_limit = model_config_data['time_limit']
-        return f"{chess_policy}-{int(delta)}-{decay}-{decay_step}-{permute_how_many}-{time_limit}--{R_start}-{R_true}"
+        return f"{chess_policy}-{noise_distribution}-{int(delta)}-{decay}-{decay_step}-{time_limit}"
     
 
 def run_BIRL(chess_boards, player_moves, config_data, out_path, validation_set):
@@ -56,8 +54,9 @@ def run_BIRL(chess_boards, player_moves, config_data, out_path, validation_set):
     else:
         raise Exception(f"The policy {config_data['chess_policy']} is not implemented yet")
 
-    config_data['permute_idxs'] = np.array(char_to_idxs(config_data['permute_char']))
-    R = np.array(config_data['R_start'], dtype=float)
+    RP = np.array(config_data['RP_start'], dtype=float)
+    # Rpst = np.array(config_data['Rpst_start'], dtype=float)
+    # RH = np.array(config_data['RH_start'], dtype=float)
     start_time = time()
     # ============================================ Algorithm Start ==================================================
     # Define variables for clarity. All other functions are functional and do not modify their inputs.
@@ -73,45 +72,45 @@ def run_BIRL(chess_boards, player_moves, config_data, out_path, validation_set):
     with (Parallel(n_jobs=config_data['n_threads']) as parallel):
         
         # Calculate initially. 
-        pi, Qpi_policy_R, pi_moves = PolicyIteration(states, None, R, config_data, parallel)
-        a_pi, _, _ = PolicyIteration(states, actions, R, config_data, parallel) # We can't guarantee that alpha-beta search fully explores move a and so we calculate it again.
-        bookkeeping(accuracies, actions, pi_moves, energies, Qpi_policy_R, Rs, R)
+        pi, Qpi_policy_R, pi_moves = PolicyIteration(states, None, RP, config_data, parallel)
+        a_pi, _, _ = PolicyIteration(states, actions, RP, config_data, parallel) # We can't guarantee that alpha-beta search fully explores move a and so we calculate it again.
+        bookkeeping(accuracies, actions, pi_moves, energies, Qpi_policy_R, Rs, RP)
 
         for epoch in tqdm(range(config_data['epochs']), desc='Epochs'):
             weight_path = join(out_path, f'weights/{epoch}.csv')
             if os.path.exists(weight_path):
                 df = pd.read_csv(weight_path)
-                R = df['Result'].values.flatten()
-                Rs.append(R)
+                RP = df['Result'].values.flatten()
+                Rs.append(RP)
                 print(f'Results loaded for epoch {epoch+1}, continuing')
                 continue # This messes up the initial calculated epoch a little bit. Fix later.
             
-            R_new = perturb_reward(R, config_data, epoch)
+            RP_new, Rpst_new, RH_new = perturb_reward(RP, config_data, epoch = epoch)
             # Evaluate perterbued reward function
-            Qpi_action_Rnew = Qeval(a_pi, states, R_new, parallel, pst = config_data['pst'])
-            Qpi_policy_Rnew = Qeval(pi, states, R_new, parallel, pst = config_data['pst']) # This the standard Q-value there, the policy should be optimal. 
+            Qpi_action_Rnew = Qeval(a_pi, states, RP_new, parallel, pst = config_data['pst'])
+            Qpi_policy_Rnew = Qeval(pi, states, RP_new, parallel, pst = config_data['pst']) # This the standard Q-value there, the policy should be optimal. 
             # np.corrcoef(Qpi_action_Rnew, Qpi_policy_Rnew) # We expect these to be highly correlated, as one move probably doesn't change much.  
 
             # Switch stochastically accept the new reward function and the new policy
             if np.any(Qpi_policy_Rnew < Qpi_action_Rnew): # if the new reward function explains the data action better than the policy action for any state
-                pi_new, QpiNew_policy_Rnew, pi_new_moves = PolicyIteration(states, None, R_new, config_data, parallel)
-                log_prob = min(0, log_prob_dist(R_new, np.sum(QpiNew_policy_Rnew), alpha=config_data['alpha']) - log_prob_dist(R, np.sum(Qpi_policy_R), alpha=config_data['alpha']))
+                pi_new, QpiNew_policy_Rnew, pi_new_moves = PolicyIteration(states, None, RP_new, config_data, parallel)
+                log_prob = min(0, log_prob_dist(RP_new, np.sum(QpiNew_policy_Rnew), alpha=config_data['alpha']) - log_prob_dist(RP, np.sum(Qpi_policy_R), alpha=config_data['alpha']))
                 if log_prob > -1e3 and np.random.random() < np.exp(log_prob):
-                    print(f'Changed weights and policy! From {R}\n to {R_new}\n Probability was: {np.exp(log_prob)}')
-                    R = np.copy(R_new)
+                    print(f'Changed weights and policy! From {RP}\n to {RP_new}\n Probability was: {np.exp(log_prob)}')
+                    RP = np.copy(RP_new)
                     pi, Qpi_policy_R, pi_moves = pi_new.copy(), np.copy(QpiNew_policy_Rnew), pi_new_moves.copy()
-                    a_pi, _, _ = PolicyIteration(states, actions,R, config_data, parallel)
+                    a_pi, _, _ = PolicyIteration(states, actions,RP, config_data, parallel)
             else:
-                log_prob = min(0, log_prob_dist(R_new, np.sum(Qpi_policy_Rnew), alpha=config_data['alpha']) - log_prob_dist(R, np.sum(Qpi_policy_R), alpha=config_data['alpha']))
+                log_prob = min(0, log_prob_dist(RP_new, np.sum(Qpi_policy_Rnew), alpha=config_data['alpha']) - log_prob_dist(RP, np.sum(Qpi_policy_R), alpha=config_data['alpha']))
                 if log_prob > -1e3 and np.random.random() < np.exp(log_prob):
-                    print(f'Changed weights! From {R}\n to {R_new}\n Probability was: {np.exp(log_prob)}')
+                    print(f'Changed weights! From {RP}\n to {RP_new}\n Probability was: {np.exp(log_prob)}')
                     Qpi_policy_R = np.copy(Qpi_policy_Rnew)
-                    R = np.copy(R_new)
+                    RP = np.copy(RP_new)
 
-            acc = bookkeeping(accuracies, actions, pi_moves, energies, Qpi_policy_R, Rs, R)
-            process_epoch(R, epoch, config_data, out_path)
+            acc = bookkeeping(accuracies, actions, pi_moves, energies, Qpi_policy_R, Rs, RP)
+            process_epoch(RP, Rpst, RH, epoch, config_data, out_path)
             print(f'Current sunfish accuracy: {acc}, best: {max(accuracies)}')
-            print(f'Best R: {R}')
+            print(f'Best R: {RP}')
             if time() - start_time > config_data['max_hours'] * 60 * 60:
                 break
 

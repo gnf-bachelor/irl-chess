@@ -1,4 +1,3 @@
-from joblib import Parallel, delayed
 import chess
 import numpy as np
 from tqdm import tqdm
@@ -7,9 +6,8 @@ from irl_chess.chess_utils.sunfish_utils import get_new_pst, str_to_sunfish_move
 from irl_chess.chess_utils.sunfish import piece, pst, pst_only, Position, Move
 from irl_chess.visualizations.visualize import plot_R_weights, char_to_idxs
 from irl_chess.chess_utils.alpha_beta_utils import no_moves_eval, evaluate_board, alpha_beta_search, alpha_beta_search_k, list_first_moves 
-from scipy.special import softmax
 from irl_chess.chess_utils.utils import perturb_reward
-from typing import List
+# from typing import List
 from joblib import Parallel, delayed
 from irl_chess.models.sunfish_GRW import eval_pos, sunfish_move
 
