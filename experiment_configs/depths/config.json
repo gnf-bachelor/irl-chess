@@ -6,11 +6,11 @@
   "elos": [1100, 1900],
   "n_midgame": 15,
   "n_endgame": 30,
-  "n_boards": 5000,
+  "n_boards": 1500,
   "n_threads": -2,
   "move_function": "player_move",
   "move_percentage_data": false,
-  "data": "maia",
+  "data": "lichess",
   "depths": [1,2,3,4,5,6,7],
   "timecontrol": [180, 600]
 }
