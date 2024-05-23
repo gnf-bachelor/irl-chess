@@ -7,7 +7,7 @@
   "n_midgame": 15,
   "n_endgame": 30,
   "n_boards": 1500,
-  "n_threads": -2,
+  "n_threads": 24,
   "move_function": "player_move",
   "move_percentage_data": false,
   "data": "lichess",
