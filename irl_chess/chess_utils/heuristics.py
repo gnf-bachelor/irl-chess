@@ -1,9 +1,11 @@
 import numpy as np
+from sunfish_utils import board2sunfish
 
 # Get a map of the pawns on the board with no pawn represented
 # by a zero, a white pawn by 1, and a black pawn by -1.
 def get_pawn_array(board):
-    board_str = str(board).replace(' ', '').replace('\n', '')
+    board_str = board2sunfish(board, 0)
+    board_str = board_str.replace(' ', '').replace('\n', '')
     pawns = {'p': -1, 'P': 1}
     pawn_array = [pawns[char] if char in 'Pp' else 0 for char in board_str]
     pawn_array = np.array(pawn_array).reshape((8, 8))
@@ -44,3 +46,21 @@ def pawn_eval(board, test=False):
         return isolated, double, passed
 
     return sum([isolated, double, passed])
+
+
+def king_safety(board, pawn_array):
+    king_square_b = board.king(False)
+    i_b, j_b = 8 - chess.square_rank(king_square_b), chess.square_file(king_square_b) + 1
+
+    king_square_w = board.king(True)
+    i_w, j_w = 8 - chess.square_rank(king_square_w), chess.square_file(king_square_w) + 1
+
+    center_files = [4, 5]
+    center_penalty = 2 * ((j_b in center_files) - (j_w in center_files))
+
+    pawn_shield_w = pawn_array[i_w - 2:i_w, j_w - 1:j_w + 2]
+    pawn_shield_b = pawn_array[i_b + 1:i_b + 3, j_b - 1:j_b + 2][::-1]
+
+    shield_weights = np.array([[1, 1, 1], [2, 2, 2]])
+
+    return np.sum(pawn_shield_w * shield_weights) + np.sum(pawn_shield_b * shield_weights) + center_penalty
