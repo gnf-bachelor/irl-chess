@@ -4,11 +4,11 @@
         Make training set: January 2019
         [X] Also run maia on other test sets: other to show it does generalize. 
 
-[ ]  Implement more chess heuristics 
-        [ ] Weight p-squared tables for each piece (Gabriel)
-                [ ] Make it possible to do any combination, say king and rest
-        [ ] Piece activity (log(avail_actions)) (Gabriel)
-        [ ] King safety (Nikolaj)
+[X]  Implement more chess heuristics 
+        [X] Weight p-squared tables for each piece (Gabriel)
+                [X] Make it possible to do any combination, say king and rest
+        [X] Piece activity (log(avail_actions)) (Gabriel)
+        [X] King safety (Nikolaj)
         [X] Pawn structure
 
 [ ] Run BIRL model on sunfish moves (Gabriel)
@@ -27,7 +27,7 @@
                         [X] Starting from 100, 100..
                                 [X] Run 1100,1900 on player and sunfish moves
                                 [X] Run 1300, 1500, 1700
-                        [ ] From Sunfish init
+                        [ ] From 1000
                                 [ ] 1100, 1300, 1500, 1700, 1900 on player moves
                 [ ] P-squared table (Split plots into material and pst values) (Gabriel, Fabian)
                         [ ] 2 values: material and pst
@@ -49,8 +49,8 @@
                 [X] From 100,100...
                         [X] Run on models at 1100, 1900
                         [X] Run 1300, 1500, 1700
-                [ ] From Sunfish init
-                        [ ] Run 1100, 1500, 1700
+                [ ] From 1000
+                        [ ] Run 1100, 1900
         [ ]      Accuracy as function of training data set size (sunfish and maia) (Probably not, Gabriel)
                 [ ] Set up Maia training 
                 [ ] Set up Sunfish training
