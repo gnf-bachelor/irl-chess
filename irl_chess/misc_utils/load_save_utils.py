@@ -136,8 +136,8 @@ def is_valid_game(game, config_data):
         return False
 
 
-def get_states(websites_filepath, file_path_data, config_data, out_path, use_ply_range=True, pgn_paths=None):
-    if config_data['move_percentage_data']:
+def get_states(websites_filepath, file_path_data, config_data, out_path, use_ply_range=True, pgn_paths=None, return_games=False, verbose=True):
+    if 'move_percentage_data' in config_data and config_data['move_percentage_data']:
         with open('data/move_percentages/moves_1000-1200_fixed', 'r') as f:
             moves_dict = json.load(f)
         n_boards = config_data['n_boards']
@@ -169,7 +169,7 @@ def get_states(websites_filepath, file_path_data, config_data, out_path, use_ply
             return ply_dict_boards, ply_dict_moves
         except FileNotFoundError:
             pass
-    else:
+    elif not return_games:
         try:
             with open(data_save_path, 'rb') as file:
                 print(f'Found saved data at {data_save_path}')
@@ -179,7 +179,7 @@ def get_states(websites_filepath, file_path_data, config_data, out_path, use_ply
             print(f'No saved data at {data_save_path}')
             pass
 
-    chess_boards, moves = [], []
+    chess_boards, moves, games = [], [], []
     i = 0
     n_games = 0
     while len(chess_boards) < config_data['n_boards']:
@@ -194,19 +194,22 @@ def get_states(websites_filepath, file_path_data, config_data, out_path, use_ply
                     game = chess.pgn.read_game(pgn)
                     if is_valid_game(game, config_data=config_data):
                         boards_, moves_ = get_boards_between(game, config_data['n_midgame'], config_data['n_endgame'], board_dict=ply_dict_boards, move_dict=ply_dict_moves)
+                        if boards_:
+                            games.append(game)
                         chess_boards += boards_
                         moves += moves_
 
                     pbar.update(pgn.tell() - progress)
                     progress = pgn.tell()
-                    if len(chess_boards) > last_len:
+                    if len(chess_boards) > last_len and verbose:
                         print(f'Found {len(chess_boards)}/{config_data["n_boards"]} boards so far from {n_games} games')
                         last_len = len(chess_boards)
                         n_games += 1
                     if size <= progress:
                         break
             i += 1
-
+    if return_games:
+        return games
     boards = chess_boards
     config_data['n_boards'] = min(len(boards), config_data['n_boards'])
     print(f'Using {config_data["n_boards"]} boards')
