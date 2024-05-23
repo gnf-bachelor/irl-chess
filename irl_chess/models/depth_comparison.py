@@ -40,6 +40,9 @@ if __name__ == '__main__':
     elos = config['elos']
     n_boards = config['n_boards']
 
+    config_data_lower = copy.copy(config) | {'min_elo': elos[0], 'max_elo': elos[0] + 100}
+    config_data_upper = copy.copy(config) | {'min_elo': elos[1], 'max_elo': elos[1] + 100}
+
     if config['data'] == 'maia':
         val_df_lower = load_maia_test_data(elos[0], n_boards)
         sunfish_boards_lower = val_df_lower['board'].apply(lambda x: board2sunfish(x, 0))
@@ -50,9 +53,6 @@ if __name__ == '__main__':
         player_moves_upper = val_df_upper['move']
 
     elif config['data'] == 'lichess':
-        config_data_lower = copy.copy(config) | {'min_elo': elos[0], 'max_elo': elos[0] + 100}
-        config_data_upper = copy.copy(config) | {'min_elo': elos[1], 'max_elo': elos[1] + 100}
-
         websites_filepath = join(os.getcwd(), 'downloads', 'lichess_websites.txt')
         file_path_data = join(os.getcwd(), 'data', 'raw')
 
