@@ -54,7 +54,7 @@ if __name__ == '__main__':
     n_boards = 5000
     model_names = ['sunfish', 'maia', ]
     maia_range = (1100, 2000)  # incl. excl.
-    sunfish_elo_epoch = {1100: 100, 1900: 100,} # {'Default Sunfish': 0, }
+    sunfish_elo_epoch = {1100: 100, 1900: 100, 'Default Sunfish': 0, }
     player_range = (1100, 2000)  # incl. excl.
     # make_maia_test_csv(destination, min_elo=player_range[0], max_elo=player_range[1], n_boards=n_boards)
     config_data_base, config_data_sunfish = load_config('sunfish_GRW')
@@ -105,8 +105,9 @@ if __name__ == '__main__':
                         out_path = join(os.path.dirname(out_path), 'default_sunfish')
                         default_weight_path = join(out_path, 'weights')
                         os.makedirs(default_weight_path, exist_ok=True)
-                        R_default = np.array(config_data_sunfish['R_true'])
-                        df = pd.DataFrame(R_default.T, columns=['Result'])
+                        R_default = np.array(config_data_base['RP_true'])
+                        R_pst = np.array(config_data_base['Rpst_true'])
+                        df = pd.DataFrame(np.concatenate((R_default.reshape((-1,1)), R_pst.reshape((-1,1))), axis=1), columns=['Result', 'RpstResult'])
                         df.to_csv(join(default_weight_path, '0.csv'))
                     else:
                         config_data_base['min_elo'] = elo_model
