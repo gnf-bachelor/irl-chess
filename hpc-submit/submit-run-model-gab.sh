@@ -12,6 +12,6 @@
 #BSUB -N
 # end of BSUB options
 
-module load python3.10.13
+module load python3/3.10.13
 source bachelor/bin/activate
 python3 -m irl_chess.run_model
