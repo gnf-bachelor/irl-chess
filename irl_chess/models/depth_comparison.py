@@ -13,6 +13,7 @@ from irl_chess.misc_utils.load_save_utils import fix_cwd, load_config, get_board
 
 def load_maia_test_data(min_elo, n_boards):
     df_path = f'data/processed/maia_test/{min_elo}_{min_elo + 100}_{n_boards}.csv'
+    df_path = os.path.join(*df_path.split('/'))
     dirname = os.path.dirname(df_path)
     if os.path.exists(dirname):
         for filename in os.listdir(dirname):
