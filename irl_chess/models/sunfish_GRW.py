@@ -131,8 +131,8 @@ def val_util(validation_set, out_path, config_data, parallel, pst_val, use_playe
     actions_val_san, actions_true_san = [], []
 
     for (state, a_player), a_val, a_true in zip(validation_set, actions_val, actions_true):
-        a_val = sunfish_move_to_str(a_val, not state.turn)
-        a_true = sunfish_move_to_str(a_true, not state.turn)
+        a_val = a_val if type(a_val) is str else sunfish_move_to_str(a_val, not state.turn)
+        a_true = a_true if type(a_true) is str else sunfish_move_to_str(a_true, not state.turn)
 
         actions_val_san.append(a_val)
         actions_true_san.append(a_true)
