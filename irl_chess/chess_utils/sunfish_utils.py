@@ -58,20 +58,6 @@ def sunfish_move_to_str(move: Move, is_black:bool):
     move_str = render(i) + render(j) + move.prom.lower()
     return move_str
 
-
-# def get_best_move_sunfish(board, R, depth=3, timer=False):
-#     best_move, Q = None, None
-#     alpha = -np.inf
-#     moves = tqdm([move for move in board.legal_moves]) if timer else board.legal_moves
-#     for move in moves:
-#         board.push(move)
-#         Q = alpha_beta_search(board, alpha=alpha, depth=depth-1, maximize=True, R=R)
-#         board.pop()
-#         if Q > alpha:
-#             alpha = Q
-#             best_move = move
-#     return best_move, Q
-
 # takes squares in the form 'a2', 'g3' etc. and returns
 # the number used to represent it in sunfish.
 def square2sunfish(square):
@@ -130,14 +116,18 @@ def board2sunfish(board, score):
 
     return Position(board_string, score, wc, bc, ep, kp)
 
-
-def get_new_pst(R):
-    assert len(R) == 6
+def get_new_pst(RP, Rpst = None):
+    # Get a new set of piece square tables (pst), but with the pieces weighed by the RP values 
+    # and the pst values weighed by the Rpst values.
+    assert len(RP) == 6
+    if Rpst is not None: assert len(Rpst) == 6
+    else:
+        Rpst = [1, 1, 1, 1, 1, 1]
     pieces = 'PNBRQK'
-    piece_new = {p: val for p, val in list(zip(pieces, R))}
+    piece_new = {p: val for p, val in list(zip(pieces, RP))}
     pst_new = copy.deepcopy(pst_only)
-    for k, table in pst_only.items():
-        padrow = lambda row: (0,) + tuple(x + piece_new[k] for x in row) + (0,)
+    for j, (k, table) in enumerate(pst_only.items()):
+        padrow = lambda row: (0,) + tuple(int(x*Rpst[j] + piece_new[k]) for x in row) + (0,)
         pst_new[k] = sum((padrow(table[i * 8: i * 8 + 8]) for i in range(8)), ())
         pst_new[k] = (0,) * 20 + pst_new[k] + (0,) * 20
     return pst_new
@@ -162,7 +152,7 @@ def sunfish2board(pos: Position):
 
 
 # Assuming white, R is array of piece values
-def eval_pos(board, R=None):
+def eval_pos(board, RP=None, Rpst=None, RH=None):
     if isinstance(board, chess.Board):
         #assert board.turn == True # Assume it is white's turn. # Fish all of sunfishes rotation mistakes later. 
         pos = board2sunfish(board, 0)
@@ -171,12 +161,16 @@ def eval_pos(board, R=None):
     else:
         raise TypeError
     pieces = 'PNBRQK'
-    if R is not None:
-        piece_dict = {p: R[i] for i, p in enumerate(pieces)} # Brittle in case of more R parameters. Piece values have to be listed first. 
+    if RP is not None:
+        piece_dict = {p: RP[i] for i, p in enumerate(pieces)} 
     else:
         piece_dict = piece
+    if Rpst is not None:
+        pst_weight_dict = {p: Rpst[i] for i, p in enumerate(pieces)} 
+    else:
+        pst_weight_dict = {p: 1 for p in pieces}   
     eval = 0
-    # pst is of size 8x8 (rows, columns) not padded.
+    # pst is of size 120 12x10 (rows, columns) padded.
     for row in range(20, 100, 10):  
         for col in range(1, 9):
             # White square = (row + col)
@@ -185,9 +179,9 @@ def eval_pos(board, R=None):
                 continue
             if p.islower(): # if black piece. Mirror baord. 
                 p = p.upper()
-                eval -= piece_dict[p] + pst_only_padded[p][110 - row + col]
+                eval -= piece_dict[p] + pst_weight_dict[p]*pst_only_padded[p][110 - row + col]
             else: # else if white piece
-                eval += piece_dict[p] + pst_only_padded[p][(row + col)]
+                eval += piece_dict[p] + pst_weight_dict[p]*pst_only_padded[p][(row + col)]
     return eval
 
 def eval_pos_pst(board, pst):

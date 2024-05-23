@@ -12,14 +12,14 @@ import pandas as pd
 from tqdm import tqdm
 from joblib import Parallel, delayed
 
-from irl_chess import Searcher, pst, piece, plot_R_weights
+from irl_chess import Searcher, pst, piece, plot_R_weights, perturb_reward
 from irl_chess.chess_utils.sunfish_utils import board2sunfish, sunfish2board, sunfish_move_to_str, \
     check_moved_same_color, sunfish_move
 from irl_chess.visualizations import char_to_idxs
 
 from irl_chess.misc_utils.utils import reformat_list
 from irl_chess.misc_utils.load_save_utils import process_epoch
-from irl_chess.chess_utils.sunfish_utils import get_new_pst, str_to_sunfish_move, check_moved_same_color, eval_pos
+from irl_chess.chess_utils.sunfish_utils import get_new_pst, str_to_sunfish_move, check_moved_same_color, eval_pos, eval_pos_pst
 from irl_chess.stat_tools.stat_tools import wilson_score_interval
 
 def sunfish_native_result_string(model_config_data):
@@ -27,10 +27,8 @@ def sunfish_native_result_string(model_config_data):
     decay = model_config_data['decay']
     decay_step = model_config_data['decay_step']
     time_limit = model_config_data['time_limit']
-    permute_all = model_config_data['permute_all']
-    R_true = reformat_list(model_config_data['R_true'], '_')
-    R_start = reformat_list(model_config_data['R_start'], '_')
-    return f"{delta}-{decay}-{decay_step}-{permute_all}-{time_limit}--{R_start}-{R_true}"
+    noise_distribution = model_config_data['noise_distribution']
+    return f"{noise_distribution}-{int(delta)}-{decay}-{decay_step}-{time_limit}"
 
 
 def run_sunfish_GRW(chess_boards, player_moves, config_data, out_path, validation_set):
@@ -41,36 +39,38 @@ def run_sunfish_GRW(chess_boards, player_moves, config_data, out_path, validatio
     else:
         raise Exception(f"The move function {config_data['move_function']} is not implemented yet")
 
-    permute_idxs = char_to_idxs(config_data['permute_char'])
-
-    R = np.array(config_data['R_start'])
-    Rs = [R]
-    sunfish_boards = [board2sunfish(board, eval_pos(board, R)) for board in chess_boards]
+    RP = np.array(config_data['RP_start'], dtype=float)
+    Rpst = np.array(config_data['Rpst_start'], dtype=float)
+    RH = np.array(config_data['RH_start'], dtype=float) 
+    RH[np.invert(config_data['include_PA_KS_PS'])] = 0 # Set the values to 0 if they are not included in the model.
+    pst_init = get_new_pst(RP=RP, Rpst=Rpst)
+    Rs, Rpsts, RHs = [RP], [Rpst], [RH]
+    sunfish_boards = [board2sunfish(board, eval_pos_pst(board, pst_init)) for board in chess_boards]
     player_moves_sunfish = [str_to_sunfish_move(move, not board.turn) for move, board in
                             zip(player_moves, chess_boards)]
-    delta = config_data['delta']
+    
     start_time = time()
-
     last_acc = 0
     accuracies = []
     with (Parallel(n_jobs=config_data['n_threads']) as parallel):
-        actions_true = player_moves_sunfish if use_player_move else parallel(
-            delayed(sunfish_move)(state, pst, config_data['time_limit'], True)
-            for state in tqdm(sunfish_boards, desc='Getting true Sunfish moves', ))
+        if use_player_move:
+            actions_true = player_moves_sunfish
+        else:
+            pst_true = get_new_pst(RP=config_data['RP_true'], Rpst=config_data['Rpst_true'])
+            actions_true = parallel(delayed(sunfish_move)(state, pst_true, config_data['time_limit'], True)
+                for state in tqdm(sunfish_boards, desc='Getting true Sunfish moves', ))
         for epoch in tqdm(range(config_data['epochs']), desc='Epochs'):
             weight_path = join(out_path, f'weights/{epoch}.csv')
             if os.path.exists(weight_path):
                 df = pd.read_csv(weight_path)
-                R = df['Result'].values.flatten()
-                Rs.append(R)
+                RP = df['Result'].values.flatten()
+                Rs.append(RP)
                 print(f'Results loaded for epoch {epoch + 1}, continuing')
                 continue
+            
+            RP_new, Rpst_new, RH_new = perturb_reward(RP, config_data, Rpst=Rpst, RH=RH, epoch = epoch) # Also handles delta decay
 
-            add = np.zeros(6)
-            add[permute_idxs] = np.random.choice([-delta, delta], len(permute_idxs))
-            R_new = R + add
-
-            pst_new = get_new_pst(R_new)  # Sunfish uses only pst table for calculations
+            pst_new = get_new_pst(RP_new, Rpst_new)  # Sunfish uses only pst table for calculations
             actions_new = parallel(delayed(sunfish_move)(board, pst_new, config_data['time_limit'], True)
                                    for board in tqdm(sunfish_boards, desc='Getting new Sunfish actions'))
             
@@ -79,27 +79,25 @@ def run_sunfish_GRW(chess_boards, player_moves, config_data, out_path, validatio
 
             acc = sum([a == a_new for a, a_new in zip(actions_true, actions_new)]) / config_data['n_boards']
             if acc >= last_acc:
-                R = copy.copy(R_new)
+                RP, Rpst, RH = RP_new.copy(), Rpst_new.copy(), RH_new.copy()
                 last_acc = copy.copy(acc)
 
             accuracies.append((acc, last_acc))
-            Rs.append(R)
+            Rs.append(RP), Rpsts.append(Rpst), RHs.append(RH)
 
-            if epoch % config_data['decay_step'] == 0 and epoch != 0:
-                delta *= config_data['decay']
-
-            process_epoch(R, epoch, config_data, out_path)
+            process_epoch(RP, Rpst, RH, epoch, config_data, out_path)
 
             print(f'Current sunfish accuracy: {acc}, best: {last_acc}')
-            print(f'Best R: {R}')
+            print(f'Best RP: {RP}')
+            print(f'Best Rpst: {Rpst}')
             if time() - start_time > config_data['max_hours'] * 60 * 60:
                 print(f'Reached time limit, exited at epoch {epoch}')
                 break
 
             if (epoch + 1) % config_data['val_every'] == 0:
-                pst_val = get_new_pst(R)
+                pst_val = get_new_pst(RP, Rpst)
                 val_util(validation_set, out_path, config_data, parallel, pst_val, use_player_moves=use_player_move, name=epoch)
-        pst_val = get_new_pst(R)
+        pst_val = get_new_pst(RP, Rpst)
         out = val_util(validation_set, out_path, config_data, parallel, pst_val, use_player_moves=use_player_move, name=epoch)
         return out
 
@@ -107,8 +105,9 @@ def run_sunfish_GRW(chess_boards, player_moves, config_data, out_path, validatio
 def val_sunfish_GRW(validation_set, out_path, config_data, epoch, use_player_moves, name):
     with (Parallel(n_jobs=config_data['n_threads']) as parallel):
         df = pd.read_csv(join(out_path, 'weights', f'{epoch}.csv'))
-        R = df['Result'].values.flatten()
-        pst_val = get_new_pst(R)
+        RP = df['Result'].values.flatten()
+        Rpst = df['RpstResult'].values.flatten()
+        pst_val = get_new_pst(RP, Rpst)
         return val_util(validation_set, out_path, config_data, parallel, pst_val, use_player_moves, name)
 
 

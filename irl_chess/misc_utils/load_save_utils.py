@@ -15,6 +15,7 @@ from tqdm import tqdm
 from irl_chess.chess_utils.sunfish_utils import board2sunfish, str_to_sunfish_move
 from irl_chess.data.make_dataset import download_lichess_pgn
 from irl_chess.visualizations import char_to_idxs, plot_R_weights
+from irl_chess.misc_utils.utils import reformat_list
 
 
 # ================= Load configs and prepare output =================
@@ -46,6 +47,7 @@ def load_config(model=None):
     path_model_config = join(os.path.dirname(path_config), base_config_data["model"], 'config.json')
     with open(path_model_config, 'r') as file:
         model_config_data = json.load(file)
+    define_permute_idxs(base_config_data)
     return base_config_data, model_config_data
 
 
@@ -69,9 +71,26 @@ def base_result_string(base_config_data):
     n_boards = base_config_data['n_boards']
     move_function = base_config_data['move_function']
     permute_char = ''.join(base_config_data['permute_char'])
+    permute_pst_char = ''.join(base_config_data['permute_pst_char']) # Piece square table weights as parameters
+    PA_KS_PS = ''.join([heuristic for heuristic, use_heuristic in zip(["PA", "KS", "PS"], base_config_data['include_PA_KS_PS']) if use_heuristic]) # Piece activity, King safety, Pawn structure
+    permute_how_many = base_config_data['permute_how_many'] if base_config_data['permute_how_many'] != -1 else "all"
     max_hours = str(base_config_data['max_hours'])
-    return f"{time_control}-{min_elo}-{max_elo}-{n_midgame}_to_{n_endgame}-{n_boards}-{permute_char}-{move_function}"
+    RP_true = reformat_list(base_config_data['RP_true'], '_')
+    RP_start = reformat_list(base_config_data['RP_start'], '_')
+    return f"{time_control}-{min_elo}-{max_elo}-{n_midgame}_to_{n_endgame}-{n_boards}-P_{permute_char}-pst_{permute_pst_char}-H_{PA_KS_PS}-{permute_how_many}-{move_function}-{RP_start}-{RP_true}"
 
+def define_permute_idxs(base_config_data):
+    base_config_data['P_permute_idxs'] = np.array(char_to_idxs(base_config_data['permute_char']))
+    base_config_data['pst_permute_idxs'] = np.array(char_to_idxs(base_config_data['permute_pst_char']))
+    base_config_data['include_PA_KS_PS'] = np.array(base_config_data['include_PA_KS_PS'], dtype=bool)
+    base_config_data['H_permute_idxs'] = np.array([i for i, permute_heuristic in enumerate(base_config_data['permute_H']) 
+                                                   if base_config_data['include_PA_KS_PS'][i] and permute_heuristic])
+    return base_config_data
+
+def define_plot_idxs(base_config_data):
+    plot_char = char_to_idxs(base_config_data['plot_char'])
+    
+    return base_config_data
 
 def create_result_path(base_config_data, model_config_data, model_result_string, path_result=None,
                        copy_configs_flag=True):
@@ -229,13 +248,18 @@ def get_states(websites_filepath, file_path_data, config_data, out_path, use_ply
 
 # ================= Processing results =================
 
-def process_epoch(R, epoch, config_data, out_path, **kwargs):
+def process_epoch(RP, Rpst, RH, epoch, config_data, out_path, **kwargs):
     # assert not (not config_data['overwrite'] and os.path.exists(join(out_path, f'{epoch}.csv'))), \
     # "Data already exists but configs are set to not overwrite"
     # Overwrite is for downloaded data files. .........
     csv_path = join(out_path, 'weights', f'{epoch}.csv')
     os.makedirs(os.path.dirname(csv_path), exist_ok=True)
-    pd.DataFrame(R.reshape((-1, 1)), columns=['Result']).to_csv(csv_path, index=False)
+    df = pd.DataFrame(RP.reshape((-1, 1)), columns=['Result'])
+    # Add Columns for Rpst and RH
+    assert len(RP) == len(Rpst), f"Length of RP and Rpst do not match: {len(RP)} != {len(Rpst)}"
+    df['RpstResult'] = Rpst
+    df['RHResult'] = np.pad(RH, (0, len(RP) - len(RH)), 'constant', constant_values=np.nan) # RH only contains 3 values
+    df.to_csv(csv_path, index=False)
 
     if epoch and config_data['plot_every'] and (epoch + 1) % config_data['plot_every'] == 0:
         plot_R_weights(config_data=config_data,

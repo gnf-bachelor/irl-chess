@@ -18,6 +18,27 @@ def idxs_to_char(idx_list: list[int]):
     idx_to_char = {0: "P", 1: "N", 2: "B", 3: "R", 4: "Q", 5: "K"}
     return [idx_to_char[idx] for idx in idx_list]
 
+def Hbool_to_idxs(plot_char: list[bool]):
+    #char_to_idxs = {"PA": 0, "KS": 1, "PS": 2}
+    Hchar = ["PA", "KS", "PS"]
+    return list(np.arange(len(Hchar))[plot_char])
+
+
+def idxs_to_Hchar(idx_list: list[int]):
+    idx_to_char = {0: "PA", 1: "KS", 2: "PS"}
+    return [idx_to_char[idx] for idx in idx_list]
+
+def load_weights(out_path, result: str, start_weight_idx=0, epoch=None):
+    weights = []
+    for i in range(start_weight_idx, epoch+1, ):
+        path = os.path.join(out_path, f'weights/{i}.csv')
+        if os.path.exists(path):
+            df = pd.read_csv(path, index_col=None)
+            weights.append(df[result].dropna().values.flatten())
+        else:
+            break
+    return np.array(weights)
+
 
 def plot_BO_2d(opt, R_true, target_idxs, plot_idxs=None, plot_path=None, epoch=None):
     """
@@ -108,30 +129,46 @@ def plot_R_weights(config_data, out_path, start_weight_idx=0, legend_names=['P',
     accuracies = kwargs['accuracies'] if 'accuracies' in kwargs else None
     bayesian_args = kwargs['bayesian_args'] if 'bayesian_args' in kwargs else None
     filename_addition = kwargs['filename_addition'] if 'filename_addition' in kwargs else ''
-    plot_char = char_to_idxs(config_data['plot_char'])
-    R_true = np.array(config_data.get('R_true', [100, 280, 320, 479, 929, 60000]))
 
     plot_path = os.path.join(out_path, 'plots')
     os.makedirs(plot_path, exist_ok=True)
 
-    weights = []
-    for i in range(start_weight_idx, epoch+1, ):
-        path = os.path.join(out_path, f'weights/{i}.csv')
-        if os.path.exists(path):
-            df = pd.read_csv(path, index_col=None)
-            weights.append(df.values.flatten())
-        else:
-            if epoch is None:
-                epoch = i
-            break
-    weights = np.array(weights)
-    # assert weights.shape[0] == epoch+1, f"Error: weights.shape[0]: {weights.shape[0]} is not equal to epoch: {epoch}"
+    plot_char = char_to_idxs(config_data['plot_char'])
+    if plot_char:
+        RP_plot_path = os.path.join(plot_path, 'RP')
+        os.makedirs(RP_plot_path, exist_ok=True)
+        weights = load_weights(out_path, 'Result', start_weight_idx=start_weight_idx, epoch=epoch)
+        RP_true = np.array(config_data.get('RP_true', [100, 280, 320, 479, 929, 60000]))
+        plot_weights(weights, RP_true, start_weight_idx, plot_char, legend_names, config_data, RP_plot_path, epoch+1,
+                     filename_addition= 'RP'+filename_addition, show=False)
+
+    plot_pst_char = char_to_idxs(config_data['plot_pst_char'])
+    if plot_pst_char:
+        Rpst_plot_path = os.path.join(plot_path, 'Rpst')
+        os.makedirs(Rpst_plot_path, exist_ok=True)
+        weights = load_weights(out_path, 'RpstResult', start_weight_idx=start_weight_idx, epoch=epoch)
+        Rpst_true = np.array(config_data.get('Rpst_true', [1, 1, 1, 1, 1, 1]))
+        plot_weights(weights, Rpst_true, start_weight_idx, plot_pst_char, legend_names, config_data, Rpst_plot_path, epoch+1,
+                     filename_addition= 'Rpst'+filename_addition, show=False)
+
+    plot_H_char = Hbool_to_idxs(config_data['plot_H'])
+    if plot_H_char:
+        RH_plot_path = os.path.join(plot_path, 'RH')
+        os.makedirs(RH_plot_path, exist_ok=True)
+        weights = load_weights(out_path, 'RHResult', start_weight_idx=start_weight_idx, epoch=epoch)
+        RH_true = np.array(config_data.get('RH_true', [0, 0, 0])) # Perhaps delete this, as there is no ground truth. 
+        plot_weights(weights, RH_true, start_weight_idx, plot_H_char, ['PA','KS','PS'], config_data, RH_plot_path, epoch+1,
+                     filename_addition= 'RH'+filename_addition, show=False)
+        
+
+    
+def plot_weights(weights, weights_true, start_weight_idx, plot_char, legend_names, config_data, plot_path, epoch, filename_addition, show=False):
     X = np.repeat(np.arange(0, weights.shape[0], 1) + start_weight_idx,
                   len(plot_char)).reshape((-1, len(plot_char)))
     colors = sns.color_palette(sunfish_palette_name, n_colors=len(plot_char))
     for x, y, color, plot_char in zip(X.T, weights[:, plot_char].T, colors, plot_char):
         plt.plot(x, y, c=color, label=legend_names[plot_char])
-        plt.hlines(R_true[plot_char], 0, x[-1], colors=color, linestyles='--')
+        if len(weights_true): plt.hlines(weights_true[plot_char], 0, x[-1], colors=color, linestyles='--')
     plt.title(f'Sunfish weights over time for ELO {config_data["min_elo"]}-{config_data["max_elo"]} on '
               f'{"player" if "player" in config_data["move_function"] else "sunfish"} moves')
     plt.xlabel('Epochs')
@@ -139,20 +176,5 @@ def plot_R_weights(config_data, out_path, start_weight_idx=0, legend_names=['P',
     plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
     plt.tight_layout()
     plt.savefig(join(plot_path, f'weights_{epoch}{filename_addition}.svg'))
-    plt.show()
+    if show: plt.show()
     plt.close()
-
-    if accuracies is not None:
-        accuracies = np.array(accuracies)
-        plt.plot(np.arange(len(accuracies)), accuracies[:, 0])
-        plt.plot(np.arange(len(accuracies)), accuracies[:, 1])
-        plt.title('Accuracies over time')
-        plt.xlabel('Epochs')
-        plt.ylabel('Accuracy')
-        plt.legend(['Accuracy', 'Accuracy Prev'])
-        plt.savefig(join(plot_path, f'accuracies_{epoch}.svg'))
-        plt.show()
-        plt.cla()
-
-    if bayesian_args is not None:
-        plot_BO_2d(*bayesian_args, epoch=epoch, plot_path=plot_path)
