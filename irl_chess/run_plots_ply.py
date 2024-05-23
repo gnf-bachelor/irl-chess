@@ -103,7 +103,7 @@ def run_comparison(run_sunfish=False, pgn_paths=None, move_range=(10, 100), val_
         pass
 
     for n_moves in tqdm(range(move_range[0] + offset, move_range[1]), desc='Iterating over n_moves'):
-        plot_path = join(plot_path_base, f'{n_moves}.png')
+        plot_path = join(plot_path_base, f'{n_moves}.svg')
 
         t = time()
 
