@@ -97,7 +97,7 @@ def run_comparison(run_sunfish=False, pgn_paths=None, move_range=(10, 100), val_
     try:
         df_results = pd.read_csv(csv_path)
         offset = len(df_results)
-        for i, column in enumerate(df_results.values.T):
+        for i, column in enumerate(df_results.values.T[:move_range[1]-move_range[0]]):
             acc_lists[i] += list(column)
     except FileNotFoundError:
         pass
@@ -210,7 +210,7 @@ def plot_ply(acc_lists, plot_path, run_sunfish, move_range, using_default_sunfis
 
 
 if __name__ == '__main__':
-    pgn_paths = ['data/raw/lichess_db_standard_rated_2017-11.pgn']
+    pgn_paths = ['data/raw/lichess_db_standard_rated_2019-01.pgn']
     ply_range = (10, 81)
     # Set the param epochs in the base config to specify epochs for sunfish
     # Also remember to set the move function to player move as this is used for validation
