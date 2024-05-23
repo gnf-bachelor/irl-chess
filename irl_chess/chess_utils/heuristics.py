@@ -1,10 +1,11 @@
 import numpy as np
-from sunfish_utils import board2sunfish
+from irl_chess.chess_utils.sunfish_utils import board2sunfish
+import chess
 
 # Get a map of the pawns on the board with no pawn represented
 # by a zero, a white pawn by 1, and a black pawn by -1.
 def get_pawn_array(board):
-    board_str = board2sunfish(board, 0)
+    board_str = board2sunfish(board, 0).board
     board_str = board_str.replace(' ', '').replace('\n', '')
     pawns = {'p': -1, 'P': 1}
     pawn_array = [pawns[char] if char in 'Pp' else 0 for char in board_str]
@@ -27,10 +28,11 @@ def count_isolated_pawns(file_count):
                 for i, pawns in enumerate(file_count)])
 
 
-def pawn_eval(board, test=False):
-    weight = {'iso': -1, 'dob': -1, 'pas': 1}
+def pawn_eval(board, pawn_array = None, test=False):
+    weight = {'iso': -1, 'dob': -1, 'pas': 2}
 
-    pawn_array = get_pawn_array(board)
+    if pawn_array is None: 
+        pawn_array = get_pawn_array(board)
     file_count_w = (pawn_array.T == 1).sum(axis=1)
     file_count_b = (pawn_array.T == -1).sum(axis=1)
 
@@ -45,10 +47,12 @@ def pawn_eval(board, test=False):
     if test:
         return isolated, double, passed
 
-    return sum([isolated, double, passed])
+    return sum([isolated, double, passed])*20  # 20 seems like a reasonable weighting.
 
 
-def king_safety(board, pawn_array):
+def king_safety(board, pawn_array = None):
+    if pawn_array is None: 
+        pawn_array = get_pawn_array(board)
     king_square_b = board.king(False)
     i_b, j_b = 8 - chess.square_rank(king_square_b), chess.square_file(king_square_b) + 1
 
@@ -63,4 +67,17 @@ def king_safety(board, pawn_array):
 
     shield_weights = np.array([[1, 1, 1], [2, 2, 2]])
 
-    return np.sum(pawn_shield_w * shield_weights) + np.sum(pawn_shield_b * shield_weights) + center_penalty
+    return (np.sum(pawn_shield_w * shield_weights) + np.sum(pawn_shield_b * shield_weights) + center_penalty)*10 
+    # 10 seems like a reasonable weighting.
+
+def piece_activity(board):
+    # Count legal moves for white
+    board.turn = chess.WHITE
+    num_legal_moves_white = len(list(board.legal_moves))
+    
+    # Count legal moves for black
+    board.turn = chess.BLACK
+    num_legal_moves_black = len(list(board.legal_moves))
+    board.turn # legal moves for who? 
+    return (np.log(num_legal_moves_white+1) - np.log(num_legal_moves_black))*50  # 100 seems like a reasonable weighting.
+    # We aim for weightings on the scale of the pst values, so about an average of 50

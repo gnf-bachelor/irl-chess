@@ -58,20 +58,6 @@ def sunfish_move_to_str(move: Move, is_black:bool):
     move_str = render(i) + render(j) + move.prom.lower()
     return move_str
 
-
-# def get_best_move_sunfish(board, R, depth=3, timer=False):
-#     best_move, Q = None, None
-#     alpha = -np.inf
-#     moves = tqdm([move for move in board.legal_moves]) if timer else board.legal_moves
-#     for move in moves:
-#         board.push(move)
-#         Q = alpha_beta_search(board, alpha=alpha, depth=depth-1, maximize=True, R=R)
-#         board.pop()
-#         if Q > alpha:
-#             alpha = Q
-#             best_move = move
-#     return best_move, Q
-
 # takes squares in the form 'a2', 'g3' etc. and returns
 # the number used to represent it in sunfish.
 def square2sunfish(square):
@@ -141,7 +127,7 @@ def get_new_pst(RP, Rpst = None):
     piece_new = {p: val for p, val in list(zip(pieces, RP))}
     pst_new = copy.deepcopy(pst_only)
     for j, (k, table) in enumerate(pst_only.items()):
-        padrow = lambda row: (0,) + tuple(x*Rpst[j] + piece_new[k] for x in row) + (0,)
+        padrow = lambda row: (0,) + tuple(int(x*Rpst[j] + piece_new[k]) for x in row) + (0,)
         pst_new[k] = sum((padrow(table[i * 8: i * 8 + 8]) for i in range(8)), ())
         pst_new[k] = (0,) * 20 + pst_new[k] + (0,) * 20
     return pst_new
