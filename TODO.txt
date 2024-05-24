@@ -51,7 +51,7 @@
                         [X] Run on models at 1100, 1900
                         [X] Run 1300, 1500, 1700
                 [ ] From 1000
-                        [ ] Run 1100, 1900
+                        [ ] Run 1100, 1900, Default
                 [ ] Using reversed data
                         [ ] 1100, 1900
         [ ]      Accuracy as function of training data set size (sunfish and maia) (Probably not, Gabriel)
