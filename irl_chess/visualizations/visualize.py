@@ -129,6 +129,7 @@ def plot_R_weights(config_data, out_path, start_weight_idx=0, legend_names=['P',
     accuracies = kwargs['accuracies'] if 'accuracies' in kwargs else None
     bayesian_args = kwargs['bayesian_args'] if 'bayesian_args' in kwargs else None
     filename_addition = kwargs['filename_addition'] if 'filename_addition' in kwargs else ''
+    show = kwargs.get('show', False)
 
     plot_path = os.path.join(out_path, 'plots')
     os.makedirs(plot_path, exist_ok=True)
@@ -140,7 +141,7 @@ def plot_R_weights(config_data, out_path, start_weight_idx=0, legend_names=['P',
         weights = load_weights(out_path, 'Result', start_weight_idx=start_weight_idx, epoch=epoch)
         RP_true = np.array(config_data.get('RP_true', [100, 280, 320, 479, 929, 60000]))
         plot_weights(weights, RP_true, start_weight_idx, plot_char, legend_names, config_data, RP_plot_path, epoch+1,
-                     filename_addition= 'RP'+filename_addition, show=False)
+                     filename_addition= 'RP'+filename_addition, show=show)
 
     plot_pst_char = char_to_idxs(config_data['plot_pst_char'])
     if plot_pst_char:
@@ -149,7 +150,7 @@ def plot_R_weights(config_data, out_path, start_weight_idx=0, legend_names=['P',
         weights = load_weights(out_path, 'RpstResult', start_weight_idx=start_weight_idx, epoch=epoch)
         Rpst_true = np.array(config_data.get('Rpst_true', [1, 1, 1, 1, 1, 1]))
         plot_weights(weights, Rpst_true, start_weight_idx, plot_pst_char, legend_names, config_data, Rpst_plot_path, epoch+1,
-                     filename_addition= 'Rpst'+filename_addition, show=False)
+                     filename_addition= 'Rpst'+filename_addition, show=show)
 
     plot_H_char = Hbool_to_idxs(config_data['plot_H'])
     if plot_H_char:
@@ -158,7 +159,7 @@ def plot_R_weights(config_data, out_path, start_weight_idx=0, legend_names=['P',
         weights = load_weights(out_path, 'RHResult', start_weight_idx=start_weight_idx, epoch=epoch)
         RH_true = np.array(config_data.get('RH_true', [0, 0, 0])) # Perhaps delete this, as there is no ground truth. 
         plot_weights(weights, RH_true, start_weight_idx, plot_H_char, ['PA','KS','PS'], config_data, RH_plot_path, epoch+1,
-                     filename_addition= 'RH'+filename_addition, show=False)
+                     filename_addition= 'RH'+filename_addition, show=show)
         
 
     
@@ -178,3 +179,24 @@ def plot_weights(weights, weights_true, start_weight_idx, plot_char, legend_name
     plt.savefig(join(plot_path, f'weights_{epoch}{filename_addition}.svg'))
     if show: plt.show()
     plt.close()
+
+if __name__ == '__main__':
+    from irl_chess import fix_cwd, load_config, load_model_functions, union_dicts, create_result_path
+    fix_cwd()
+    base_config_data, model_config_data = load_config()
+    model, model_result_string = load_model_functions(base_config_data)
+    config_data = union_dicts(base_config_data, model_config_data)
+    out_path = create_result_path(base_config_data, model_config_data, model_result_string, path_result=None)
+    assert os.path.isdir(out_path), 'The result path does not exist, which means that result data has not been generated for this configuration.\
+          Run run_model with the correct configs to generate results and plots.'
+    
+    for epoch in range(config_data['epochs']): # Check how many epochs the weights have been saved for.
+        path = os.path.join(out_path, f'weights/{epoch}.csv')
+        if os.path.exists(path):
+            epoch += 1
+        else:
+            epoch -= 1
+            print("Weights have been saved for", epoch+1, "epochs.")
+            break
+
+    plot_R_weights(config_data, out_path, start_weight_idx=0, epoch=epoch, show=True)
