@@ -10,7 +10,7 @@
   "n_threads": 24,
   "move_function": "player_move",
   "move_percentage_data": false,
-  "data": "lichess",
+  "data": "maia",
   "depths": [1,2,3,4,5,6,7],
   "timecontrol": [180, 600]
 }
