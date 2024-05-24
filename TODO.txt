@@ -189,5 +189,25 @@ Less vital/useful background:
 [X] How much detail to explain searching in Sunfish
         [ ] pseudo-code in report or appendix?
 
-        
+----- Notes from Tue -------
+
+Presentér processen af projektet i IRL, mål om at lave IRL, endte med en noget anderledes approach
+
+Indre RL loop med én iteration af policy iteration, inspireret IRL. Vi optimerer policyen ligesom en imitation learning, men med en reqrd vektor der kan fortolkes.
+
+Vi skal flette alt ind vi har lavet, men de mere perifære ting skal præsenteres som sådan.
+
+Ca træningstid er fint.
+
+Stor introduktion, klare læringsobjektiver bliver defineret her - muligvis i bullet points.
+
+Plots skal ikke være repetitive
+
+Konklusionen skal holde sig tæt op af læringsmålene, og adressere dem. 
+
+Outcome: baseline for IRL på skak, fixed bug i Sunfish, skak-heuristikker.
+
+Helt fast på definitionerne af IRL og imitation learning i introduktionen.
+
+
 
