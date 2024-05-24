@@ -46,11 +46,14 @@
                 [ ] Add Sunfish from Sunfish init 
         [.]      Accuracy over ply. How many moves into the game. (Fabian)
                 [X] Implement script to run plots
+                [X] Script for combining into single plot
                 [X] From 100,100...
                         [X] Run on models at 1100, 1900
                         [X] Run 1300, 1500, 1700
                 [ ] From 1000
                         [ ] Run 1100, 1900
+                [ ] Using reversed data
+                        [ ] 1100, 1900
         [ ]      Accuracy as function of training data set size (sunfish and maia) (Probably not, Gabriel)
                 [ ] Set up Maia training 
                 [ ] Set up Sunfish training
