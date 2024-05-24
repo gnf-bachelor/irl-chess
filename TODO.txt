@@ -178,15 +178,15 @@ Less vital/useful background:
 
 
 ---- Questions for Tue ----
-[ ] Formlisation of IRL problem
+[X] Formlisation of IRL problem
         [ ] Chess RL defined, how to define IRL problem
-[ ] Chess programming role in report
-        [ ] History + tehcnical development, as will be included in discussion
+[X] Chess programming role in report
+        [X] History + tehcnical development, as will be included in discussion
         [ ] 
-[ ] What plots to include
-        [ ] HOw many are too many?
-[ ] How precisely does computational time have to be reported?
-[ ] How much detail to explain searching in Sunfish
+[X] What plots to include
+        [X] How many are too many?
+[X] How precisely does computational time have to be reported?
+[X] How much detail to explain searching in Sunfish
         [ ] pseudo-code in report or appendix?
 
         
