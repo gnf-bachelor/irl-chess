@@ -65,7 +65,7 @@ Report:
                                 [ ] Maximum entropy
                                 [ ] Maximum margin planning
                         [ ] Cat 3
-                [ ] Explain what methods are inapplicable to out domain and why
+                [ ] Explain what methods are inapplicable to our domain and why
         [ ] Chess programming (Nikolaj)
                 [ ] Historical overview
                         [ ] Simple engines
@@ -178,4 +178,16 @@ Less vital/useful background:
 
 
 ---- Questions for Tue ----
+[ ] Formlisation of IRL problem
+        [ ] Chess RL defined, how to define IRL problem
+[ ] Chess programming role in report
+        [ ] History + tehcnical development, as will be included in discussion
+        [ ] 
+[ ] What plots to include
+        [ ] HOw many are too many?
+[ ] How precisely does computational time have to be reported?
+[ ] How much detail to explain searching in Sunfish
+        [ ] pseudo-code in report or appendix?
+
+        
 
