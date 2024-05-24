@@ -43,12 +43,32 @@ def load_config(model=None):
     path_config = join(os.getcwd(), 'experiment_configs', 'base_config.json')
     with open(path_config, 'r') as file:
         base_config_data = json.load(file)
-    base_config_data["model"] = base_config_data["model"] if model is None else model
+    if model is not None: base_config_data["model"] = model
     path_model_config = join(os.path.dirname(path_config), base_config_data["model"], 'config.json')
     with open(path_model_config, 'r') as file:
         model_config_data = json.load(file)
     define_permute_idxs(base_config_data)
     return base_config_data, model_config_data
+
+def load_model_functions(config_data):
+    match config_data[
+        'model']:  # Load the model specified in the "base_config" file. Make sure the "model" field is set
+        # correctly and that a model_result_string function is defined to properly store the results.
+        case "sunfish_GRW":  # Sunfish Greedy Random Walk
+            from irl_chess.models.sunfish_GRW import run_sunfish_GRW as model, \
+                sunfish_native_result_string as model_result_string
+        case "bayesian_optimisation":
+            from irl_chess.models.bayesian_optimisation import run_bayesian_optimisation as model, \
+                bayesian_model_result_string as model_result_string
+        case "maia_pretrained":
+            from irl_chess.models.maia_pretrained import run_maia_pre as model, \
+                maia_pre_result_string as model_result_string
+        case "BIRL":
+            from irl_chess.models.BIRL import run_BIRL as model, \
+                BIRL_result_string as model_result_string
+        case _:
+            raise Exception(f"No model found with the name {config_data['model']}")
+    return model, model_result_string
 
 
 def copy_configs(out_path, model_name):
@@ -75,9 +95,11 @@ def base_result_string(base_config_data):
     PA_KS_PS = ''.join([heuristic for heuristic, use_heuristic in zip(["PA", "KS", "PS"], base_config_data['include_PA_KS_PS']) if use_heuristic]) # Piece activity, King safety, Pawn structure
     permute_how_many = base_config_data['permute_how_many'] if base_config_data['permute_how_many'] != -1 else "all"
     max_hours = str(base_config_data['max_hours'])
-    RP_true = reformat_list(base_config_data['RP_true'], '_')
     RP_start = reformat_list(base_config_data['RP_start'], '_')
-    return f"{time_control}-{min_elo}-{max_elo}-{n_midgame}_to_{n_endgame}-{n_boards}-P_{permute_char}-pst_{permute_pst_char}-H_{PA_KS_PS}-{permute_how_many}-{move_function}-{RP_start}-{RP_true}"
+    RP_true = reformat_list(base_config_data['RP_true'], '_')
+    Rpst_start = reformat_list(base_config_data['Rpst_start'], '_')
+    Rpst_true = reformat_list(base_config_data['Rpst_true'], '_')
+    return f"{time_control}-{min_elo}-{max_elo}-{n_midgame}_to_{n_endgame}-{n_boards}-P_{permute_char}-pst_{permute_pst_char}-H_{PA_KS_PS}-{permute_how_many}-{move_function}-{RP_start}-{RP_true}-{Rpst_start}-{Rpst_true}"
 
 def define_permute_idxs(base_config_data):
     base_config_data['P_permute_idxs'] = np.array(char_to_idxs(base_config_data['permute_char']))
@@ -85,11 +107,6 @@ def define_permute_idxs(base_config_data):
     base_config_data['include_PA_KS_PS'] = np.array(base_config_data['include_PA_KS_PS'], dtype=bool)
     base_config_data['H_permute_idxs'] = np.array([i for i, permute_heuristic in enumerate(base_config_data['permute_H']) 
                                                    if base_config_data['include_PA_KS_PS'][i] and permute_heuristic])
-    return base_config_data
-
-def define_plot_idxs(base_config_data):
-    plot_char = char_to_idxs(base_config_data['plot_char'])
-    
     return base_config_data
 
 def create_result_path(base_config_data, model_config_data, model_result_string, path_result=None,
