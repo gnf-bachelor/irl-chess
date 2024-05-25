@@ -26,12 +26,14 @@ def random_moves_acc(boards, moves):
     return acc / norm, wilson_score_interval(acc, norm)
 
 
-def result_path(config, move_min, val_prop, run_sunfish, sunfish_epoch, using_maia_val_data):
-    return f"results/plots/maia_per_ply_{config['min_elo']}-{config['max_elo']}-{config['maia_elo']}-{config['n_boards']}-{move_min}-{val_prop}-{run_sunfish}-{sunfish_epoch}-{using_maia_val_data}"
+def result_path(config, move_min, val_prop, run_sunfish, sunfish_epoch, using_maia_val_data, time_control=None):
+    return ((f"results/plots/maia_per_ply_{config['min_elo']}-{config['max_elo']}-{config['maia_elo']}-"
+            f"{config['n_boards']}-{move_min}-{val_prop}-{run_sunfish}-{sunfish_epoch}-{using_maia_val_data}")
+            + (f'-{time_control}' if time_control is not None else ''))
 
 
 def run_comparison(run_sunfish=False, pgn_paths=None, move_range=(10, 100), val_proportion=0.2, sunfish_epoch=90,
-                   using_maia_val_data=False, using_default_sunfish=False):
+                   using_maia_val_data=False, using_default_sunfish=False, time_left_range=None, game_time_bounds=None):
     # SHOULD ONLY USE ALREADY TRAINED SUNFISH FOR N_BOARDS TO MAKE SENSE!!!
     from irl_chess import run_sunfish_GRW, sunfish_native_result_string, run_maia_pre, maia_pre_result_string, \
         load_config, val_sunfish_GRW, \
@@ -51,7 +53,7 @@ def run_comparison(run_sunfish=False, pgn_paths=None, move_range=(10, 100), val_
     websites_filepath = join(os.getcwd(), 'downloads', 'lichess_websites.txt')
     file_path_data = join(os.getcwd(), 'data', 'raw')
     out_path_sunfish = create_result_path(base_config_data, m_config_data, sunfish_native_result_string)
-    out_path_maia = create_result_path(base_config_data, config_data_maia, maia_pre_result_string) + '-maia'
+    out_path_maia = create_result_path(base_config_data, config_data_maia, maia_pre_result_string).replace(base_config_data['model'], 'maia_pretrained')
 
     if using_maia_val_data:
         val_df = load_maia_test_data(base_config_data['min_elo'], base_config_data['n_boards'])
@@ -62,7 +64,9 @@ def run_comparison(run_sunfish=False, pgn_paths=None, move_range=(10, 100), val_
             config_data=base_config_data,
             use_ply_range=True,
             pgn_paths=pgn_paths,
-            out_path=out_path_sunfish
+            out_path=out_path_sunfish,
+            time_left_range=time_left_range,
+            game_time_bounds=game_time_bounds
         )
 
     acc_sunfish_list = []
@@ -87,7 +91,7 @@ def run_comparison(run_sunfish=False, pgn_paths=None, move_range=(10, 100), val_
 
     maia_model = None
     results_path = result_path(base_config_data, move_range[0], val_proportion, run_sunfish, sunfish_epoch,
-                               using_maia_val_data) + ('using_default_sunfish' if using_default_sunfish else '')
+                               using_maia_val_data, time_control=(time_left_range, game_time_bounds)) + ('-using_default_sunfish' if using_default_sunfish else '')
     csv_path = join(results_path, f'csvs', f'results.csv')
     plot_path_base = join(results_path, f'plots', )
     os.makedirs(os.path.dirname(csv_path), exist_ok=True)
@@ -137,8 +141,10 @@ def run_comparison(run_sunfish=False, pgn_paths=None, move_range=(10, 100), val_
             out_path_sunfish = join(os.path.dirname(out_path_sunfish), 'default_sunfish')
             default_weight_path = join(out_path_sunfish, 'weights')
             os.makedirs(default_weight_path, exist_ok=True)
-            R_default = np.array(config_data_sunfish['R_true'])
-            df = pd.DataFrame(R_default.T, columns=['Result'])
+            R_default = np.array(base_config_data['RP_true'])
+            R_pst = np.array(base_config_data['Rpst_true'])
+            df = pd.DataFrame(np.concatenate((R_default.reshape((-1, 1)), R_pst.reshape((-1, 1))), axis=1),
+                              columns=['Result', 'RpstResult'])
             df.to_csv(join(default_weight_path, '0.csv'))
         acc_sunfish, (lower_bound_sunfish, upper_bound_sunfish) = val_sunfish_GRW(
             epoch=0 if using_default_sunfish else sunfish_epoch,
@@ -146,7 +152,7 @@ def run_comparison(run_sunfish=False, pgn_paths=None, move_range=(10, 100), val_
             config_data=config_data_sunfish,
             out_path=out_path_sunfish,
             validation_set=validation_set,
-            name=f'n_moves/{n_moves}'
+            name=f'n_moves_{time_left_range}_{game_time_bounds}/{n_moves}'
         ) if run_sunfish else (None, (None, None))
 
         acc_random_list.append(acc_random)
@@ -210,9 +216,11 @@ def plot_ply(acc_lists, plot_path, run_sunfish, move_range, using_default_sunfis
 
 
 if __name__ == '__main__':
-    pgn_paths = ['data/raw/lichess_db_standard_rated_2019-01.pgn']
+    pgn_paths = ['data/raw/lichess_db_standard_rated_2014-01.pgn']
     ply_range = (10, 81)
+    time_left_range = (0, 3000)
+    game_time_bounds = (0, 18000)
     # Set the param epochs in the base config to specify epochs for sunfish
     # Also remember to set the move function to player move as this is used for validation
-    run_comparison(run_sunfish=True, move_range=ply_range, pgn_paths=pgn_paths, using_maia_val_data=True,
-                   using_default_sunfish=False)
+    run_comparison(run_sunfish=True, move_range=ply_range, pgn_paths=pgn_paths, using_maia_val_data=False,
+                   using_default_sunfish=True, time_left_range=time_left_range, game_time_bounds=game_time_bounds)

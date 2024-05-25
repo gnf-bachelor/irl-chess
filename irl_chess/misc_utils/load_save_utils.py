@@ -121,27 +121,32 @@ def create_result_path(base_config_data, model_config_data, model_result_string,
 
 
 # ================= Loading chess games =================
-def get_boards_between(game, n_start, n_end, board_dict=None, move_dict=None):
+def get_boards_between(game, n_start, n_end, board_dict=None, move_dict=None, time_left_range=None):
+    time_left_range = (30, np.inf) if time_left_range is None else time_left_range
     boards, moves = [], []
     board = chess.Board()
     try:
         var = game.variations[0]
     except IndexError:
         return boards, moves
+    has_time = True
     for i, move in enumerate(game.mainline_moves()):
         # Search for the pattern in the input string
         match = re.search(pattern_time, var.comment)
         if not match:
-            print(f'No move-time information available: {var.comment}, ignoring game')
-            break
+            if has_time:
+                print(f'No move-time information available: {var.comment} ignoring time requirement')
+            has_time = False
+            valid_time = True
+        else:
+            has_time = True
+            hh = int(match.group(1))
+            mm = int(match.group(2))
+            ss = int(match.group(3))
+            seconds_left = hh * 3600 + mm * 60 + ss
+            valid_time = (time_left_range[0] < seconds_left) & (seconds_left < time_left_range[1])
 
-        hh = int(match.group(1))
-        mm = int(match.group(2))
-        ss = int(match.group(3))
-
-        if not hh and not mm and ss < 30:
-            break
-        elif n_start <= i <= n_end:
+        if valid_time and (n_start <= i <= n_end):
             flip = not board.turn
             boards.append(deepcopy(board))
             moves.append(move)
@@ -157,14 +162,16 @@ def get_boards_between(game, n_start, n_end, board_dict=None, move_dict=None):
     return boards, moves
 
 
-def is_valid_game(game, config_data):
+def is_valid_game(game, config_data, time_bounds=None):
+    time_bounds = (180, np.inf) if time_bounds is None else time_bounds
     # Add time control check
     try:
         elo_check_white = config_data['min_elo'] < int(game.headers['WhiteElo']) < config_data['max_elo']
         elo_check_black = config_data['min_elo'] < int(game.headers['BlackElo']) < config_data['max_elo']
         # Add 1 to length check to ensure there is a valid move in the position returned
         # length_check = len(list(game.mainline_moves())) > config_data['n_endgame'] + 1
-        game_type_check = float(game.headers['TimeControl'].split('+')[0]) > 180
+        game_type = float(game.headers['TimeControl'].split('+')[0])
+        game_type_check = (time_bounds[0] < game_type) & (game_type < time_bounds[1])
         return elo_check_white and elo_check_black and game_type_check # and length_check
     except KeyError:
         return False
@@ -172,7 +179,7 @@ def is_valid_game(game, config_data):
         return False
 
 
-def get_states(websites_filepath, file_path_data, config_data, out_path, use_ply_range=True, pgn_paths=None, return_games=False, verbose=True):
+def get_states(websites_filepath, file_path_data, config_data, out_path, use_ply_range=True, pgn_paths=None, return_games=False, verbose=True, time_left_range=None, game_time_bounds=None):
     if 'move_percentage_data' in config_data and config_data['move_percentage_data']:
         with open('data/move_percentages/moves_1000-1200_fixed', 'r') as f:
             moves_dict = json.load(f)
@@ -228,8 +235,13 @@ def get_states(websites_filepath, file_path_data, config_data, out_path, use_ply
             with tqdm(total=size, desc=f'Looking through file {i}') as pbar:
                 while len(chess_boards) < config_data['n_boards']:
                     game = chess.pgn.read_game(pgn)
-                    if is_valid_game(game, config_data=config_data):
-                        boards_, moves_ = get_boards_between(game, config_data['n_midgame'], config_data['n_endgame'], board_dict=ply_dict_boards, move_dict=ply_dict_moves)
+                    if is_valid_game(game, config_data=config_data, time_bounds=game_time_bounds):
+                        boards_, moves_ = get_boards_between(game,
+                                                             config_data['n_midgame'],
+                                                             config_data['n_endgame'],
+                                                             board_dict=ply_dict_boards,
+                                                             move_dict=ply_dict_moves,
+                                                             time_left_range=time_left_range)
                         if boards_:
                             games.append(game)
                         chess_boards += boards_
@@ -264,19 +276,41 @@ def get_states(websites_filepath, file_path_data, config_data, out_path, use_ply
 
 
 # ================= Processing results =================
-
+        
 def process_epoch(RP, Rpst, RH, epoch, config_data, out_path, **kwargs):
-    # assert not (not config_data['overwrite'] and os.path.exists(join(out_path, f'{epoch}.csv'))), \
-    # "Data already exists but configs are set to not overwrite"
-    # Overwrite is for downloaded data files. .........
+    debug = kwargs.get('debug', False)
     csv_path = join(out_path, 'weights', f'{epoch}.csv')
     os.makedirs(os.path.dirname(csv_path), exist_ok=True)
-    df = pd.DataFrame(RP.reshape((-1, 1)), columns=['Result'])
-    # Add Columns for Rpst and RH
+    # Ensure RP and Rpst have the same length
     assert len(RP) == len(Rpst), f"Length of RP and Rpst do not match: {len(RP)} != {len(Rpst)}"
-    df['RpstResult'] = Rpst
-    df['RHResult'] = np.pad(RH, (0, len(RP) - len(RH)), 'constant', constant_values=np.nan) # RH only contains 3 values
+    # Pad RH to match the length of RP
+    RH_padded = np.pad(RH, (0, len(RP) - len(RH)), 'constant', constant_values=np.nan) # RH only contains 3 value
+    # Ensure that all written arrays have the same length
+    assert len(RP) == len(Rpst) == len(RH_padded) == 6, \
+        f"Length of RP, Rpst and RH_padded do not match: {len(RP)}, {len(Rpst)}, {len(RH_padded)}"
+    # Convert arrays to float. I can't stand more errors. 
+    RP = RP.astype(float)
+    Rpst = Rpst.astype(float)
+    RH_padded = RH_padded.astype(float)
+    # Create DataFrame
+    df = pd.DataFrame({
+        'Result': RP,
+        'RpstResult': Rpst,
+        'RHResult': RH_padded
+    })
+
+    # Write to CSV
     df.to_csv(csv_path, index=False)
+
+    if debug:
+        # Print out lengths and types for debugging
+        print(f"Length of RP: {len(RP)}, Type: {type(RP)}")
+        print(f"Length of Rpst: {len(Rpst)}, Type: {type(Rpst)}")
+        print(f"Length of RH: {len(RH)}, Type: {type(RH)}")
+        print(f"Length of RH_padded: {len(RH_padded)}, Type: {type(RH_padded)}")
+        # Read back the CSV to ensure consistency
+        df_check = pd.read_csv(csv_path)
+        print(f"CSV contents after writing:\n{df_check}")
 
     if epoch and config_data['plot_every'] and (epoch + 1) % config_data['plot_every'] == 0:
         plot_R_weights(config_data=config_data,
