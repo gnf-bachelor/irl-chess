@@ -9,6 +9,8 @@ from matplotlib import pyplot as plt
 sunfish_palette_name = 'mako'
 maia_palette_name = 'flare'
 
+result_strings = ['Result', 'RpstResult', 'RHResult']
+
 def char_to_idxs(plot_char: list[str]):
     char_to_idxs = {"P": 0, "N": 1, "B": 2, "R": 3, "Q": 4, "K": 5}
     return [char_to_idxs[char] for char in plot_char]
@@ -31,13 +33,17 @@ def idxs_to_Hchar(idx_list: list[int]):
 def load_weights(out_path, result: str, start_weight_idx=0, epoch=None):
     weights = []
     for i in range(start_weight_idx, epoch+1, ):
-        path = os.path.join(out_path, f'weights/{i}.csv')
-        if os.path.exists(path):
-            df = pd.read_csv(path, index_col=None)
-            weights.append(df[result].dropna().values.flatten())
-        else:
-            break
+        weights_i = load_weights_epoch(out_path, result, epoch = i)
+        if weights_i is not None:
+            weights.append(weights_i)
     return np.array(weights)
+
+def load_weights_epoch(out_path, result: str, epoch):
+    path = os.path.join(out_path, f'weights/{epoch}.csv')
+    if os.path.exists(path):
+        df = pd.read_csv(path, index_col=None)
+        return df[result].dropna().values.flatten()
+    return None
 
 
 def plot_BO_2d(opt, R_true, target_idxs, plot_idxs=None, plot_path=None, epoch=None):

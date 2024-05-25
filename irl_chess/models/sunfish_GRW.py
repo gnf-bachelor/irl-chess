@@ -15,7 +15,7 @@ from joblib import Parallel, delayed
 from irl_chess import Searcher, pst, piece, plot_R_weights, perturb_reward
 from irl_chess.chess_utils.sunfish_utils import board2sunfish, sunfish2board, sunfish_move_to_str, \
     check_moved_same_color, sunfish_move
-from irl_chess.visualizations import char_to_idxs
+from irl_chess.visualizations import char_to_idxs, load_weights_epoch
 
 from irl_chess.misc_utils.utils import reformat_list
 from irl_chess.misc_utils.load_save_utils import process_epoch
@@ -43,8 +43,9 @@ def run_sunfish_GRW(chess_boards, player_moves, config_data, out_path, validatio
     Rpst = np.array(config_data['Rpst_start'], dtype=float)
     RH = np.array(config_data['RH_start'], dtype=float) 
     RH[np.invert(config_data['include_PA_KS_PS'])] = 0 # Set the values to 0 if they are not included in the model.
+    
     pst_init = get_new_pst(RP=RP, Rpst=Rpst)
-    Rs, Rpsts, RHs = [RP], [Rpst], [RH]
+    RPs, Rpsts, RHs = [RP], [Rpst], [RH]
     sunfish_boards = [board2sunfish(board, eval_pos_pst(board, pst_init)) for board in chess_boards]
     player_moves_sunfish = [str_to_sunfish_move(move, not board.turn) for move, board in
                             zip(player_moves, chess_boards)]
@@ -60,12 +61,22 @@ def run_sunfish_GRW(chess_boards, player_moves, config_data, out_path, validatio
             actions_true = parallel(delayed(sunfish_move)(state, pst_true, config_data['time_limit'], True)
                 for state in tqdm(sunfish_boards, desc='Getting true Sunfish moves', ))
         for epoch in tqdm(range(config_data['epochs']), desc='Epochs'):
-            weight_path = join(out_path, f'weights/{epoch}.csv')
-            if os.path.exists(weight_path):
-                df = pd.read_csv(weight_path)
-                RP = df['Result'].values.flatten()
-                Rs.append(RP)
+
+            RP_loaded, Rpst_loaded, RH_loaded = (load_weights_epoch(out_path, result, epoch) for result in ['Result', 'RpstResult', 'RHResult'])
+            # I have to check like this because they are arrays of ambigous truth type.
+            if RP_loaded is not None or Rpst_loaded is not None or RH_loaded is not None: 
+                
+                # Use loaded values if available, otherwise keep current values
+                RP = RP_loaded if RP_loaded is not None else RP
+                Rpst = Rpst_loaded if Rpst_loaded is not None else Rpst
+                RH = RH_loaded if RH_loaded is not None else RH
+                
+                RPs.append(RP)
+                Rpsts.append(Rpst)
+                RHs.append(RH)
+                
                 print(f'Results loaded for epoch {epoch + 1}, continuing')
+                assert RP is not None and Rpst is not None and RH is not None, 'All weights must be loaded, even if they are 0'
                 continue
             
             RP_new, Rpst_new, RH_new = perturb_reward(RP, config_data, Rpst=Rpst, RH=RH, epoch = epoch) # Also handles delta decay
@@ -83,7 +94,7 @@ def run_sunfish_GRW(chess_boards, player_moves, config_data, out_path, validatio
                 last_acc = copy.copy(acc)
 
             accuracies.append((acc, last_acc))
-            Rs.append(RP), Rpsts.append(Rpst), RHs.append(RH)
+            RPs.append(RP), Rpsts.append(Rpst), RHs.append(RH)
 
             process_epoch(RP, Rpst, RH, epoch, config_data, out_path)
 

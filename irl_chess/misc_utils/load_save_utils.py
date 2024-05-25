@@ -264,19 +264,41 @@ def get_states(websites_filepath, file_path_data, config_data, out_path, use_ply
 
 
 # ================= Processing results =================
-
+        
 def process_epoch(RP, Rpst, RH, epoch, config_data, out_path, **kwargs):
-    # assert not (not config_data['overwrite'] and os.path.exists(join(out_path, f'{epoch}.csv'))), \
-    # "Data already exists but configs are set to not overwrite"
-    # Overwrite is for downloaded data files. .........
+    debug = kwargs.get('debug', False)
     csv_path = join(out_path, 'weights', f'{epoch}.csv')
     os.makedirs(os.path.dirname(csv_path), exist_ok=True)
-    df = pd.DataFrame(RP.reshape((-1, 1)), columns=['Result'])
-    # Add Columns for Rpst and RH
+    # Ensure RP and Rpst have the same length
     assert len(RP) == len(Rpst), f"Length of RP and Rpst do not match: {len(RP)} != {len(Rpst)}"
-    df['RpstResult'] = Rpst
-    df['RHResult'] = np.pad(RH, (0, len(RP) - len(RH)), 'constant', constant_values=np.nan) # RH only contains 3 values
+    # Pad RH to match the length of RP
+    RH_padded = np.pad(RH, (0, len(RP) - len(RH)), 'constant', constant_values=np.nan) # RH only contains 3 value
+    # Ensure that all written arrays have the same length
+    assert len(RP) == len(Rpst) == len(RH_padded) == 6, \
+        f"Length of RP, Rpst and RH_padded do not match: {len(RP)}, {len(Rpst)}, {len(RH_padded)}"
+    # Convert arrays to float. I can't stand more errors. 
+    RP = RP.astype(float)
+    Rpst = Rpst.astype(float)
+    RH_padded = RH_padded.astype(float)
+    # Create DataFrame
+    df = pd.DataFrame({
+        'Result': RP,
+        'RpstResult': Rpst,
+        'RHResult': RH_padded
+    })
+
+    # Write to CSV
     df.to_csv(csv_path, index=False)
+
+    if debug:
+        # Print out lengths and types for debugging
+        print(f"Length of RP: {len(RP)}, Type: {type(RP)}")
+        print(f"Length of Rpst: {len(Rpst)}, Type: {type(Rpst)}")
+        print(f"Length of RH: {len(RH)}, Type: {type(RH)}")
+        print(f"Length of RH_padded: {len(RH_padded)}, Type: {type(RH_padded)}")
+        # Read back the CSV to ensure consistency
+        df_check = pd.read_csv(csv_path)
+        print(f"CSV contents after writing:\n{df_check}")
 
     if epoch and config_data['plot_every'] and (epoch + 1) % config_data['plot_every'] == 0:
         plot_R_weights(config_data=config_data,
