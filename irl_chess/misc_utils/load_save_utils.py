@@ -129,13 +129,17 @@ def get_boards_between(game, n_start, n_end, board_dict=None, move_dict=None, ti
         var = game.variations[0]
     except IndexError:
         return boards, moves
+    has_time = True
     for i, move in enumerate(game.mainline_moves()):
         # Search for the pattern in the input string
         match = re.search(pattern_time, var.comment)
         if not match:
-            print(f'No move-time information available: {var.comment} ignoring time requirement')
+            if has_time:
+                print(f'No move-time information available: {var.comment} ignoring time requirement')
+            has_time = False
             valid_time = True
         else:
+            has_time = True
             hh = int(match.group(1))
             mm = int(match.group(2))
             ss = int(match.group(3))

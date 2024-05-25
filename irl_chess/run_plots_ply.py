@@ -53,7 +53,7 @@ def run_comparison(run_sunfish=False, pgn_paths=None, move_range=(10, 100), val_
     websites_filepath = join(os.getcwd(), 'downloads', 'lichess_websites.txt')
     file_path_data = join(os.getcwd(), 'data', 'raw')
     out_path_sunfish = create_result_path(base_config_data, m_config_data, sunfish_native_result_string)
-    out_path_maia = create_result_path(base_config_data, config_data_maia, maia_pre_result_string) + '-maia'
+    out_path_maia = create_result_path(base_config_data, config_data_maia, maia_pre_result_string).replace(base_config_data['model'], 'maia_pretrained')
 
     if using_maia_val_data:
         val_df = load_maia_test_data(base_config_data['min_elo'], base_config_data['n_boards'])
@@ -216,9 +216,9 @@ def plot_ply(acc_lists, plot_path, run_sunfish, move_range, using_default_sunfis
 
 
 if __name__ == '__main__':
-    pgn_paths = None # ['data/raw/lichess_db_standard_rated_2014-01.pgn']
+    pgn_paths = ['data/raw/lichess_db_standard_rated_2014-01.pgn']
     ply_range = (10, 81)
-    time_left_range = (0, 30)
+    time_left_range = (0, 3000)
     game_time_bounds = (0, 18000)
     # Set the param epochs in the base config to specify epochs for sunfish
     # Also remember to set the move function to player move as this is used for validation
