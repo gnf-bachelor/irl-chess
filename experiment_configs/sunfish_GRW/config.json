@@ -1,5 +1,5 @@
 {
-  "noise_distribution": "step",
+  "noise_distribution": "gaussian",
   "delta": 40,
   "decay": 0.5,
   "decay_step": 40,
