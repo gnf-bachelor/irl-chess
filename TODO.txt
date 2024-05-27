@@ -62,67 +62,74 @@
 Report:
 [ ] Abstract
 [ ] Introduction (Each paragraph could be used as the first paragraph of each section)
-        [ ] Theory (IRL)
-        [ ] Learning objectives
-                [ ] IRL litterature study
-                [ ] Exploring IRL for chess domain
-                [ ] Defining a dataset
-                [ ] Replicating Maia chess results
-                [ ] Developing a more interpretable player move prediction model
-                [ ] Quantitatively characterising the performance of our method
-                [ ] Qualitatively characterising the performance of our method
-        [ ] Method
-                [ ] How learning objectives are solved
-                [ ] Imitation learning?
+        [.] Theory (IRL)
+                [x] What is IRL
+                [x] Imitation Learning Taxonomy
+                [x] Soft intention inference intro
+        [x] Learning objectives
+                [x] Goal explained
+                [x] Bullet points
+                        [x] IRL litterature study
+                        [x] Exploring IRL for chess domain
+                        [x] Defining a dataset
+                        [x] Replicating Maia chess results
+                        [x] Developing a more interpretable player move prediction model
+                        [x] Quantitatively characterising the performance of our method
+                        [x] Qualitatively characterising the performance of our method
+        [.] Method
+                [.] Sunfish GRW explained
+                [.] How learning objectives are solved
                 [ ] Our method vs Maia
-        [ ] Results & Discussion
-                [ ] Difference of styles across ELOs
-                        [ ] More fidelity over Maia's un-explainable model (only possible through its moves, Cynthia Ruodin) 
-                [ ] Model performance
-                        [ ] Skill difference hard to show
-                        [ ] Depth difference detectable
-                        [ ] GRW validated
-                                [ ] Ground truth for pst-tables is achieved
-                                [ ] Material values ranked correctly
-                [ ] Weight intertpretation
-                        [ ] Pawn higher than expected
-                        [ ] Pieces ranked according to conventional wisdom (affine transform)
+        [.] Results & Discussion
+                [.] Difference of styles across ELOs
+                        [.] More fidelity over Maia's un-explainable model (only possible through its moves, Cynthia Ruodin) 
+                [.] Model performance
+                        [x] Skill difference hard to show
+                        [x] Depth difference detectable
+                        [x] GRW validated
+                                [x] Ground truth for pst-tables is achieved
+                                [x] Material values ranked correctly
+                [.] Weight intertpretation
+                        [.] Pawn higher than expected
+                        [.] Pieces ranked according to conventional wisdom (affine transform)
                                 [ ] Position valued as expected (pawns+knights in focus)
-                        [ ] Depth higher for higher ELO
-        [ ] Conclusion
-                [ ] Interpretation of weights shows little difference
-                [ ] New baseline for player move prediction developed
+                        [x] Depth higher for higher ELO
+        [.] Conclusion
+                [.] Interpretation of weights shows little difference
+                [x] New baseline for player move prediction developed
                 [ ] Maia results replicated and are (XYZ)
-                [ ] Bug in Sunfish fixed
-[ ] Theory
-        [ ] Notation
-                [ ] What is a policy
+                [x] Bug in Sunfish fixed
+[.] Theory
+        [.] Notation
+                [X] What is a policy
                 [ ] Figure of search tree
         [ ] IRL
                 [ ] Explain what it is
-                        [ ] Pseudo-code
-                        [ ] Figure
-                [ ] Describe main categories
+                        [x] Detailed explanation
+                        [x] Difference from behavioural cloning
+                        [x] Pseudo-code
+                        [ ] Figure, what?
+                [.] Describe main categories
                         [ ] Detailed characterization of Bayesian IRL. How our model relates to IRL. (Gabriel)
-                        [ ] MAP
+                        [.] MAP
                                 [ ] Maximum entropy
                                 [ ] Maximum margin planning
                         [ ] Cat 3
-                [ ] Explain what methods are inapplicable to our domain and why
-                        [ ] Occupancy rates for NN
-        [ ] Imitation learning
-                [ ] Explanation
+                [.] Explain what methods are inapplicable to our domain and why
+                        [.] Occupancy rates for NN
+        [.] Behavioural cloning
+                [.] Explanation
                 [ ] Maia
-        [ ] Chess programming (Nikolaj)
-                [ ] Historical overview
-                        [ ] Simple engines
-                        [ ] Searching
-                                [ ] Deep blue
-                                [ ] Stockfish
-                        [ ] Neural Networks
-                                [ ] Stockfish
-                                [ ] Leela chess zero (Alpha Zero)
-                                [ ] Maia (Human like/Help humans improve)
+        [.] Chess programming (Nikolaj)
+                [.] Historical overview
+                        [x] Simple engines
+                        [x] Searching
+                                [x] Deep blue
+                                [x] Stockfish
+                        [x] Neural Networks
+                                [x] Stockfish
+                                [x] Leela chess zero (Alpha Zero)
+                                [x] Maia (Human like/Help humans improve)
                         [ ] State of modern open source chess
                                 [ ] Sunfish
                                         [ ] Search strategy
@@ -179,6 +186,7 @@ Report:
 
 [ ] Discussion
         [ ] Computational costs of methods
+        [ ] Bayesian Fail
         [ ] Player move accuracy predition
                 [ ] Large variance in data
                         [ ] Using the average move
@@ -208,6 +216,7 @@ Report:
         [ ] Future work
                 [ ] Look from specific opening 6 ply forward, so occupancy ratios work. 
                 [ ] Using Leela chess embeddings (Tue's words)
+
 [ ]  Qualitlively compare key positions and blunder prediction, so we can discuss searching vs. not searching
 [ ]     Show in demonstrations in jupyter notebooks.   
 
