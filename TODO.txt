@@ -133,8 +133,9 @@ Report:
                         [ ] Hyper-parameters
                                 [ ] Time, max-depth
                 [ ] Inner RL problem still expensive
-        [ ] BIRL 
+        [ ] BIRL
                 [ ] Implementation details
+                        [ ] Hyper-parameters
                 [ ] Why BIRL inflates energy causing reward function pertubation instability
                         [ ] Discuss lack of strong priors
                         [ ] Stochastic searcher leads to potentially different Q-values due to varying max-depth, q-value compared for different problems
