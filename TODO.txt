@@ -130,15 +130,14 @@ Report:
                                 [x] Stockfish
                                 [x] Leela chess zero (Alpha Zero)
                                 [x] Maia (Human like/Help humans improve)
-                        [ ] State of modern open source chess
                         [x] Sunfish
                                 [x] Search strategy
 [ ] Methodology
         [ ] Chosing a chess framework
                 [ ] HM Alpha Beta Quiscent search
                 [ ] Sunfish MTD-bi search
-                        [ ] Hyper-parameters
-                                [ ] Time, max-depth
+                        [x] Hyper-parameters
+                                [x] Time, max-depth
                 [x] Inner RL problem still expensive
         [ ] BIRL
                 [ ] Implementation details
