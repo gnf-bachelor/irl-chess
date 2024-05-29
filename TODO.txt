@@ -186,13 +186,13 @@ Report:
 
 [ ] Discussion
         [x] Computational costs of methods
-        [ ] Bayesian Optimisation Fail
+        [.] Bayesian Optimisation Fail
         [ ] Player move accuracy predition
-                [ ] Large variance in data
-                        [ ] Using the average move
-                [ ] Maia results replicated correctly
-                [ ] Maia not that different from ELO to ELO
-                [ ] Sunfish the same across ELOs
+                [x] Large variance in data
+                        [x] Using the average move
+                [x] Maia results replicated correctly
+                [x] Maia not that different from ELO to ELO
+                [x] Sunfish the same across ELOs
                         [ ] Stockfish in Maia paper same accuracy as Sunfish 
         [ ] Why BIRL fails
                 [ ] BIRL Priors are uniform
@@ -202,19 +202,19 @@ Report:
         [ ] Sunfish Weight intertpretation
                 [x] Pawn higher than expected
                 [x] Pieces ranked according to conventional wisdom (affine transform)
-                        [ ] Position valued as expected (pawns+knights in focus)
+                        [x] Position valued as expected (pawns+knights in focus)
                 [x] Depth higher for higher ELO
         [x] Depth interpretation
         [.] Bridging the gap between symbolic and data driven AI to maintain explainability
                 
-[ ] Conclusion
-        [ ] Interpretation of weights shows little difference
-        [ ] New baseline for player move prediction developed
-        [ ] Maia results replicated and are (XYZ)
-        [ ] Bug in Sunfish fixed
-        [ ] Future work
-                [ ] Look from specific opening 6 ply forward, so occupancy ratios work. 
-                [ ] Using Leela chess embeddings (Tue's words)
+[.] Conclusion
+        [x] Interpretation of weights shows little difference
+        [.] New baseline for player move prediction developed
+        [x] Maia results replicated and are (XYZ)
+        [x] Bug in Sunfish fixed
+        [x] Future work
+                [x] Look from specific opening 6 ply forward, so occupancy ratios work. 
+                [x] Using Leela chess embeddings (Tue's words)
 
 [ ]  Qualitlively compare key positions and blunder prediction, so we can discuss searching vs. not searching
 [ ]     Show in demonstrations in jupyter notebooks.   
