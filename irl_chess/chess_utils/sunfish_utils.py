@@ -119,8 +119,8 @@ def board2sunfish(board, score):
 def get_new_pst(RP, Rpst = None):
     # Get a new set of piece square tables (pst), but with the pieces weighed by the RP values 
     # and the pst values weighed by the Rpst values.
-    assert len(RP) == 6
-    if Rpst is not None: assert len(Rpst) == 6
+    assert len(RP) == 6, f"RP must be of length 6 but was {RP}"
+    if Rpst is not None: assert len(Rpst) == 6, f"Rpst must be of length 6 but was {Rpst}"
     else:
         Rpst = [1, 1, 1, 1, 1, 1]
     pieces = 'PNBRQK'

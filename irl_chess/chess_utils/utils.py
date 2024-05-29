@@ -44,7 +44,14 @@ def perturb_reward(RP, config_data, Rpst = None, RH = None, epoch = None):
         RH_new = RH.copy()
         RH_new[H_permute_idxs] += noise_H
     if epoch is not None: noise_decay(config_data, epoch)
+    assert_RP_returns(RP, RP_new, Rpst, Rpst_new, RH, RH_new)
     return RP_new, Rpst_new, RH_new # It is better to keep the return types consistent, even though it might return None
+
+def assert_RP_returns(RP, RP_new, Rpst, Rpst_new, RH, RH_new):
+    assert RP.shape == RP_new.shape, f"The shape of the new RP vector must be the same as the old RP vector, but it was {RP_new}"
+    assert Rpst.shape == Rpst_new.shape, f"The shape of the new Rpst vector must be the same as the old Rpst vector, but it was {Rpst_new}"
+    assert RH.shape == RH_new.shape, f"The shape of the new RH vector must be the same as the old RH vector, but it was {RH_new}"
+
 
 def noise_decay(config_data, epoch):
     if epoch % config_data['decay_step'] == 0 and epoch != 0:
