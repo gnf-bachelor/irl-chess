@@ -61,7 +61,7 @@
 
 Report:
 [ ] Abstract
-[ ] Introduction (Each paragraph could be used as the first paragraph of each section)
+[.] Introduction (Each paragraph could be used as the first paragraph of each section)
         [.] Theory (IRL)
                 [x] What is IRL
                 [x] Imitation Learning Taxonomy
@@ -92,29 +92,29 @@ Report:
                 [.] Weight intertpretation
                         [.] Pawn higher than expected
                         [.] Pieces ranked according to conventional wisdom (affine transform)
-                                [ ] Position valued as expected (pawns+knights in focus)
                         [x] Depth higher for higher ELO
+                [ ] BIRL results!!
         [.] Conclusion
                 [.] Interpretation of weights shows little difference
                 [x] New baseline for player move prediction developed
-                [ ] Maia results replicated and are (XYZ)
+                [x] Maia results replicated
                 [x] Bug in Sunfish fixed
 [.] Theory
         [.] Notation
                 [X] What is a policy
                 [ ] Figure of search tree
         [ ] IRL
-                [ ] Explain what it is
+                [.] Explain what it is
                         [x] Detailed explanation
                         [x] Difference from behavioural cloning
                         [x] Pseudo-code
                         [ ] Figure, what?
                 [.] Describe main categories
-                        [ ] Detailed characterization of Bayesian IRL. How our model relates to IRL. (Gabriel)
-                        [.] MAP
-                                [ ] Maximum entropy
-                                [ ] Maximum margin planning
-                        [ ] Cat 3
+                        [ ] Detailed characterization of BIRL. 
+                                [ ] How our model relates to IRL. (Gabriel)
+                                [ ] Policy Walk
+                        [.] Entropy
+                        [ ] Margin
                 [.] Explain what methods are inapplicable to our domain and why
                         [.] Occupancy rates for NN
         [.] Behavioural cloning
@@ -131,15 +131,15 @@ Report:
                                 [x] Leela chess zero (Alpha Zero)
                                 [x] Maia (Human like/Help humans improve)
                         [ ] State of modern open source chess
-                                [ ] Sunfish
-                                        [ ] Search strategy
-[ ] Methodology    
+                        [x] Sunfish
+                                [x] Search strategy
+[ ] Methodology
         [ ] Chosing a chess framework
                 [ ] HM Alpha Beta Quiscent search
                 [ ] Sunfish MTD-bi search
                         [ ] Hyper-parameters
                                 [ ] Time, max-depth
-                [ ] Inner RL problem still expensive
+                [x] Inner RL problem still expensive
         [ ] BIRL
                 [ ] Implementation details
                         [ ] Hyper-parameters
@@ -148,12 +148,12 @@ Report:
                         [ ] Stochastic searcher leads to potentially different Q-values due to varying max-depth, q-value compared for different problems
                         [ ] Compare with alpha-beta with a constant max depth 
         [ ] Sunfish GRW
-                [ ] Implementation details
-                [ ] Non convex optimisation (many local optima)
-        [ ] Maia
-                [ ] Training process
-                [ ] Replication of Maia
-                        [ ] Deprication
+                [x] Implementation details
+                [x] Non convex optimisation (many local optima)
+        [x] Maia
+                [x] Training process
+                        [ ] Failed attempt, Deprication
+                [x] Replication of Maia
 
 [.] Data (Fabian)
         [X] Overview of online chess data in 2024
@@ -164,7 +164,6 @@ Report:
         [X] Show distribution of [ELO, move ply] in train/test
                 [X] In Maia test set
                 [X] In 1100, 1900 ELO bin
-        [ ] Explanation of (python) tools needed to use sunfish GRW/our Maia implementation
 
 [ ] Results
         [ ] For a specific position show what players at different ELOs do
@@ -176,17 +175,18 @@ Report:
                 [ ] Energies over time
                 [ ] Accuracies over time
         [ ] Sunfish GRW plots
-                [ ] Material over time
-                [ ] Search depth per ELO
-                [ ] Mention computational cost of plots
-        [ ] Maia plots
-                [ ] Per ELO (same as in paper, correctly replicated)
-                [ ] Per ply
-                        [ ] Put default Sunfish on 1100 and 1900 plots
+                [ ] Run convergence with time limit 0.2 seconds
+                        [ ] 1100, 1900, sunfish/player moves, with/without pst
+                [x] Search depth per ELO
+                [x] Mention computational cost of plots
+        [x] Maia plots
+                [x] Per ELO (same as in paper, correctly replicated)
+                [x] Per ply
+                        [x] Put default Sunfish on 1100 and 1900 plots
 
 [ ] Discussion
-        [ ] Computational costs of methods
-        [ ] Bayesian Fail
+        [x] Computational costs of methods
+        [ ] Bayesian Optimisation Fail
         [ ] Player move accuracy predition
                 [ ] Large variance in data
                         [ ] Using the average move
@@ -194,19 +194,18 @@ Report:
                 [ ] Maia not that different from ELO to ELO
                 [ ] Sunfish the same across ELOs
                         [ ] Stockfish in Maia paper same accuracy as Sunfish 
-                [ ] 
         [ ] Why BIRL fails
                 [ ] BIRL Priors are uniform
                 [ ] Instability
                 [ ] Parameterising reward function
                 [ ] Why Leela chess feature vectors won't work (still fails)
         [ ] Sunfish Weight intertpretation
-                [ ] Pawn higher than expected
-                [ ] Pieces ranked according to conventional wisdom (affine transform)
+                [x] Pawn higher than expected
+                [x] Pieces ranked according to conventional wisdom (affine transform)
                         [ ] Position valued as expected (pawns+knights in focus)
-                [ ] Depth higher for higher ELO
-        [ ] Depth interpretation
-        [ ] Bridging the gap between symbolic and data driven AI to maintain explainability
+                [x] Depth higher for higher ELO
+        [x] Depth interpretation
+        [.] Bridging the gap between symbolic and data driven AI to maintain explainability
                 
 [ ] Conclusion
         [ ] Interpretation of weights shows little difference
