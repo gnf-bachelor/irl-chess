@@ -31,7 +31,7 @@ if __name__ == '__main__':
             raise Exception(f"No model found with the name {config_data['model']}")
 
     out_path = create_result_path(base_config_data, model_config_data, model_result_string, path_result=None)
-
+    print(f'Output path: {out_path}')
     websites_filepath = join(os.getcwd(), 'downloads', 'lichess_websites.txt')
     file_path_data = join(os.getcwd(), 'data', 'raw')
     pgn_paths = ['data/raw/lichess_db_standard_rated_2019-01.pgn']
