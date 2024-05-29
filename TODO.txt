@@ -110,11 +110,12 @@ Report:
                         [x] Pseudo-code
                         [ ] Figure, what?
                 [.] Describe main categories
+                        [ ] Margin
+                        [.] Entropy
                         [ ] Detailed characterization of BIRL. 
                                 [ ] How our model relates to IRL. (Gabriel)
                                 [ ] Policy Walk
-                        [.] Entropy
-                        [ ] Margin
+                        [ ] GAN
                 [.] Explain what methods are inapplicable to our domain and why
                         [.] Occupancy rates for NN
         [.] Behavioural cloning
@@ -132,9 +133,10 @@ Report:
                                 [x] Maia (Human like/Help humans improve)
                         [x] Sunfish
                                 [x] Search strategy
+                                [ ] Write pseudocode.
 [ ] Methodology
         [ ] Chosing a chess framework
-                [ ] HM Alpha Beta Quiscent search
+                [X] HM Alpha Beta Quiscent search
                 [ ] Sunfish MTD-bi search
                         [x] Hyper-parameters
                                 [x] Time, max-depth
