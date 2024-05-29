@@ -8,7 +8,7 @@
     "n_endgame": 100,
     "n_boards": 10000,
     "n_boards_val": 10,
-    "epochs": 200,
+    "epochs": 500,
     "max_hours": 100,
     "n_threads": -2,
     "plot_every": 20,
