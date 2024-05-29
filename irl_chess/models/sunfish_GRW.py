@@ -104,9 +104,15 @@ def run_sunfish_GRW(chess_boards, player_moves, config_data, out_path, validatio
 
 def val_sunfish_GRW(validation_set, out_path, config_data, epoch, use_player_moves, name):
     with (Parallel(n_jobs=config_data['n_threads']) as parallel):
-        df = pd.read_csv(join(out_path, 'weights', f'{epoch}.csv'))
+        csv_path = join(out_path, 'weights', f'{epoch}.csv')
+        print(f'Loading weights from {csv_path}')
+        df = pd.read_csv(csv_path)
         RP = df['Result'].values.flatten()
-        Rpst = df['RpstResult'].values.flatten()
+        try:
+            Rpst = df['RpstResult'].values.flatten()
+        except KeyError:
+            print(f'No Rpst for {out_path}, using array of 1s.')
+            Rpst = np.ones(6)
         pst_val = get_new_pst(RP, Rpst)
         return val_util(validation_set, out_path, config_data, parallel, pst_val, use_player_moves, name)
 
