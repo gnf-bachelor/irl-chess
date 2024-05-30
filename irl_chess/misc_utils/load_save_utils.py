@@ -14,7 +14,7 @@ import pandas as pd
 from tqdm import tqdm
 from irl_chess.chess_utils.sunfish_utils import board2sunfish, str_to_sunfish_move
 from irl_chess.data.make_dataset import download_lichess_pgn
-from irl_chess.visualizations import char_to_idxs, plot_R_weights
+from irl_chess.visualizations import char_to_idxs, plot_R_weights, load_weights_epoch
 from irl_chess.misc_utils.utils import reformat_list
 
 
@@ -118,6 +118,16 @@ def create_result_path(base_config_data, model_config_data, model_result_string,
     os.makedirs(out_path, exist_ok=True)
     if copy_configs_flag: copy_configs(out_path, model_name=base_config_data['model'])
     return out_path
+
+def load_Rs(config_data):
+    RP = np.array(config_data['RP_start'], dtype=float)
+    assert len(RP) == 6, f"RP must be of length 6 but was {RP}"
+    Rpst = np.array(config_data['Rpst_start'], dtype=float)
+    assert len(Rpst) == 6, f"Rpst must be of length 6 but was {Rpst}"
+    RH = np.array(config_data['RH_start'], dtype=float) 
+    assert len(RH) == 3, f"RH must be of length 3 but was {RH}"
+    RH[np.invert(config_data['include_PA_KS_PS'])] = 0 # Set the values to 0 if they are not included in the model.
+    return RP, Rpst, RH
 
 
 # ================= Loading chess games =================
@@ -274,6 +284,50 @@ def get_states(websites_filepath, file_path_data, config_data, out_path, use_ply
 
     return boards, moves
 
+# ================= Loading Previous Results =================
+def load_previous_results(out_path, epoch = 0):
+    _epoch = deepcopy(epoch)
+    RPs, Rpsts, RHs= [], [], []
+    while True:
+        RP_loaded, Rpst_loaded, RH_loaded = (load_weights_epoch(out_path, result, _epoch) for result in ['Result', 'RpstResult', 'RHResult'])
+        # I have to check like this because they are arrays of ambigous truth type.
+        if RP_loaded is not None or Rpst_loaded is not None or RH_loaded is not None: 
+            
+            # Use loaded values if available, otherwise keep current values
+            RP = RP_loaded if RP_loaded is not None else None
+            Rpst = Rpst_loaded if Rpst_loaded is not None else None
+            RH = RH_loaded if RH_loaded is not None else None
+
+            
+            RPs.append(RP)
+            Rpsts.append(Rpst)
+            RHs.append(RH)
+            
+            print(f'Results loaded for epoch {epoch + 1}, continuing')
+            assert RP is not None and Rpst is not None and RH is not None, 'All weights must be loaded, even if they are 0'
+            _epoch += 1
+        else:
+            break
+    if _epoch > epoch: print(f"Results loaded for {_epoch+1} first epochs.")
+    return RPs, Rpsts, RHs, _epoch # Return the number of the epoch without data.
+
+def load_accuracies(out_path, epoch = 0):
+    _epoch = deepcopy(epoch)
+    accuracies = []
+    while True:
+        (best_acc, temp_acc) = (load_weights_epoch(out_path, result, _epoch) for result in ['best_acc', 'temp_acc'])
+        if best_acc is not None or temp_acc is not None:
+
+            # Use loaded values if available, otherwise keep current values
+            best_accuracy = best_acc if best_acc is not None else None
+            temp_accuracy = temp_acc if temp_acc is not None else None
+            accuracies.append((best_acc, temp_acc))
+            # print(f'Accuracy loaded for epoch {epoch + 1}, continuing')
+            _epoch += 1
+        else:
+            break
+    if _epoch > epoch: print(f"Accuracies loaded for {_epoch+1} first epochs.")
+    return accuracies, _epoch
 
 # ================= Processing results =================
         
@@ -292,11 +346,19 @@ def process_epoch(RP, Rpst, RH, epoch, config_data, out_path, **kwargs):
     RP = RP.astype(float)
     Rpst = Rpst.astype(float)
     RH_padded = RH_padded.astype(float)
+
+    # Get accuracy and ensure it is a list of two numbers
+    accuracies = kwargs.get('accuracies', (np.nan, np.nan))
+    assert len(accuracies) == 2, f"Accuracy should be a tuple of two numbers, got: {accuracies}"
+    (best_acc, temp_acc) = accuracies
+    
     # Create DataFrame
     df = pd.DataFrame({
         'Result': RP,
         'RpstResult': Rpst,
-        'RHResult': RH_padded
+        'RHResult': RH_padded,
+        'best_acc': [best_acc] * len(RP),
+        'temp_acc': [temp_acc] * len(RP),
     })
 
     # Write to CSV
@@ -317,6 +379,10 @@ def process_epoch(RP, Rpst, RH, epoch, config_data, out_path, **kwargs):
                        out_path=out_path,
                        epoch=epoch,
                        kwargs=kwargs)
+        
+    
+
+    
 
 
 def next_available_epoch(out_path):

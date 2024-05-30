@@ -4,14 +4,13 @@
   "chess_policy": "sunfish",
 
   "depth": 3,
-  "pst": false,
   "quiesce": false,
 
   "sunfish_things": 0,
-  "time_limit": 1,
+  "time_limit": 0.2,
 
-  "noise_distribution": "step",
+  "noise_distribution": "gaussian",
   "delta": 40,
   "decay": 1,
-  "decay_step": 30
+  "decay_step": 1000
 }

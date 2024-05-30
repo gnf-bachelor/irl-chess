@@ -1,8 +1,8 @@
 {
-  "noise_distribution": "step",
+  "noise_distribution": "gaussian",
   "delta": 40,
-  "decay": 0.5,
-  "decay_step": 40,
-  "time_limit": 1,
+  "decay": 1,
+  "decay_step": 1000,
+  "time_limit": 0.2,
   "version": "v0_multi"
 }
