@@ -3,7 +3,7 @@
 #BSUB -e /zhome/de/d/169059/Desktop/irl-chess/hpc-logs/sunfish-run/%J.err
 #BSUB -q hpc
 #BSUB -n 24
-#BSUB -R "rusage[mem=1G]"
+#BSUB -R "rusage[mem=2G]"
 #BSUB -R "span[hosts=1]"
 #BSUB -W 24:00
 ### -- send notification at start --
