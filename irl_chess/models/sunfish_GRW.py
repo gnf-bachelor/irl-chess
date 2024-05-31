@@ -99,6 +99,9 @@ def run_sunfish_GRW(chess_boards, player_moves, config_data, out_path, validatio
             accuracies.append((acc, last_acc))
             RPs.append(RP), Rpsts.append(Rpst), RHs.append(RH)
 
+            with open(join(out_path, 'accuracies'), 'wb') as file:
+                pickle.dump(accuracies, file)
+
             process_epoch(RP, Rpst, RH, epoch, config_data, out_path)
 
             print(f'Current sunfish accuracy: {acc}, best: {last_acc}')
