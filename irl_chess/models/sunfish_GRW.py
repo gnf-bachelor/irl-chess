@@ -18,7 +18,7 @@ from irl_chess.chess_utils.sunfish_utils import board2sunfish, sunfish2board, su
 from irl_chess.visualizations import char_to_idxs, load_weights_epoch
 
 from irl_chess.misc_utils.utils import reformat_list
-from irl_chess.misc_utils.load_save_utils import process_epoch, load_Rs, load_previous_results
+from irl_chess.misc_utils.load_save_utils import process_epoch, load_Rs, load_previous_results, save_array
 from irl_chess.chess_utils.sunfish_utils import get_new_pst, str_to_sunfish_move, check_moved_same_color, eval_pos, eval_pos_pst
 from irl_chess.stat_tools.stat_tools import wilson_score_interval
 
@@ -94,6 +94,9 @@ def run_sunfish_GRW(chess_boards, player_moves, config_data, out_path, validatio
                 val_util(validation_set, out_path, config_data, parallel, pst_val, use_player_moves=use_player_move, name=epoch)
         pst_val = get_new_pst(RP, Rpst)
         out = val_util(validation_set, out_path, config_data, parallel, pst_val, use_player_moves=use_player_move, name=epoch)
+        best_acc_list, temp_acc_list = zip(*accuracies) 
+        save_array(best_acc_list, "best_accuracies", out_path)
+        save_array(temp_acc_list, "temp_accuracies", out_path)
         return out
 
 

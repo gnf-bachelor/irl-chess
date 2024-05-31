@@ -12,7 +12,7 @@ from irl_chess import pst
 from irl_chess.visualizations import char_to_idxs
 
 from irl_chess.misc_utils.utils import reformat_list
-from irl_chess.misc_utils.load_save_utils import process_epoch, load_Rs, load_previous_results
+from irl_chess.misc_utils.load_save_utils import process_epoch, load_Rs, load_previous_results, save_array
 from irl_chess.chess_utils.sunfish_utils import board2sunfish, get_new_pst, str_to_sunfish_move, eval_pos, sunfish_move, eval_pos_pst
 from irl_chess.chess_utils.BIRL_utils import pi_alpha_beta_search, pi_alpha_beta_search_par, \
     Qeval_chessBoard, Qeval_chessBoard_par, sunfish_search_par, bookkeeping, perturb_reward, log_prob_dist, Qeval_sunfishBoard_par
@@ -114,4 +114,6 @@ def run_BIRL(chess_boards, player_moves, config_data, out_path, validation_set):
             # if ((epoch + 1) % config_data['val_every']) == 0 or (epoch + 1) == config_data['epochs']:
             #     pst_val = get_new_pst(R)
             #     val_util(validation_set, out_path, config_data, parallel, pst_val, name=epoch)
+        save_array(accuracies, "temp_accuracies", out_path)
+        save_array(energies, "energies", out_path)
         return accuracies

@@ -346,19 +346,12 @@ def process_epoch(RP, Rpst, RH, epoch, config_data, out_path, **kwargs):
     RP = RP.astype(float)
     Rpst = Rpst.astype(float)
     RH_padded = RH_padded.astype(float)
-
-    # Get accuracy and ensure it is a list of two numbers
-    accuracies = kwargs.get('accuracies', (np.nan, np.nan))
-    assert len(accuracies) == 2, f"Accuracy should be a tuple of two numbers, got: {accuracies}"
-    (best_acc, temp_acc) = accuracies
     
     # Create DataFrame
     df = pd.DataFrame({
         'Result': RP,
         'RpstResult': Rpst,
         'RHResult': RH_padded,
-        'best_acc': [best_acc] * len(RP),
-        'temp_acc': [temp_acc] * len(RP),
     })
 
     # Write to CSV
@@ -380,7 +373,16 @@ def process_epoch(RP, Rpst, RH, epoch, config_data, out_path, **kwargs):
                        epoch=epoch,
                        kwargs=kwargs)
         
-    
+def save_array(array, name, out_path):
+
+    csv_path = join(out_path, 'weights', f'{name}.csv')
+    os.makedirs(os.path.dirname(csv_path), exist_ok=True)
+    # Create DataFrame
+    df = pd.DataFrame({
+        name: np.array(array, dtype=float),
+    })
+    # Write to CSV
+    df.to_csv(csv_path, index=False)    
 
     
 
