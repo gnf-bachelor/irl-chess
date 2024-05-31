@@ -16,7 +16,7 @@
 
     "plot_char": ["P", "N", "B", "R", "Q"],
     "permute_char": ["N", "B", "R", "Q"],
-    "RP_start": [1000, 1000, 1000, 1000, 1000, 60000],
+    "RP_start": [101, 101, 101, 101, 101, 60000],
 
     "plot_pst_char": ["P", "N", "B", "R", "Q", "K"],
     "permute_pst_char": ["P", "N", "B", "R", "Q", "K"],
