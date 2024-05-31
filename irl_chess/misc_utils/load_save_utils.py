@@ -303,8 +303,9 @@ def load_previous_results(out_path, epoch = 0):
             Rpsts.append(Rpst)
             RHs.append(RH)
             
-            print(f'Results loaded for epoch {epoch + 1}, continuing')
+            print(f'Results loaded for epoch {_epoch + 1}, continuing')
             assert RP is not None and Rpst is not None and RH is not None, 'All weights must be loaded, even if they are 0'
+            assert _epoch < 1000
             _epoch += 1
         else:
             break
