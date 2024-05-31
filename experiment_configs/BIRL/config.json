@@ -1,7 +1,7 @@
 {
   "alpha": 1e-1,
 
-  "chess_policy": "alpha_beta",
+  "chess_policy": "sunfish",
 
   "depth": 3,
   "quiesce": false,
