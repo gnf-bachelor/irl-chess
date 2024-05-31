@@ -196,3 +196,6 @@ results/*
 # exception to the rule
 !results/.gitkeep 
 /maia_chess
+
+# Gabriel's python environment
+/bachelor

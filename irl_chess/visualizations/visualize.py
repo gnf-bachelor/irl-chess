@@ -30,7 +30,7 @@ def idxs_to_Hchar(idx_list: list[int]):
     idx_to_char = {0: "PA", 1: "KS", 2: "PS"}
     return [idx_to_char[idx] for idx in idx_list]
 
-def load_weights(out_path, result: str, start_weight_idx=0, epoch=None):
+def load_weights(out_path, result: str, start_weight_idx=0, epoch=None): # Load all weights up to epoch
     weights = []
     for i in range(start_weight_idx, epoch+1, ):
         weights_i = load_weights_epoch(out_path, result, epoch = i)
