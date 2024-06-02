@@ -3,6 +3,7 @@ import os
 import pickle
 from os.path import join
 from time import time
+import logging
 
 import chess
 import chess.pgn
@@ -80,15 +81,11 @@ def run_sunfish_GRW(chess_boards, player_moves, config_data, out_path, validatio
             accuracies.append((best_acc, temp_acc))
             RPs.append(RP), Rpsts.append(Rpst), RHs.append(RH)
 
-            best_acc_list, temp_acc_list = zip(*accuracies)
-            save_array(best_acc_list, "best_accuracies", out_path)
-            save_array(temp_acc_list, "temp_accuracies", out_path)
-
             process_epoch(RP, Rpst, RH, epoch, config_data, out_path)
 
-            print(f'Current sunfish accuracy: {temp_acc}, best: {best_acc}')
-            print(f'Best RP: {RP}')
-            print(f'Best Rpst: {Rpst}')
+            logging.info(f'Current sunfish accuracy: {temp_acc}, best: {best_acc}')
+            logging.info(f'Best RP: {RP}')
+            logging.info(f'Best Rpst: {Rpst}')
             if time() - start_time > config_data['max_hours'] * 60 * 60:
                 print(f'Reached time limit, exited at epoch {epoch}')
                 break
@@ -98,6 +95,9 @@ def run_sunfish_GRW(chess_boards, player_moves, config_data, out_path, validatio
                 val_util(validation_set, out_path, config_data, parallel, pst_val, use_player_moves=use_player_move, name=epoch)
         pst_val = get_new_pst(RP, Rpst)
         out = val_util(validation_set, out_path, config_data, parallel, pst_val, use_player_moves=use_player_move, name=epoch)
+        best_acc_list, temp_acc_list = zip(*accuracies)
+        save_array(best_acc_list, "best_accuracies", out_path)
+        save_array(temp_acc_list, "temp_accuracies", out_path)
         return out
 
 

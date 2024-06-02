@@ -16,7 +16,7 @@ from irl_chess.chess_utils.sunfish_utils import board2sunfish, str_to_sunfish_mo
 from irl_chess.data.make_dataset import download_lichess_pgn
 from irl_chess.visualizations import char_to_idxs, plot_R_weights, load_weights_epoch
 from irl_chess.misc_utils.utils import reformat_list
-
+import logging
 
 # ================= Load configs and prepare output =================
 pattern_time = r'%clk (\d+):(\d+):(\d+)'
@@ -260,7 +260,7 @@ def get_states(websites_filepath, file_path_data, config_data, out_path, use_ply
                     pbar.update(pgn.tell() - progress)
                     progress = pgn.tell()
                     if len(chess_boards) > last_len and verbose:
-                        print(f'Found {len(chess_boards)}/{config_data["n_boards"]} boards so far from {n_games} games')
+                        logging.info(f'Found {len(chess_boards)}/{config_data["n_boards"]} boards so far from {n_games} games')
                         last_len = len(chess_boards)
                         n_games += 1
                     if size <= progress:
