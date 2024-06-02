@@ -2,6 +2,7 @@ from time import time
 import numpy as np
 from tqdm import tqdm
 from joblib import Parallel, delayed
+import logging
 from irl_chess.misc_utils.load_save_utils import process_epoch, load_Rs, load_previous_results, save_array
 from irl_chess.chess_utils.sunfish_utils import board2sunfish, get_new_pst, str_to_sunfish_move, eval_pos, sunfish_move, eval_pos_pst
 from irl_chess.chess_utils.BIRL_utils import pi_alpha_beta_search, pi_alpha_beta_search_par, \

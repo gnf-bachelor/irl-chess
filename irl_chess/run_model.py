@@ -1,13 +1,14 @@
 import os
 from os.path import join
-
 import chess
+import logging
 
 from irl_chess.misc_utils.utils import union_dicts
 from irl_chess.misc_utils.load_save_utils import fix_cwd, load_config, create_result_path, get_states
+from irl_chess import load_maia_test_data
 
 if __name__ == '__main__':
-    from irl_chess import load_maia_test_data
+    logging.basicConfig(level=logging.INFO)
     fix_cwd()
     base_config_data, model_config_data = load_config()
     config_data = union_dicts(base_config_data, model_config_data)
@@ -48,11 +49,14 @@ if __name__ == '__main__':
 
     val_df = load_maia_test_data(config_data['min_elo'], config_data['n_boards_val'])
     validation_set = list(zip([chess.Board(board_str) for board_str in val_df['board']], val_df['move']))
-
-    model(
-        chess_boards=chess_boards,
-        player_moves=player_moves,
-        config_data=config_data,
-        out_path=out_path,
-        validation_set=validation_set
-    )
+    
+    for i in range(1, config_data['run_n_times']+1):
+        out_path_i = out_path + f'_{i}'
+        print(f'Output path: {out_path_i}')
+        model(
+            chess_boards=chess_boards,
+            player_moves=player_moves,
+            config_data=config_data,
+            out_path=out_path_i,
+            validation_set=validation_set
+        )

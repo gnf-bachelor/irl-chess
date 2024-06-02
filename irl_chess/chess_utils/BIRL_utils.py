@@ -92,8 +92,10 @@ def sunfish_search(states, actions, RP, Rpst, RH, config_data, parallel):
         Qpi_policy_R[i], pi[i], pi_moves[i] = eval, board_final_opposite_player, best_move
     return pi, Qpi_policy_R, pi_moves
 
+import logging
 def sunfish_search_par(states, actions, RP, Rpst, RH, config_data, parallel):
     def evaluate_single_state(i, s, pst):
+        logging.debug(f"Evaluating state {i}")
         assert isinstance(s, Position), f"For sunfish policy, states must be of type Position, but got {type(s)}"
         # Sunfish always seeks to maximize the score and views each position as white.
         if actions is not None:
@@ -109,11 +111,15 @@ def sunfish_search_par(states, actions, RP, Rpst, RH, config_data, parallel):
                 sunfish_move(s, pst, time_limit=config_data['time_limit'], min_depth=2, return_best_board_found_tuple=True)
             eval = best_board_found_tuple[1]
 
-        board_final_opposite_player = (best_board_found_tuple[0], best_board_found_tuple[2])
+        board_final_opposite_player = (best_board_found_tuple[0], best_board_found_tuple[2]) # Is a tuple of (board, opposite_player)
         return eval, board_final_opposite_player, best_move
 
     pst = get_new_pst(RP, Rpst)
+    if actions is not None and len(states) != len(actions):
+        raise ValueError("The length of states and actions must be the same.")
+    logging.debug("Starting parallel execution")
     results = parallel(delayed(evaluate_single_state)(i, s, pst) for i, s in enumerate(states))
+    logging.debug("Parallel execution completed")
 
     pi, Qpi_policy_R, pi_moves = zip(*[(board_final_opposite_player, eval, best_move) for eval, board_final_opposite_player, best_move in results])
     Qpi_policy_R = np.array(Qpi_policy_R)

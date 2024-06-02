@@ -3,6 +3,7 @@ import numpy as np
 from tqdm import tqdm
 import copy
 from time import time
+import logging
 
 from irl_chess.chess_utils.sunfish import Position, Move, Searcher, render, pst, pst_only, pst_only_padded, piece
 
@@ -41,12 +42,18 @@ def sunfish_move(state, pst, time_limit, move_only=False, max_depth=1000, run_at
 
 def sunfish_best_board(state, pst, tp_move: dict):
     state_depth = 0
+    seen_states = set()
     while state in tp_move:
+        if state in seen_states:
+            logging.warning(f"Cycle detected at state: {state}. Breaking out of the loop.")
+            break
+        seen_states.add(state)
+
         best_move = tp_move[state]
         next_state = state.move(best_move, pst)
         state = next_state
         state_depth += 1
-    assert state_depth > 0
+    assert state_depth > 0, "State depth must be greater than zero after processing moves."
     # print(state_depth)
     score = eval_pos_pst(state, pst)*(-1 if state_depth % 2 else 1) # Keep trach of whether it is white's or black's turn
     return state, score, bool(state_depth % 2) # state, score, opposite players turn or not
