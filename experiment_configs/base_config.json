@@ -17,7 +17,7 @@
 
     "plot_char": ["P", "N", "B", "R", "Q"],
     "permute_char": ["N", "B", "R", "Q"],
-    "RP_start": [100, 100, 100, 100, 100, 60000],
+    "RP_start": [100, 102, 102, 102, 102, 60000],
 
     "plot_pst_char": ["P", "N", "B", "R", "Q", "K"],
     "permute_pst_char": [],
@@ -34,7 +34,7 @@
     "RH_true": [0, 0, 0],
 
     "permute_how_many": 1, 
-    "model": "BIRL",
+    "model": "sunfish_GRW",
 
     "board_translation": "none",
     "move_percentage_data": false
