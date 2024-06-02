@@ -136,6 +136,8 @@ def plot_R_weights(config_data, out_path, start_weight_idx=0, legend_names=['P',
     bayesian_args = kwargs['bayesian_args'] if 'bayesian_args' in kwargs else None
     filename_addition = kwargs['filename_addition'] if 'filename_addition' in kwargs else ''
     show = kwargs.get('show', False)
+    close_when_done = kwargs.get('close_when_done', True)
+    save_path = kwargs.get('save_path', None)
 
     plot_path = os.path.join(out_path, 'plots')
     os.makedirs(plot_path, exist_ok=True)
@@ -147,7 +149,7 @@ def plot_R_weights(config_data, out_path, start_weight_idx=0, legend_names=['P',
         weights = load_weights(out_path, 'Result', start_weight_idx=start_weight_idx, epoch=epoch)
         RP_true = np.array(config_data.get('RP_true', [100, 280, 320, 479, 929, 60000]))
         plot_weights(weights, RP_true, start_weight_idx, plot_char, legend_names, config_data, RP_plot_path, epoch+1,
-                     filename_addition= 'RP'+filename_addition, show=show)
+                     filename_addition= 'RP'+filename_addition, show=show, close_when_done=close_when_done, save_path=save_path)
 
     plot_pst_char = char_to_idxs(config_data['plot_pst_char'])
     if plot_pst_char:
@@ -156,7 +158,7 @@ def plot_R_weights(config_data, out_path, start_weight_idx=0, legend_names=['P',
         weights = load_weights(out_path, 'RpstResult', start_weight_idx=start_weight_idx, epoch=epoch)
         Rpst_true = np.array(config_data.get('Rpst_true', [1, 1, 1, 1, 1, 1]))
         plot_weights(weights, Rpst_true, start_weight_idx, plot_pst_char, legend_names, config_data, Rpst_plot_path, epoch+1,
-                     filename_addition= 'Rpst'+filename_addition, show=show)
+                     filename_addition= 'Rpst'+filename_addition, show=show, save_path=save_path)
 
     plot_H_char = Hbool_to_idxs(config_data['plot_H'])
     if plot_H_char:
@@ -165,26 +167,29 @@ def plot_R_weights(config_data, out_path, start_weight_idx=0, legend_names=['P',
         weights = load_weights(out_path, 'RHResult', start_weight_idx=start_weight_idx, epoch=epoch)
         RH_true = np.array(config_data.get('RH_true', [0, 0, 0])) # Perhaps delete this, as there is no ground truth. 
         plot_weights(weights, RH_true, start_weight_idx, plot_H_char, ['PA','KS','PS'], config_data, RH_plot_path, epoch+1,
-                     filename_addition= 'RH'+filename_addition, show=show)
+                     filename_addition= 'RH'+filename_addition, show=show, save_path=save_path)
         
 
     
-def plot_weights(weights, weights_true, start_weight_idx, plot_char, legend_names, config_data, plot_path, epoch, filename_addition, show=False):
+def plot_weights(weights, weights_true, start_weight_idx, plot_char, legend_names, config_data, plot_path, epoch, filename_addition, show=False, close_when_done=True, save_path=None):
     X = np.repeat(np.arange(0, weights.shape[0], 1) + start_weight_idx,
                   len(plot_char)).reshape((-1, len(plot_char)))
     colors = sns.color_palette(sunfish_palette_name, n_colors=len(plot_char))
+    alpha = config_data.get('alpha', 1)
     for x, y, color, plot_char in zip(X.T, weights[:, plot_char].T, colors, plot_char):
-        plt.plot(x, y, c=color, label=legend_names[plot_char])
+        plt.plot(x, y, c=color, label=legend_names[plot_char] if config_data.get('add_legend', True) else None, alpha=alpha)
         if len(weights_true): plt.hlines(weights_true[plot_char], 0, x[-1], colors=color, linestyles='--')
     plt.title(f'Sunfish weights over time for ELO {config_data["min_elo"]}-{config_data["max_elo"]} on '
-              f'{"player" if "player" in config_data["move_function"] else "sunfish"} moves')
+              f'{"player" if "player" in config_data["move_function"] else "sunfish"} moves') if not config_data.get('plot_title', False) else plt.title(config_data['plot_title'])
     plt.xlabel('Epochs')
     plt.ylabel('Weight values')
     plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
     plt.tight_layout()
-    plt.savefig(join(plot_path, f'weights_{epoch}{filename_addition}.svg'))
+    os.makedirs(plot_path, exist_ok=True)
+    plt.savefig(join(plot_path, f'weights_{epoch}{filename_addition}.svg')) if save_path is None else plt.savefig(save_path)
     if show: plt.show()
-    plt.close()
+    if close_when_done: plt.close()
+
 
 if __name__ == '__main__':
     from irl_chess import fix_cwd, load_config, load_model_functions, union_dicts, create_result_path
