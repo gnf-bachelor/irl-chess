@@ -80,8 +80,9 @@ def run_sunfish_GRW(chess_boards, player_moves, config_data, out_path, validatio
             accuracies.append((best_acc, temp_acc))
             RPs.append(RP), Rpsts.append(Rpst), RHs.append(RH)
 
-            with open(join(out_path, 'accuracies'), 'wb') as file:
-                pickle.dump(accuracies, file)
+            best_acc_list, temp_acc_list = zip(*accuracies)
+            save_array(best_acc_list, "best_accuracies", out_path)
+            save_array(temp_acc_list, "temp_accuracies", out_path)
 
             process_epoch(RP, Rpst, RH, epoch, config_data, out_path)
 
@@ -97,9 +98,6 @@ def run_sunfish_GRW(chess_boards, player_moves, config_data, out_path, validatio
                 val_util(validation_set, out_path, config_data, parallel, pst_val, use_player_moves=use_player_move, name=epoch)
         pst_val = get_new_pst(RP, Rpst)
         out = val_util(validation_set, out_path, config_data, parallel, pst_val, use_player_moves=use_player_move, name=epoch)
-        best_acc_list, temp_acc_list = zip(*accuracies) 
-        save_array(best_acc_list, "best_accuracies", out_path)
-        save_array(temp_acc_list, "temp_accuracies", out_path)
         return out
 
 

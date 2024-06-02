@@ -39,12 +39,25 @@ def run_loop(plot_weights, plot_accuracies, move_functions, initial_weights, elo
                     save_path = join(os.getcwd(), 'results', 'plots', 'data_section',
                                      f'trace_plot_accuracies_{move_function}_{base_config["RP_start"][1]}.svg')
 
-                    acc_path = join(out_path, 'accuracies')
-                    with open(acc_path, 'rb') as f:
-                        acc = pickle.load(f)
+                    try:
+                        acc_path = join(out_path, 'accuracies')
+                        with open(acc_path, 'rb') as f:
+                            acc = pickle.load(f)
+                        best_acc_list = [el[0] for el in acc]
+                        temp_acc_list = [el[1] for el in acc]
+                        save_array(best_acc_list, "best_accuracies", out_path)
+                        save_array(temp_acc_list, "temp_accuracies", out_path)
+                    except FileNotFoundError:
+                        print(f'No pickled accuracies, using csvs')
+                        pass
+                    df_best = pd.read_csv(join(out_path, 'weights', 'best_accuracies.csv', ))
+                    df_temp = pd.read_csv(join(out_path, 'weights', 'temp_accuracies.csv', ))
+                    best_acc_list = df_best.values.flatten()
+                    temp_acc_list = df_temp.values.flatten()
+
                     plt.title(f'Train Accuracy using {move_function.replace("_", " ")}s')
-                    plt.plot([el[0] for el in acc], label=f'Best {elo}', alpha=base_config['alpha']+.2, color=color_palette[2*i])
-                    plt.plot([el[1] for el in acc], label=f'Epoch {elo}', alpha=base_config['alpha'], color=color_palette[2*i+1])
+                    plt.plot(best_acc_list, label=f'Best {elo}', alpha=base_config['alpha']+.2, color=color_palette[2*i])
+                    plt.plot(temp_acc_list, label=f'Epoch {elo}', alpha=base_config['alpha'], color=color_palette[2*i+1])
                     plt.ylabel('Accuracy')
                     plt.xlabel('Epoch')
                     plt.grid(True)
@@ -57,7 +70,8 @@ def run_loop(plot_weights, plot_accuracies, move_functions, initial_weights, elo
 
 
 if __name__ == '__main__':
-    from irl_chess import load_config, create_result_path, sunfish_native_result_string, plot_R_weights, load_weights
+    from irl_chess import load_config, create_result_path, sunfish_native_result_string, plot_R_weights, load_weights, \
+    save_array
 
     base_config, model_config = load_config('sunfish_GRW')
 
