@@ -51,7 +51,9 @@ if __name__ == '__main__':
     validation_set = list(zip([chess.Board(board_str) for board_str in val_df['board']], val_df['move']))
     
     for i in range(1, config_data['run_n_times']+1):
-        out_path_i = out_path + f'_{i}'
+        out_path_i = join(out_path, f'run_{i}')
+        os.makedirs(out_path_i, exist_ok=True)
+
         print(f'Output path: {out_path_i}')
         model(
             chess_boards=chess_boards,
