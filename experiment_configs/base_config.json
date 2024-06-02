@@ -8,7 +8,7 @@
     "n_endgame": 100,
     "n_boards": 10000,
     "n_boards_val": 10,
-    "epochs": 300,
+    "epochs": 500,
     "max_hours": 100,
     "n_threads": -1,
     "plot_every": 20,
@@ -28,7 +28,7 @@
     "permute_H": [true, true, true],
     "RH_start": [0, 0, 0],
 
-    "move_function": "player_move",
+    "move_function": "sunfish_move",
     "RP_true": [100, 280, 320, 479, 929, 60000],
     "Rpst_true": [1, 1, 1, 1, 1, 1],
     "RH_true": [0, 0, 0],
