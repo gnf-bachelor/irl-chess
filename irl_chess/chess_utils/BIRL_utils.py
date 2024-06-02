@@ -16,10 +16,10 @@ def log_prob_dist(R, energy, alpha, prior=lambda R: 1):
     log_prob = alpha * energy + np.log(prior(R))
     return log_prob
     
-def PolicyIteration(states, actions, RP, Rpst, config_data):
+def PolicyIteration(states, actions, RP, Rpst, RH, config_data, parallel = None):
     pass
 
-def pi_alpha_beta_search(states, actions, RP, Rpst, config_data, parallel):
+def pi_alpha_beta_search(states, actions, RP, Rpst, RH, config_data, parallel = None):
     pi = [None] * len(states)
     Qpi_policy_R = np.zeros(len(states))
     pi_moves = [None] * len(states)
@@ -38,12 +38,12 @@ def pi_alpha_beta_search(states, actions, RP, Rpst, config_data, parallel):
             else:
                 raise TypeError
         eval, board_final, move_trajectory = alpha_beta_search(board=s, RP=RP, depth=config_data['depth'] - (1 if actions is not None else 0), 
-                                                 maximize=s.turn, Rpst = Rpst, quiesce=config_data['quiesce'])
+                                                 maximize=s.turn, Rpst = Rpst, RH=RH, quiesce=config_data['quiesce'])
         if actions is not None: s.pop()
         Qpi_policy_R[i], pi[i], pi_moves[i] = eval*reward_sign, board_final, move_trajectory[0]
     return pi, Qpi_policy_R, pi_moves
 
-def pi_alpha_beta_search_par(states, actions, RP, Rpst, config_data, parallel):
+def pi_alpha_beta_search_par(states, actions, RP, Rpst, RH, config_data, parallel):
     def evaluate_single_state(i, s):
         # Interpret following policy pi as alpha_beta searching with evaluation function R.
         assert isinstance(s, chess.Board), f"For alpha beta policy, states must be of type chess.Board, but got {type(s)}"
@@ -57,8 +57,8 @@ def pi_alpha_beta_search_par(states, actions, RP, Rpst, config_data, parallel):
             else:
                 raise TypeError
         eval, board_final, move_trajectory = alpha_beta_search(
-            board=s, RR=RP, depth=config_data['depth'] - (1 if actions is not None else 0),
-            maximize=s.turn, Rpst = Rpst, quiesce=config_data['quiesce']
+            board=s, RP=RP, depth=config_data['depth'] - (1 if actions is not None else 0),
+            maximize=s.turn, Rpst = Rpst, RH=RH, quiesce=config_data['quiesce']
         )
         if actions is not None: s.pop()
         return eval * reward_sign, board_final, move_trajectory[0]
@@ -68,7 +68,7 @@ def pi_alpha_beta_search_par(states, actions, RP, Rpst, config_data, parallel):
     Qpi_policy_R = np.array(Qpi_policy_R)
     return list(pi), Qpi_policy_R, list(pi_moves)
 
-def sunfish_search(states, actions, RP, Rpst, config_data, parallel):
+def sunfish_search(states, actions, RP, Rpst, RH, config_data, parallel):
     pi = [None] * len(states)
     Qpi_policy_R = np.zeros(len(states))
     pi_moves = [None] * len(states)
@@ -92,8 +92,10 @@ def sunfish_search(states, actions, RP, Rpst, config_data, parallel):
         Qpi_policy_R[i], pi[i], pi_moves[i] = eval, board_final_opposite_player, best_move
     return pi, Qpi_policy_R, pi_moves
 
-def sunfish_search_par(states, actions, RP, Rpst, config_data, parallel):
+import logging
+def sunfish_search_par(states, actions, RP, Rpst, RH, config_data, parallel):
     def evaluate_single_state(i, s, pst):
+        logging.debug(f"Evaluating state {i}")
         assert isinstance(s, Position), f"For sunfish policy, states must be of type Position, but got {type(s)}"
         # Sunfish always seeks to maximize the score and views each position as white.
         if actions is not None:
@@ -109,36 +111,40 @@ def sunfish_search_par(states, actions, RP, Rpst, config_data, parallel):
                 sunfish_move(s, pst, time_limit=config_data['time_limit'], min_depth=2, return_best_board_found_tuple=True)
             eval = best_board_found_tuple[1]
 
-        board_final_opposite_player = (best_board_found_tuple[0], best_board_found_tuple[2])
+        board_final_opposite_player = (best_board_found_tuple[0], best_board_found_tuple[2]) # Is a tuple of (board, opposite_player)
         return eval, board_final_opposite_player, best_move
 
     pst = get_new_pst(RP, Rpst)
+    if actions is not None and len(states) != len(actions):
+        raise ValueError("The length of states and actions must be the same.")
+    logging.debug("Starting parallel execution")
     results = parallel(delayed(evaluate_single_state)(i, s, pst) for i, s in enumerate(states))
+    logging.debug("Parallel execution completed")
 
     pi, Qpi_policy_R, pi_moves = zip(*[(board_final_opposite_player, eval, best_move) for eval, board_final_opposite_player, best_move in results])
     Qpi_policy_R = np.array(Qpi_policy_R)
     return list(pi), Qpi_policy_R, list(pi_moves)
 
-def Qeval(pi, states, RP, parallel, Rpst = None, evaluation_function = evaluate_board):
+def Qeval(pi, states, RP, Rpst, RH, parallel, evaluation_function = evaluate_board):
     pass
 
-def Qeval_chessBoard(pi, states, RP, parallel = None, Rpst = False, evaluation_function = evaluate_board):
+def Qeval_chessBoard(pi, states, RP, Rpst, RH, parallel = None, evaluation_function = evaluate_board):
     Qpi_R = np.zeros(len(states))
     for i, s_final in enumerate(pi):
         assert isinstance(s_final, chess.Board), f"For alpha beta policy, states must be of type chess.Board, but got {type(s_final)}"
         reward_sign = 1 if states[i].turn else -1 # White seeks to maximize and black to minimize, so the reward for black is the flipped evaluation.
-        Qpi_R[i] = no_moves_eval(s_final, RP, Rpst, evaluation_function)[0] * reward_sign
+        Qpi_R[i] = no_moves_eval(s_final, RP, Rpst, RH=RH, evaluation_function=evaluation_function)[0] * reward_sign
     return Qpi_R
 
-def Qeval_chessBoard_par(pi, states, RP, parallel, Rpst = None, evaluation_function = evaluate_board):
+def Qeval_chessBoard_par(pi, states, RP, Rpst, RH, parallel, evaluation_function = evaluate_board):
     def evaluate_single_board(i, s_final):
         assert isinstance(s_final, chess.Board), f"For alpha beta policy, states must be of type chess.Board, but got {type(s_final)}"
         reward_sign = 1 if states[i].turn else -1  # White seeks to maximize and black to minimize, so the reward for black is the flipped evaluation.
-        return no_moves_eval(s_final, RP, Rpst, evaluation_function=evaluation_function)[0] * reward_sign
+        return no_moves_eval(s_final, RP, Rpst, RH=RH, evaluation_function=evaluation_function)[0] * reward_sign
     Qpi_R = parallel(delayed(evaluate_single_board)(i, s_final) for i, s_final in enumerate(pi))
     return np.array(Qpi_R)
 
-def Qeval_sunfishBoard_par(pi, states, RP, parallel, Rpst = None, evaluation_function = evaluate_board):
+def Qeval_sunfishBoard_par(pi, states, RP, Rpst, RH, parallel, evaluation_function = evaluate_board):
     def evaluate_single_board(i, s_f_tuple):
         s_final, opposite_player = s_f_tuple
         assert isinstance(s_final, Position), f"For sunfish policy, states must be of type Position, but got {type(s_final)}"
@@ -245,18 +251,18 @@ def set_chess_policy(chess_boards, player_moves, config_data):
         raise Exception(f"The policy {config_data['chess_policy']} is not implemented yet")
     return states, actions, PolicyIteration, Qeval
 
-def probability_of_switching(states, actions, pi, a_pi, R_new, R, Qpi_policy_R, alpha, config_data, Qeval, PolicyIteration, parallel):
-    Qpi_action_Rnew = Qeval(a_pi, states, R_new, parallel, pst = config_data['pst'])
-    Qpi_policy_Rnew = Qeval(pi, states, R_new, parallel, pst = config_data['pst'])
+def probability_of_switching(states, actions, pi, a_pi, RP_new, RP, Rpst_new, Rpst, RH_new, RH, Qpi_policy_R, alpha, config_data, Qeval, PolicyIteration, parallel):
+    Qpi_action_Rnew = Qeval(a_pi, states, RP_new, Rpst_new, RH_new, parallel)
+    Qpi_policy_Rnew = Qeval(pi, states, RP_new, Rpst_new, RH_new, parallel)
     if np.any(Qpi_policy_Rnew < Qpi_action_Rnew): # if the new reward function explains the data action better than the policy action for any state
         print("There exists a state-action pair (s, a) such that Qpi(s, pi, R~) < Qpi(s, a, R~)")
-        pi_new, QpiNew_policy_Rnew, pi_new_moves = PolicyIteration(states, None, R_new, config_data, parallel)
-        log_prob = min(0, log_prob_dist(R_new, np.sum(QpiNew_policy_Rnew), alpha=alpha) - log_prob_dist(R, np.sum(Qpi_policy_R), alpha=alpha))
+        pi_new, QpiNew_policy_Rnew, pi_new_moves = PolicyIteration(states, None, RP_new, Rpst_new, RH_new, config_data, parallel)
+        log_prob = min(0, log_prob_dist(RP_new, np.sum(QpiNew_policy_Rnew), alpha=config_data['alpha']) - log_prob_dist(RP, np.sum(Qpi_policy_R), alpha=config_data['alpha']))
         print(f"Probability of switching R and policy is: {np.exp(log_prob)}")
         print(f"Relative energies are {np.sum(QpiNew_policy_Rnew)} to {np.sum(Qpi_policy_R)}")
     else:
         print("Action is worse or equal to policy in all states under R~")
-        log_prob = min(0, log_prob_dist(R_new, np.sum(Qpi_policy_Rnew), alpha=alpha) - log_prob_dist(R, np.sum(Qpi_policy_R), alpha=alpha))
+        log_prob = min(0, log_prob_dist(RP_new, np.sum(Qpi_policy_Rnew), alpha=alpha) - log_prob_dist(RP, np.sum(Qpi_policy_R), alpha=alpha))
         print(f"Probability of switching R is: {np.exp(log_prob)}")
         print(f"Relative energies are {np.sum(Qpi_policy_Rnew)} to {np.sum(Qpi_policy_R)}")
     return np.exp(log_prob)

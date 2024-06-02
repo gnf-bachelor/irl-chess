@@ -33,16 +33,19 @@ def perturb_reward(RP, config_data, Rpst = None, RH = None, epoch = None):
     noise_pst = gen_noise(delta_pst, pst_permute_idxs)
     noise_H = gen_noise(delta_H, H_permute_idxs)
     RP_new = RP.copy()
-    Rpst_new = None
-    RH_new = None
     # Add noise to the specified indices
-    RP_new[P_permute_idxs] += noise_P
+    if len(P_permute_idxs) > 0:
+        RP_new[P_permute_idxs] += noise_P
+    Rpst_new = None
     if Rpst is not None:
         Rpst_new = Rpst.copy()
-        Rpst_new[pst_permute_idxs] += noise_pst
+        if len(pst_permute_idxs) > 0:
+            Rpst_new[pst_permute_idxs] += noise_pst
+    RH_new = None
     if RH is not None:  
         RH_new = RH.copy()
-        RH_new[H_permute_idxs] += noise_H
+        if len(H_permute_idxs) > 0:
+            RH_new[H_permute_idxs] += noise_H
     if epoch is not None: noise_decay(config_data, epoch)
     assert_RP_returns(RP, RP_new, Rpst, Rpst_new, RH, RH_new)
     return RP_new, Rpst_new, RH_new # It is better to keep the return types consistent, even though it might return None

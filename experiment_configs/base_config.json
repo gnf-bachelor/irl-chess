@@ -6,20 +6,21 @@
     "max_elo": 2000,
     "n_midgame": 10,
     "n_endgame": 100,
-    "n_boards": 10000,
+    "n_boards": 100,
     "n_boards_val": 10,
-    "epochs": 500,
+    "epochs": 300,
     "max_hours": 100,
     "n_threads": -1,
     "plot_every": 20,
     "val_every": 10,
+    "run_n_times": 5,
 
     "plot_char": ["P", "N", "B", "R", "Q"],
     "permute_char": ["N", "B", "R", "Q"],
-    "RP_start": [100, 1000, 1000, 1000, 1000, 60000],
+    "RP_start": [100, 100, 100, 100, 100, 60000],
 
     "plot_pst_char": ["P", "N", "B", "R", "Q", "K"],
-    "permute_pst_char": ["P", "N", "B", "R", "Q", "K"],
+    "permute_pst_char": [],
     "Rpst_start": [1, 1, 1, 1, 1, 1],
 
     "include_PA_KS_PS": [false, false, false],
@@ -32,8 +33,8 @@
     "Rpst_true": [1, 1, 1, 1, 1, 1],
     "RH_true": [0, 0, 0],
 
-    "permute_how_many": -1, 
-    "model": "sunfish_GRW",
+    "permute_how_many": 1, 
+    "model": "BIRL",
 
     "board_translation": "none",
     "move_percentage_data": false
