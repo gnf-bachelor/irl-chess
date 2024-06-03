@@ -2,7 +2,7 @@
   "delta": 20.0,
   "decay": 1,
   "decay_step": 30,
-  "time_limit": 0.3,
+  "time_limit": 0.2,
   "permute_all": true,
   "R_true": [100, 280, 320, 480, 920, 60000],
   "R_start": [100, 100, 100, 100, 100, 60000],

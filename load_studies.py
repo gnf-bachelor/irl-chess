@@ -36,7 +36,6 @@ def configure(driver, set_time_controls, set_ratings):
     driver.find_element(By.XPATH, '//*[@aria-label="Close configuration"]').click()
 
 
-# Categories to be excluded
 time_controls = ['Blitz', 'Rapid', 'Classical']
 ratings = ['1000','1200']
 n_boards = 10000
@@ -48,24 +47,24 @@ driver.implicitly_wait(1)
 pgn = open("data/raw/lichess_db_standard_rated_2013-01.pgn")
 move_dicts = {}
 
-save_point = 5269
-file_path = f'data/move_percentages/moves_sub1200_{save_point}'
-with open(file_path, "r") as f:
-    loaded_dict = json.load(f)
-
-loaded_boards = list(loaded_dict.keys())
-pbar = tqdm(total=save_point, desc='Getting to save point')
-while pbar.n < save_point:
-    game = chess.pgn.read_game(pgn)
-    board = game.board()
-    state, player_move = get_board_after_n(game, 12)
-    fen = state.fen()
-    if fen in loaded_boards:
-        pbar.update(1)
-print(f'Loaded to save point:{pbar.n}/{save_point}')
+# save_point = 5269
+# file_path = f'data/move_percentages/moves_sub1200_{save_point}'
+# with open(file_path, "r") as f:
+#     loaded_dict = json.load(f)
+#
+# loaded_boards = list(loaded_dict.keys())
+# pbar = tqdm(total=save_point, desc='Getting to save point')
+# while pbar.n < save_point:
+#     game = chess.pgn.read_game(pgn)
+#     board = game.board()
+#     state, player_move = get_board_after_n(game, 12)
+#     fen = state.fen()
+#     if fen in loaded_boards:
+#         pbar.update(1)
+# print(f'Loaded to save point:{pbar.n}/{save_point}')
 
 pbar = tqdm(total=n_boards, desc='Getting position info')
-pbar.update(save_point)
+# pbar.update(save_point)
 driver.get(site)
 configure(driver, time_controls, ratings)
 
