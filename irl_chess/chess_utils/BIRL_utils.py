@@ -1,15 +1,14 @@
 import chess
 import numpy as np
 from tqdm import tqdm
-from irl_chess.chess_utils.sunfish_utils import board2sunfish, eval_pos
-from irl_chess.chess_utils.sunfish_utils import get_new_pst, str_to_sunfish_move, sunfish_move_to_str, moves_and_Q_from_result
+from irl_chess.chess_utils.sunfish_utils import board2sunfish, eval_pos, has_no_legal_moves, \
+    get_new_pst, str_to_sunfish_move, sunfish_move_to_str, moves_and_Q_from_result, sunfish_move
 from irl_chess.chess_utils.sunfish import piece, pst, pst_only, Position, Move
 from irl_chess.visualizations.visualize import plot_R_weights, char_to_idxs
 from irl_chess.chess_utils.alpha_beta_utils import no_moves_eval, evaluate_board, alpha_beta_search, alpha_beta_search_k, list_first_moves 
 from irl_chess.chess_utils.utils import perturb_reward
 # from typing import List
 from joblib import Parallel, delayed
-from irl_chess.models.sunfish_GRW import eval_pos, sunfish_move
 
 # ======================== Functions for BIRL policy walk ====================== #
 def log_prob_dist(R, energy, alpha, prior=lambda R: 1):
@@ -84,9 +83,12 @@ def sunfish_search(states, actions, RP, Rpst, RH, config_data, parallel):
             a = actions[i]
             assert isinstance(a, Move)
             s_a = s.move(Move, pst)     # Searches will end at different final depths, but that is not a problem as both are following the policy
-            best_move, best_moves, move_dict, best_board_found_tuple = \
-                sunfish_move(s_a, pst, time_limit=config_data['time_limit'], min_depth=2, return_best_board_found_tuple=True)
-            eval = -1*best_board_found_tuple[1] # Invert because s_a was from the perspective of the opposite player
+            if not has_no_legal_moves(s_a):
+                best_move, best_moves, move_dict, best_board_found_tuple = \
+                    sunfish_move(s_a, pst, time_limit=config_data['time_limit'], min_depth=2, return_best_board_found_tuple=True)
+                eval = -1 * best_board_found_tuple[1]  # Invert because s_a was from the perspective of the opposite player
+            else: # If there are no legal moves, next state is temrinal and the evaluation is the reward gained in making that move.
+                eval = (-1 * eval_pos(s_a, RP, Rpst) - eval_pos(s, RP, Rpst))
         else:
             best_move, best_moves, move_dict, best_board_found_tuple = \
                 sunfish_move(s, pst, time_limit=config_data['time_limit'], min_depth=2, return_best_board_found_tuple=True)
@@ -107,9 +109,12 @@ def sunfish_search_par(states, actions, RP, Rpst, RH, config_data, parallel):
             a = actions[i]
             assert isinstance(a, Move)
             s_a = s.move(a, pst)  # Searches will end at different final depths, but that is not a problem as both are following the policy
-            best_move, best_moves, move_dict, best_board_found_tuple = \
-                sunfish_move(s_a, pst, time_limit=config_data['time_limit'], min_depth=2, return_best_board_found_tuple=True)
-            eval = -1 * best_board_found_tuple[1]  # Invert because s_a was from the perspective of the opposite player
+            if not has_no_legal_moves(s_a):
+                best_move, best_moves, move_dict, best_board_found_tuple = \
+                    sunfish_move(s_a, pst, time_limit=config_data['time_limit'], min_depth=2, return_best_board_found_tuple=True)
+                eval = -1 * best_board_found_tuple[1]  # Invert because s_a was from the perspective of the opposite player
+            else: # If there are no legal moves, next state is temrinal and the evaluation is the reward gained in making that move.
+                eval = (-1 * eval_pos(s_a, RP, Rpst) - eval_pos(s, RP, Rpst))
         else:
             best_move, best_moves, move_dict, best_board_found_tuple = \
                 sunfish_move(s, pst, time_limit=config_data['time_limit'], min_depth=2, return_best_board_found_tuple=True)

@@ -15,12 +15,11 @@ from joblib import Parallel, delayed
 
 from irl_chess import Searcher, pst, piece, plot_R_weights, perturb_reward
 from irl_chess.chess_utils.sunfish_utils import board2sunfish, sunfish2board, sunfish_move_to_str, \
-    check_moved_same_color, sunfish_move
+    check_moved_same_color, sunfish_move, get_new_pst, eval_pos, eval_pos_pst, str_to_sunfish_move
 from irl_chess.visualizations import char_to_idxs, load_weights_epoch
 
 from irl_chess.misc_utils.utils import reformat_list
 from irl_chess.misc_utils.load_save_utils import process_epoch, load_Rs, load_previous_results, save_array
-from irl_chess.chess_utils.sunfish_utils import get_new_pst, str_to_sunfish_move, check_moved_same_color, eval_pos, eval_pos_pst
 from irl_chess.stat_tools.stat_tools import wilson_score_interval
 
 def sunfish_native_result_string(model_config_data):

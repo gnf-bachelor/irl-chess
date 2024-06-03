@@ -32,7 +32,7 @@ def sunfish_move(state, pst, time_limit, move_only=False, max_depth=1000, run_at
         print(f"best move is: {best_move} and count is {count}")
         print(state.board)
     assert best_move is not None, f"No best move found, this probably means an invalid position was passed to the \
-                                   searcher"
+                                   searcher. The position was: {state.board}"
     if move_only: # Should clean this up such that it returns (best_move, info) where info is dictionary with all the auxillary information. 
         return best_move
     elif return_best_board_found_tuple:
@@ -45,7 +45,7 @@ def sunfish_best_board(state, pst, tp_move: dict):
     seen_states = set()
     while state in tp_move:
         if state in seen_states:
-            logging.warning(f"Cycle detected at state: {state}. Breaking out of the loop.")
+            logging.info(f"Cycle detected at state: {state}. Breaking out of the loop.")
             break
         seen_states.add(state)
 
@@ -64,6 +64,13 @@ def sunfish_move_to_str(move: Move, is_black:bool):
         i, j = 119 - i, 119 - j
     move_str = render(i) + render(j) + move.prom.lower()
     return move_str
+
+def has_no_legal_moves(position):
+    try:
+        next(position.generate_legal_moves())
+        return False
+    except StopIteration:
+        return True
 
 # takes squares in the form 'a2', 'g3' etc. and returns
 # the number used to represent it in sunfish.
