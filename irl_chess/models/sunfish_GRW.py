@@ -119,10 +119,12 @@ def val_sunfish_GRW(validation_set, out_path, config_data, epoch, use_player_mov
 def val_util(validation_set, out_path, config_data, parallel, pst_val, use_player_moves, name):
     csv_path = join(out_path, 'validation_output', f'{name}.csv')
     if os.path.exists(csv_path):
+        print(f'Loading validation outputs from {csv_path}')
         df = pd.read_csv(csv_path)
         actions_val = list(df['a_val'])
         actions_true = list(df['a_true'])
     else:
+        print(f'No validation data found at {csv_path}')
         os.makedirs(os.path.dirname(csv_path), exist_ok=True)
         actions_val = parallel(
             delayed(sunfish_move)(board2sunfish(board, eval_pos(board, None)), pst_val, config_data['time_limit'], True)
