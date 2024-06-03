@@ -66,7 +66,7 @@ def plot_accuracies_over_elo(accuracies, time_limits, elos, n_boards, save_filen
     plt.grid(axis='y', zorder=0)
     for i, (accs, color) in enumerate(zip(accuracies, palette_sunfish)):
         if accs:
-            plt.plot(elos, accs, label=f'{time_limits[i]:.2}', color=color)
+            plt.plot(elos, accs, label=f'{float(time_limits[i]):.2}', color=color)
             lower, upper = wilson_score_interval(np.array(accs) * n_boards, n_boards)
             plt.fill_between(elos, lower, upper, color=color, alpha=0.15)
 
@@ -85,6 +85,6 @@ def plot_accuracies_over_elo(accuracies, time_limits, elos, n_boards, save_filen
 if __name__ == '__main__':
     from irl_chess import load_config
     configs = load_config()
-    time_limits = [0.01, 0.1, 0.2, 0.4, 0.75, 1., 1.5, 2]
+    time_limits = [0.01, 0.1, 0.2, 0.4, 0.75, 1., 1.5, 2.]
     time_limits.reverse()
     plot_time_limit(*configs, elos=range(1100, 2000, 100), time_limits=time_limits)
