@@ -220,6 +220,23 @@ Report:
 [ ]  Qualitlively compare key positions and blunder prediction, so we can discuss searching vs. not searching
 [ ]     Show in demonstrations in jupyter notebooks.   
 
+---- Figures TODO ----
+[ ]  Figure of Imitation Learning Taxonomy. Bubbles for BC and IRL should have small graphics that illustrate what they are. (copy vs. infer intention).
+        Perhaps inspired by IRL paper. Robot sees human pouring water in cup. Cup is moved. BC pours water on table in same spot, IRL pours in cup.  
+[ ]  Figure of IRL
+
+[ ]  Figure of Chess as MDP (showing position and 3 potential moves), then dots to a checkmate position
+[ ]  Figure of depth limited chess as MDP.
+[ ]  Number line of possible rewards, where we show best possible board and Checkmate way out there. 
+Optional [ ]  Make our own general IRL pseudocode
+[ ]  Figure of the transferability of IRL reward functions. Robot pouring water. Make the arm longer. IRL generalizes, RL does not.
+
+[ ]  Figures for different IRL methodoligies. Need to think about how to do this. 
+[ ]  Lots of fun pictures for the history section.
+[ ]  Pseudocode for basic chess algorithms (Gabriel will do)
+[ ]  Figure illustrating three main facets of chess engine (pipeline thing)
+[ ]  Figure of sunfish board representation
+[ ]  Figure of sunfish bug
 
 ---- Less important notes
 [ ]     Implement BO to make optimization more robust.
