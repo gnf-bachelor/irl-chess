@@ -15,7 +15,11 @@ from irl_chess.models.sunfish_GRW import eval_pos, sunfish_move
 def log_prob_dist(R, energy, alpha, prior=lambda R: 1):
     log_prob = alpha * energy + np.log(prior(R))
     return log_prob
-    
+
+def eval_log_prob(RP_new, QpiNew, RP, Qpi, alpha):
+    log_prob = min(0, log_prob_dist(RP_new, np.sum(QpiNew), alpha=alpha) - log_prob_dist(RP, np.sum(Qpi), alpha=alpha))
+    return log_prob
+
 def PolicyIteration(states, actions, RP, Rpst, RH, config_data, parallel = None):
     pass
 
@@ -153,10 +157,11 @@ def Qeval_sunfishBoard_par(pi, states, RP, Rpst, RH, parallel, evaluation_functi
     Qpi_R = parallel(delayed(evaluate_single_board)(i, s_f_tuple) for i, s_f_tuple in enumerate(pi))
     return np.array(Qpi_R)
 
-def bookkeeping(accuracies, actions, pi_moves, energies, Qpi_policy_R, RPs, RP, Rpsts= None, Rpst = None, RHs = None, RH = None):
+def bookkeeping(accuracies, actions, pi_moves, pi_energies, a_energies, Qpi_policy_R, Qpi_action_R, RPs, RP, Rpsts= None, Rpst = None, RHs = None, RH = None):
     acc = sum([player_move == policy_move for player_move, policy_move in list(zip(actions, pi_moves))]) / len(actions)
     accuracies.append(acc)
-    energies.append(np.sum(Qpi_policy_R))
+    pi_energies.append(np.sum(Qpi_policy_R))
+    a_energies.append(np.sum(Qpi_action_R))
     RPs.append(RP)
     if Rpsts is not None:
         Rpsts.append(Rpst)
