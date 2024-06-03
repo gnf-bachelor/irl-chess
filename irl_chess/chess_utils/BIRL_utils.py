@@ -83,9 +83,9 @@ def sunfish_search(states, actions, RP, Rpst, RH, config_data, parallel):
             a = actions[i]
             assert isinstance(a, Move)
             s_a = s.move(Move, pst)     # Searches will end at different final depths, but that is not a problem as both are following the policy
-            if not has_no_legal_moves(s_a):
-                best_move, best_moves, move_dict, best_board_found_tuple = \
-                    sunfish_move(s_a, pst, time_limit=config_data['time_limit'], min_depth=2, return_best_board_found_tuple=True)
+            best_move, best_moves, move_dict, best_board_found_tuple = \
+                sunfish_move(s_a, pst, time_limit=config_data['time_limit'], min_depth=2, return_best_board_found_tuple=True)
+            if best_move is not None:
                 eval = -1 * best_board_found_tuple[1]  # Invert because s_a was from the perspective of the opposite player
             else: # If there are no legal moves, next state is temrinal and the evaluation is the reward gained in making that move.
                 eval = (-1 * eval_pos(s_a, RP, Rpst) - eval_pos(s, RP, Rpst))
@@ -109,9 +109,9 @@ def sunfish_search_par(states, actions, RP, Rpst, RH, config_data, parallel):
             a = actions[i]
             assert isinstance(a, Move)
             s_a = s.move(a, pst)  # Searches will end at different final depths, but that is not a problem as both are following the policy
-            if not has_no_legal_moves(s_a):
-                best_move, best_moves, move_dict, best_board_found_tuple = \
-                    sunfish_move(s_a, pst, time_limit=config_data['time_limit'], min_depth=2, return_best_board_found_tuple=True)
+            best_move, best_moves, move_dict, best_board_found_tuple = \
+                sunfish_move(s_a, pst, time_limit=config_data['time_limit'], min_depth=2, return_best_board_found_tuple=True)
+            if best_move is not None:
                 eval = -1 * best_board_found_tuple[1]  # Invert because s_a was from the perspective of the opposite player
             else: # If there are no legal moves, next state is temrinal and the evaluation is the reward gained in making that move.
                 eval = (-1 * eval_pos(s_a, RP, Rpst) - eval_pos(s, RP, Rpst))

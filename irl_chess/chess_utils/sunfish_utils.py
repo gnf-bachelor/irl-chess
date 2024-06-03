@@ -28,11 +28,10 @@ def sunfish_move(state, pst, time_limit, move_only=False, max_depth=1000, run_at
             count_gamma += 1
         if time() - start > time_limit and count_gamma >= 1 and (count >= run_at_least) and depth >= min_depth:
             break
-    if best_move is None:
-        print(f"best move is: {best_move} and count is {count}")
-        print(state.board)
-    assert best_move is not None, f"No best move found, this probably means an invalid position was passed to the \
-                                   searcher. The position was: {state.board}"
+    if best_move is None: # I know this looks ugly. It is only used in the special case of BIRL, where the player action leads to game end. 
+        logging.warning(f"No best move found, this probably means an invalid position was passed to the searcher. The position was: {state.board}")
+        if return_best_board_found_tuple: return None, None, None, None
+        return None, None, None
     if move_only: # Should clean this up such that it returns (best_move, info) where info is dictionary with all the auxillary information. 
         return best_move
     elif return_best_board_found_tuple:
@@ -64,13 +63,6 @@ def sunfish_move_to_str(move: Move, is_black:bool):
         i, j = 119 - i, 119 - j
     move_str = render(i) + render(j) + move.prom.lower()
     return move_str
-
-def has_no_legal_moves(position):
-    try:
-        next(position.generate_legal_moves())
-        return False
-    except StopIteration:
-        return True
 
 # takes squares in the form 'a2', 'g3' etc. and returns
 # the number used to represent it in sunfish.
