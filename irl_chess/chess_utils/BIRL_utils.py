@@ -115,6 +115,7 @@ def sunfish_search_par(states, actions, RP, Rpst, RH, config_data, parallel):
                 eval = -1 * best_board_found_tuple[1]  # Invert because s_a was from the perspective of the opposite player
             else: # If there are no legal moves, next state is temrinal and the evaluation is the reward gained in making that move.
                 eval = (-1 * eval_pos(s_a, RP, Rpst) - eval_pos(s, RP, Rpst))
+                return eval, (s_a, True), None 
         else:
             best_move, best_moves, move_dict, best_board_found_tuple = \
                 sunfish_move(s, pst, time_limit=config_data['time_limit'], min_depth=2, return_best_board_found_tuple=True)
