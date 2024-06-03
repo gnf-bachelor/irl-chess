@@ -178,6 +178,7 @@ def process_epoch(R, epoch, config_data, out_path, **kwargs):
     if config_data['save_every'] and epoch % config_data['save_every'] == 0:
         pd.DataFrame(R.reshape((-1, 1)), columns=['Result']).to_csv(join(out_path, f'{epoch}.csv'),
                                                                     index=False)
+
     if config_data['plot_every'] and epoch % config_data['plot_every'] == 0:
         plot_R_weights(config_data=config_data,
                        out_path=out_path,

@@ -91,6 +91,10 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path):
     permute_idxs = char_to_idxs(config_data['permute_char'])
     metric = config_data['metric']
 
+    result_path = os.path.join(out_path, 'Rs_and_accs')
+    if not os.path.exists(result_path):
+        os.makedirs(result_path)
+
     R = np.array(config_data['R_start'])
     Rs = [R]
     delta = config_data['delta']
@@ -145,13 +149,14 @@ def run_sunfish_GRW(sunfish_boards, player_moves, config_data, out_path):
             if epoch % config_data['decay_step'] == 0 and epoch != 0:
                 delta *= config_data['decay']
 
+            if epoch % config_data['save_every'] == 0 and epoch != 0:
+                np.save(os.path.join(result_path, 'Rs'), np.array(Rs))
+                np.save(os.path.join(result_path, 'Accs'), np.array(accuracies))
+
             process_epoch(R, epoch, config_data, out_path)  # , accuracies=accuracies)
 
             print(f'Current accuracy: {acc}, best: {last_acc}')
             print(f'Best R: {R}')
 
-        result_path = os.path.join(out_path, 'Rs_and_accs')
-        if not os.path.exists(result_path):
-            os.makedirs(result_path)
         np.save(os.path.join(result_path, 'Rs'), np.array(Rs))
         np.save(os.path.join(result_path, 'Accs'), np.array(accuracies))
