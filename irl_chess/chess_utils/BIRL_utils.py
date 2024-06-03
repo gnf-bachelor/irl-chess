@@ -1,7 +1,7 @@
 import chess
 import numpy as np
 from tqdm import tqdm
-from irl_chess.chess_utils.sunfish_utils import board2sunfish, eval_pos, has_no_legal_moves, \
+from irl_chess.chess_utils.sunfish_utils import board2sunfish, eval_pos, \
     get_new_pst, str_to_sunfish_move, sunfish_move_to_str, moves_and_Q_from_result, sunfish_move
 from irl_chess.chess_utils.sunfish import piece, pst, pst_only, Position, Move
 from irl_chess.visualizations.visualize import plot_R_weights, char_to_idxs
