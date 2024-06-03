@@ -1,4 +1,4 @@
-#BSUB -J sunfish-run
+#BSUB -J plot
 #BSUB -o /zhome/de/d/169059/Desktop/irl-chess/hpc-logs/sunfish-run/%J.out
 #BSUB -e /zhome/de/d/169059/Desktop/irl-chess/hpc-logs/sunfish-run/%J.err
 #BSUB -q hpc
@@ -14,4 +14,4 @@
 
 module load python3.10.13
 source venv/bin/activate
-python3 -m irl_chess.replicate_maia
+python3 -m irl_chess.run_plots_time_limit
