@@ -10,6 +10,7 @@ from irl_chess.chess_utils.BIRL_utils import pi_alpha_beta_search, pi_alpha_beta
 
 
 def BIRL_result_string(model_config_data):
+    energy_optimized = model_config_data['energy_optimized']
     chess_policy = model_config_data['chess_policy']
     delta = model_config_data['delta']
     decay = model_config_data['decay']
@@ -18,10 +19,10 @@ def BIRL_result_string(model_config_data):
     if chess_policy == "alpha_beta":
         depth = model_config_data['depth']
         quisce = model_config_data["quiesce"]
-        return f"{chess_policy}-{noise_distribution}-{int(delta)}-{decay}-{decay_step}-{depth}-{quisce}"
+        return f"{energy_optimized}-{chess_policy}-{noise_distribution}-{int(delta)}-{decay}-{decay_step}-{depth}-{quisce}"
     elif chess_policy == "sunfish":
         time_limit = model_config_data['time_limit']
-        return f"{chess_policy}-{noise_distribution}-{int(delta)}-{decay}-{decay_step}-{time_limit}"
+        return f"{energy_optimized}-{chess_policy}-{noise_distribution}-{int(delta)}-{decay}-{decay_step}-{time_limit}"
     
 
 def run_BIRL(chess_boards, player_moves, config_data, out_path, validation_set):
