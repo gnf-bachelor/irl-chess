@@ -14,8 +14,8 @@ if __name__ == '__main__':
     base_config_data['overwrite'] = False
     base_config_data['n_files'] = 1
     base_config_data['time_control'] = False
-    base_config_data['min_elo'] = 1100
-    base_config_data['max_elo'] = 1200
+    base_config_data['min_elo'] = 1900
+    base_config_data['max_elo'] = 2000
     base_config_data['n_midgame'] = 10
     base_config_data['n_endgame'] = 100
     base_config_data['n_boards'] = 10000
