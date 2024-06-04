@@ -7,6 +7,7 @@ from irl_chess.misc_utils.load_save_utils import process_epoch, load_Rs, load_pr
 from irl_chess.chess_utils.sunfish_utils import board2sunfish, get_new_pst, str_to_sunfish_move, eval_pos, sunfish_move, eval_pos_pst
 from irl_chess.chess_utils.BIRL_utils import pi_alpha_beta_search, pi_alpha_beta_search_par, \
     Qeval_chessBoard, Qeval_chessBoard_par, sunfish_search_par, bookkeeping, perturb_reward, log_prob_dist, Qeval_sunfishBoard_par, eval_log_prob
+from irl_chess.chess_utils.sunfish import pst
 
 
 def BIRL_result_string(model_config_data):
@@ -41,7 +42,7 @@ def run_BIRL(chess_boards, player_moves, config_data, out_path, validation_set):
     elif config_data['chess_policy'] == "sunfish":
         from irl_chess.chess_utils.BIRL_utils import sunfish_search_par as PolicyIteration, \
                 Qeval_sunfishBoard_par as Qeval
-        states = [board2sunfish(board, 0) for board in chess_boards] # sunfish scores are relative, so setting them to 0 is fine. 
+        states = [board2sunfish(board, eval_pos_pst(board, pst)) for board in chess_boards] # sunfish scores are relative, so they have no bearing. 
         actions = [str_to_sunfish_move(move, not board.turn) for move, board in zip(player_moves, chess_boards)]
     else:
         raise Exception(f"The policy {config_data['chess_policy']} is not implemented yet")
@@ -67,11 +68,13 @@ def run_BIRL(chess_boards, player_moves, config_data, out_path, validation_set):
     # RPs, Rpsts, RHs = [], [], []
     with (Parallel(n_jobs=config_data['n_threads']) as parallel):
         
-        # Calculate initially. 
+        # Calculate initially.
+        print("Calculating initial policy.") 
         pi, Qpi_policy_R, pi_moves = PolicyIteration(states, None, RP, Rpst, RH, config_data, parallel)
+        print("Calculating initial action policy.")
         a_pi, Qpi_action_R, _ = PolicyIteration(states, actions, RP, Rpst, RH, config_data, parallel) # We can't guarantee that alpha-beta search fully explores move a and so we calculate it again.
         bookkeeping(accuracies, actions, pi_moves, pi_energies, a_energies, Qpi_policy_R, Qpi_action_R, RPs, RP, Rpsts, Rpst, RHs, RH) # Bookkeeping for the initialization.
-
+        print("Finished initial policy calculation.")
 
         for epoch in tqdm(range(next_empty_epoch, config_data['epochs']), desc='Epochs'):
             

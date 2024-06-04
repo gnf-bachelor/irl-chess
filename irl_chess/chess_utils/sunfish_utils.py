@@ -86,7 +86,7 @@ def str_to_sunfish_move(move, flip):
     if flip:
         i = 119 - i
         j = 119 - j
-    prom = move[4] if len(move) > 4 else ''
+    prom = (move[4] if len(move) > 4 else '').upper()
     return Move(i, j, prom)
 
 # Takes a board object and returns the position
