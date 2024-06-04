@@ -73,7 +73,7 @@ def plot_accuracies_over_elo(accuracies, time_limits, elos, n_boards, save_filen
     plt.title('Model Accuracy by Player ELO and Time Limit')
     plt.xlabel('ELO')
     plt.ylabel('Accuracy')
-    plt.legend(title='', loc='upper left', bbox_to_anchor=(1, 1))
+    plt.legend(title='Seconds', loc='upper left', bbox_to_anchor=(1, 1))
     os.makedirs(os.path.dirname(save_filename), exist_ok=True)
     plt.tight_layout()
     plt.savefig(save_filename)
@@ -85,6 +85,6 @@ def plot_accuracies_over_elo(accuracies, time_limits, elos, n_boards, save_filen
 if __name__ == '__main__':
     from irl_chess import load_config
     configs = load_config()
-    time_limits = [0.01, 0.1, 0.2, 0.4, 0.75, 1., 1.5, 2]
+    time_limits = [0.01, 0.1, 0.2, 0.4, 0.75, 1., 1.5,]# 2.]
     time_limits.reverse()
     plot_time_limit(*configs, elos=range(1100, 2000, 100), time_limits=time_limits)
