@@ -11,6 +11,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     fix_cwd()
     base_config_data, model_config_data = load_config()
+
     config_data = union_dicts(base_config_data, model_config_data)
 
     match config_data[
