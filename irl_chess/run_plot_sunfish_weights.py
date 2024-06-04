@@ -9,6 +9,7 @@ from matplotlib import pyplot as plt
 
 from irl_chess.visualizations.visualize import plot_weights, sunfish_palette_name, maia_palette_name
 from irl_chess.models.sunfish_GRW import val_sunfish_GRW
+from irl_chess.misc_utils.utils import create_default_sunfish
 
 
 def run_loop(plot_weights, plot_accuracies, move_functions, initial_weights, elos, extensions=('', ), out_path=None, save_path=None):
@@ -44,10 +45,9 @@ def run_loop(plot_weights, plot_accuracies, move_functions, initial_weights, elo
                                    epoch=300,
                                    filename_addition='mod',# f'-{elo}-{elo+100}-{move_function}-gaussian',
                                    close_when_done=False,
-                                   show=False,
+                                   show=True,
                                    save_path=save_path)
-                            print(move_function, initial_weight, extension, elo)
-                            print(f'Were used!!')
+                            print(move_function, initial_weight, extension, elo, f'Were used!!')
                         except IndexError:
                             print(f'No weights saved at {out_path}')
                             print(move_function, initial_weight, extension, elo)
@@ -122,16 +122,10 @@ if __name__ == '__main__':
     base_config, model_config = load_config('sunfish_GRW')
     path_BIRL = r'C:\Users\fs\Downloads\BIRL'
 
-    elos = (1100, )#1900)
-    initial_weights = (101, 102)
-    move_functions = ('sunfish_move', 'player_move', )
+    elos = (1100, 1900)
+    initial_weights = (102, 102)
+    move_functions = ('player_move', 'player_move', )
     extensions = ('', '_1')
-
-    #save_path = join(os.getcwd(), 'results', 'plots', 'data_section',
-     #    f'trace_plot_{move_function}_{initial_weights[-1]}_{elos[0]}_{elos[-1]}.svg') if save_path is None else save_path
-
-    #run_loop(plot_weights=True, plot_accuracies=False, move_functions=move_functions, initial_weights=initial_weights,
-    #         elos=elos, extensions=extensions)
 
     run_loop(plot_weights=True, plot_accuracies=False, move_functions=move_functions, initial_weights=initial_weights, elos=elos, extensions=extensions)
 
