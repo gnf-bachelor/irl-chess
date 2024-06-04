@@ -138,7 +138,6 @@ def plot_R_weights(config_data, out_path, start_weight_idx=0, legend_names=['P',
     show = kwargs.get('show', False)
     close_when_done = kwargs.get('close_when_done', True)
     save_path = kwargs.get('save_path', None)
-
     plot_path = os.path.join(out_path, 'plots')
     os.makedirs(plot_path, exist_ok=True)
 
@@ -158,7 +157,7 @@ def plot_R_weights(config_data, out_path, start_weight_idx=0, legend_names=['P',
         weights = load_weights(out_path, 'RpstResult', start_weight_idx=start_weight_idx, epoch=epoch)
         Rpst_true = np.array(config_data.get('Rpst_true', [1, 1, 1, 1, 1, 1]))
         plot_weights(weights, Rpst_true, start_weight_idx, plot_pst_char, legend_names, config_data, Rpst_plot_path, epoch+1,
-                     filename_addition= 'Rpst'+filename_addition, show=show, save_path=save_path)
+                     filename_addition= 'Rpst'+filename_addition, show=show, close_when_done=close_when_done, save_path=save_path)
 
     plot_H_char = Hbool_to_idxs(config_data['plot_H'])
     if plot_H_char:
@@ -167,7 +166,7 @@ def plot_R_weights(config_data, out_path, start_weight_idx=0, legend_names=['P',
         weights = load_weights(out_path, 'RHResult', start_weight_idx=start_weight_idx, epoch=epoch)
         RH_true = np.array(config_data.get('RH_true', [0, 0, 0])) # Perhaps delete this, as there is no ground truth. 
         plot_weights(weights, RH_true, start_weight_idx, plot_H_char, ['PA','KS','PS'], config_data, RH_plot_path, epoch+1,
-                     filename_addition= 'RH'+filename_addition, show=show, save_path=save_path)
+                     filename_addition= 'RH'+filename_addition, show=show, save_path=save_path, close_when_done=close_when_done,)
         
 
     
@@ -187,8 +186,8 @@ def plot_weights(weights, weights_true, start_weight_idx, plot_char, legend_name
     plt.tight_layout()
     os.makedirs(plot_path, exist_ok=True)
     plt.savefig(join(plot_path, f'weights_{epoch}{filename_addition}.svg')) if save_path is None else plt.savefig(save_path)
-    if show: plt.show()
-    if close_when_done: plt.close()
+    if show: plt.show(), print(f'Showing from inner function')
+    if close_when_done: plt.close(), print(f'Closing from inner function')
 
 
 if __name__ == '__main__':
