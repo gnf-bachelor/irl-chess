@@ -1,21 +1,25 @@
 import chess
 import numpy as np
 from tqdm import tqdm
-from irl_chess.chess_utils.sunfish_utils import board2sunfish, eval_pos
-from irl_chess.chess_utils.sunfish_utils import get_new_pst, str_to_sunfish_move, sunfish_move_to_str, moves_and_Q_from_result
+import logging
+from irl_chess.chess_utils.sunfish_utils import board2sunfish, eval_pos, \
+    get_new_pst, str_to_sunfish_move, sunfish_move_to_str, moves_and_Q_from_result, sunfish_move
 from irl_chess.chess_utils.sunfish import piece, pst, pst_only, Position, Move
 from irl_chess.visualizations.visualize import plot_R_weights, char_to_idxs
 from irl_chess.chess_utils.alpha_beta_utils import no_moves_eval, evaluate_board, alpha_beta_search, alpha_beta_search_k, list_first_moves 
 from irl_chess.chess_utils.utils import perturb_reward
 # from typing import List
 from joblib import Parallel, delayed
-from irl_chess.models.sunfish_GRW import eval_pos, sunfish_move
 
 # ======================== Functions for BIRL policy walk ====================== #
 def log_prob_dist(R, energy, alpha, prior=lambda R: 1):
     log_prob = alpha * energy + np.log(prior(R))
     return log_prob
-    
+
+def eval_log_prob(RP_new, QpiNew, RP, Qpi, alpha):
+    log_prob = min(0, log_prob_dist(RP_new, np.sum(QpiNew), alpha=alpha) - log_prob_dist(RP, np.sum(Qpi), alpha=alpha))
+    return log_prob
+
 def PolicyIteration(states, actions, RP, Rpst, RH, config_data, parallel = None):
     pass
 
@@ -82,7 +86,10 @@ def sunfish_search(states, actions, RP, Rpst, RH, config_data, parallel):
             s_a = s.move(Move, pst)     # Searches will end at different final depths, but that is not a problem as both are following the policy
             best_move, best_moves, move_dict, best_board_found_tuple = \
                 sunfish_move(s_a, pst, time_limit=config_data['time_limit'], min_depth=2, return_best_board_found_tuple=True)
-            eval = -1*best_board_found_tuple[1] # Invert because s_a was from the perspective of the opposite player
+            if best_move is not None:
+                eval = -1 * best_board_found_tuple[1]  # Invert because s_a was from the perspective of the opposite player
+            else: # If there are no legal moves, next state is temrinal and the evaluation is the reward gained in making that move.
+                eval = (-1 * eval_pos(s_a, RP, Rpst) - eval_pos(s, RP, Rpst))
         else:
             best_move, best_moves, move_dict, best_board_found_tuple = \
                 sunfish_move(s, pst, time_limit=config_data['time_limit'], min_depth=2, return_best_board_found_tuple=True)
@@ -92,7 +99,7 @@ def sunfish_search(states, actions, RP, Rpst, RH, config_data, parallel):
         Qpi_policy_R[i], pi[i], pi_moves[i] = eval, board_final_opposite_player, best_move
     return pi, Qpi_policy_R, pi_moves
 
-import logging
+
 def sunfish_search_par(states, actions, RP, Rpst, RH, config_data, parallel):
     def evaluate_single_state(i, s, pst):
         logging.debug(f"Evaluating state {i}")
@@ -101,11 +108,17 @@ def sunfish_search_par(states, actions, RP, Rpst, RH, config_data, parallel):
         if actions is not None:
             # Follow policy pi after taking move a
             a = actions[i]
+            logging.debug(f"Taking action {a}")
             assert isinstance(a, Move)
             s_a = s.move(a, pst)  # Searches will end at different final depths, but that is not a problem as both are following the policy
             best_move, best_moves, move_dict, best_board_found_tuple = \
                 sunfish_move(s_a, pst, time_limit=config_data['time_limit'], min_depth=2, return_best_board_found_tuple=True)
-            eval = -1 * best_board_found_tuple[1]  # Invert because s_a was from the perspective of the opposite player
+            if best_move is not None:
+                eval = -1 * best_board_found_tuple[1]  # Invert because s_a was from the perspective of the opposite player
+            else: # If there are no legal moves, next state is temrinal and the evaluation is the reward gained in making that move.
+                logging.info(f"No best move found after action. The position was: {s.board}, which transitioned to {s_a.board}")
+                eval = (-1 * eval_pos(s_a, RP, Rpst) - eval_pos(s, RP, Rpst))
+                return eval, (s_a, True), None 
         else:
             best_move, best_moves, move_dict, best_board_found_tuple = \
                 sunfish_move(s, pst, time_limit=config_data['time_limit'], min_depth=2, return_best_board_found_tuple=True)
@@ -153,10 +166,11 @@ def Qeval_sunfishBoard_par(pi, states, RP, Rpst, RH, parallel, evaluation_functi
     Qpi_R = parallel(delayed(evaluate_single_board)(i, s_f_tuple) for i, s_f_tuple in enumerate(pi))
     return np.array(Qpi_R)
 
-def bookkeeping(accuracies, actions, pi_moves, energies, Qpi_policy_R, RPs, RP, Rpsts= None, Rpst = None, RHs = None, RH = None):
+def bookkeeping(accuracies, actions, pi_moves, pi_energies, a_energies, Qpi_policy_R, Qpi_action_R, RPs, RP, Rpsts= None, Rpst = None, RHs = None, RH = None):
     acc = sum([player_move == policy_move for player_move, policy_move in list(zip(actions, pi_moves))]) / len(actions)
     accuracies.append(acc)
-    energies.append(np.sum(Qpi_policy_R))
+    pi_energies.append(np.sum(Qpi_policy_R))
+    a_energies.append(np.sum(Qpi_action_R))
     RPs.append(RP)
     if Rpsts is not None:
         Rpsts.append(Rpst)

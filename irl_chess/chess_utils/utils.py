@@ -51,9 +51,9 @@ def perturb_reward(RP, config_data, Rpst = None, RH = None, epoch = None):
     return RP_new, Rpst_new, RH_new # It is better to keep the return types consistent, even though it might return None
 
 def assert_RP_returns(RP, RP_new, Rpst, Rpst_new, RH, RH_new):
-    assert RP.shape == RP_new.shape, f"The shape of the new RP vector must be the same as the old RP vector, but it was {RP_new}"
-    assert Rpst.shape == Rpst_new.shape, f"The shape of the new Rpst vector must be the same as the old Rpst vector, but it was {Rpst_new}"
-    assert RH.shape == RH_new.shape, f"The shape of the new RH vector must be the same as the old RH vector, but it was {RH_new}"
+    if RP_new is not None: assert RP.shape == RP_new.shape, f"The shape of the new RP vector must be the same as the old RP vector, but it was {RP_new}"
+    if Rpst_new is not None: assert Rpst.shape == Rpst_new.shape, f"The shape of the new Rpst vector must be the same as the old Rpst vector, but it was {Rpst_new}"
+    if RH_new is not None: assert RH.shape == RH_new.shape, f"The shape of the new RH vector must be the same as the old RH vector, but it was {RH_new}"
 
 
 def noise_decay(config_data, epoch):

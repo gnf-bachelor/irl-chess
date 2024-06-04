@@ -8,7 +8,7 @@ from irl_chess.misc_utils.load_save_utils import fix_cwd, load_config, create_re
 from irl_chess import load_maia_test_data
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.WARNING)
+    logging.basicConfig(level=logging.DEBUG)
     fix_cwd()
     base_config_data, model_config_data = load_config()
     base_config_data['overwrite'] = False

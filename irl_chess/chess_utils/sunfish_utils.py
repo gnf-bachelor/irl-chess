@@ -28,11 +28,10 @@ def sunfish_move(state, pst, time_limit, move_only=False, max_depth=1000, run_at
             count_gamma += 1
         if time() - start > time_limit and count_gamma >= 1 and (count >= run_at_least) and depth >= min_depth:
             break
-    if best_move is None:
-        print(f"best move is: {best_move} and count is {count}")
-        print(state.board)
-    assert best_move is not None, f"No best move found, this probably means an invalid position was passed to the \
-                                   searcher"
+    if best_move is None: # I know this looks ugly. It is only used in the special case of BIRL, where the player action leads to game end. 
+        logging.warning(f"No best move found, this probably means an invalid position was passed to the searcher. The position was: {state.board}")
+        if return_best_board_found_tuple: return None, None, None, None
+        return None, None, None
     if move_only: # Should clean this up such that it returns (best_move, info) where info is dictionary with all the auxillary information. 
         return best_move
     elif return_best_board_found_tuple:
@@ -45,7 +44,7 @@ def sunfish_best_board(state, pst, tp_move: dict):
     seen_states = set()
     while state in tp_move:
         if state in seen_states:
-            logging.warning(f"Cycle detected at state: {state}. Breaking out of the loop.")
+            logging.info(f"Cycle detected at state: {state}. Breaking out of the loop.")
             break
         seen_states.add(state)
 
@@ -87,7 +86,7 @@ def str_to_sunfish_move(move, flip):
     if flip:
         i = 119 - i
         j = 119 - j
-    prom = move[4] if len(move) > 4 else ''
+    prom = (move[4] if len(move) > 4 else '').upper()
     return Move(i, j, prom)
 
 # Takes a board object and returns the position
