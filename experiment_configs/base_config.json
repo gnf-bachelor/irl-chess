@@ -34,7 +34,7 @@
     "RH_true": [0, 0, 0],
 
     "permute_how_many": 1, 
-    "model": "BIRL",
+    "model": "sunfish_GRW",
 
     "board_translation": "none",
     "move_percentage_data": false

@@ -69,12 +69,9 @@ def run_BIRL(chess_boards, player_moves, config_data, out_path, validation_set):
     with (Parallel(n_jobs=config_data['n_threads']) as parallel):
         
         # Calculate initially.
-        print("Calculating initial policy.") 
         pi, Qpi_policy_R, pi_moves = PolicyIteration(states, None, RP, Rpst, RH, config_data, parallel)
-        print("Calculating initial action policy.")
         a_pi, Qpi_action_R, _ = PolicyIteration(states, actions, RP, Rpst, RH, config_data, parallel) # We can't guarantee that alpha-beta search fully explores move a and so we calculate it again.
         bookkeeping(accuracies, actions, pi_moves, pi_energies, a_energies, Qpi_policy_R, Qpi_action_R, RPs, RP, Rpsts, Rpst, RHs, RH) # Bookkeeping for the initialization.
-        print("Finished initial policy calculation.")
 
         for epoch in tqdm(range(next_empty_epoch, config_data['epochs']), desc='Epochs'):
             

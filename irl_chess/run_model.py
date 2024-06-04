@@ -11,45 +11,6 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     fix_cwd()
     base_config_data, model_config_data = load_config()
-    base_config_data['overwrite'] = False
-    base_config_data['n_files'] = 1
-    base_config_data['time_control'] = False
-    base_config_data['min_elo'] = 1900
-    base_config_data['max_elo'] = 2000
-    base_config_data['n_midgame'] = 10
-    base_config_data['n_endgame'] = 100
-    base_config_data['n_boards'] = 10000
-    base_config_data['n_boards_val'] = 10
-    base_config_data['epochs'] = 300
-    base_config_data['max_hours'] = 100
-    base_config_data['n_threads'] = -1
-    base_config_data['plot_every'] = 20
-    base_config_data['val_every'] = 10
-    base_config_data['run_n_times'] = 5
-
-    base_config_data['plot_char'] = ["P", "N", "B", "R", "Q"]
-    base_config_data['permute_char'] = []
-    base_config_data['RP_start'] = [100, 280, 320, 479, 929, 60000]
-
-    base_config_data['plot_pst_char'] = ["P", "N", "B", "R", "Q", "K"]
-    base_config_data['permute_pst_char'] = ["P", "N", "B", "R", "Q", "K"]
-    base_config_data['Rpst_start'] = [0, 0, 0, 0, 0, 0]
-
-    base_config_data['include_PA_KS_PS'] = [False, False, False]
-    base_config_data['plot_H'] = [True, True, True]
-    base_config_data['permute_H'] = [True, True, True]
-    base_config_data['RH_start'] = [0, 0, 0]
-
-    base_config_data['move_function'] = "sunfish_move"
-    base_config_data['RP_true'] = [100, 280, 320, 479, 929, 60000]
-    base_config_data['Rpst_true'] = [1, 1, 1, 1, 1, 1]
-    base_config_data['RH_true'] = [0, 0, 0]
-
-    base_config_data['permute_how_many'] = -1
-    base_config_data['model'] = "sunfish_GRW"
-
-    base_config_data['board_translation'] = "none"
-    base_config_data['move_percentage_data'] = False
 
     config_data = union_dicts(base_config_data, model_config_data)
 

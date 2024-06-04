@@ -11,7 +11,7 @@ from irl_chess.visualizations.visualize import plot_weights, sunfish_palette_nam
 from irl_chess.models.sunfish_GRW import val_sunfish_GRW
 
 
-def run_loop(plot_weights, plot_accuracies, move_functions, initial_weights, elos, extensions=('', )):
+def run_loop(plot_weights, plot_accuracies, move_functions, initial_weights, elos, extensions=('', ), out_path=None, save_path=None):
     default_acc = [None for _ in elos]
     def_colors = sns.color_palette(maia_palette_name, len(elos))
     for move_function in move_functions:
@@ -30,34 +30,31 @@ def run_loop(plot_weights, plot_accuracies, move_functions, initial_weights, elo
                     base_config['add_legend'] = add_legend
                     add_legend = False
                     base_config['plot_title'] = (f'Sunfish weights for multiple runs using {move_function.replace("_", " ")}s\n'
-                                                 f'Using ELO bins {elos[0]} and {elos[-1]} ')
+                                                 f'Using ELO bins {elos[0]}' + (f' and {elos[-1]} ' if len(elos)>1 else ''))
                     base_config["RP_start"][:5] = [initial_weight] * 5
+                    base_config["model"] = 'sunfish_GRW'
+                    base_config['permute_char'] = ["N", "B", "R", "Q"]
 
-                    out_path = create_result_path(base_config, model_config, sunfish_native_result_string) + extension
+                    out_path = (create_result_path(base_config, model_config, sunfish_native_result_string) + extension) if out_path is None else out_path
                     if plot_weights:
+                        save_path = join(os.getcwd(), 'results', 'plots', 'data_section', f'trace_plot_{move_function}_{initial_weights[-1]}_{elos[0]}_{elos[-1]}.svg') if save_path is None else save_path
                         try:
                             plot_R_weights(config_data=base_config,
                                    out_path=out_path,
-                                   epoch=500,
+                                   epoch=300,
                                    filename_addition='mod',# f'-{elo}-{elo+100}-{move_function}-gaussian',
                                    close_when_done=False,
                                    show=False,
-                                   save_path=join(os.getcwd(), 'results', 'plots', 'data_section', f'trace_plot_{move_function}_{base_config["RP_start"][1]}.svg'))
+                                   save_path=save_path)
+                            print(move_function, initial_weight, extension, elo)
+                            print(f'Were used!!')
                         except IndexError:
-                            out_path = create_result_path(base_config, model_config,
-                                                          sunfish_native_result_string) + '_1'
-                            plot_R_weights(config_data=base_config,
-                                   out_path=out_path,
-                                   epoch=500,
-                                   filename_addition='mod',  # f'-{elo}-{elo+100}-{move_function}-gaussian',
-                                   close_when_done=False,
-                                   show=False,
-                                   save_path=join(os.getcwd(), 'results', 'plots', 'data_section',
-                                                  f'trace_plot_{move_function}_{base_config["RP_start"][1]}.svg'))
+                            print(f'No weights saved at {out_path}')
+                            print(move_function, initial_weight, extension, elo)
 
                     if plot_accuracies:
                         save_path = join(os.getcwd(), 'results', 'plots', 'data_section',
-                                         f'trace_plot_accuracies_{move_function}_{base_config["RP_start"][1]}.svg')
+                                         f'trace_plot_accuracies_{move_function}_{initial_weights[-1]}_{elos[0]}-{elos[-1]}.svg')
 
                         try:
                             acc_path = join(out_path, 'accuracies')
@@ -108,9 +105,11 @@ def run_loop(plot_weights, plot_accuracies, move_functions, initial_weights, elo
                             plt.grid(True)
                             plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
                             plt.tight_layout()
+                            print(f'Saved to {save_path}')
                             plt.savefig(save_path)
                         except FileNotFoundError:
                             print(f'No accuracies for {out_path}')
+                            pass
 
         plt.show()
         plt.close()
@@ -121,11 +120,19 @@ if __name__ == '__main__':
     save_array, union_dicts
 
     base_config, model_config = load_config('sunfish_GRW')
+    path_BIRL = r'C:\Users\fs\Downloads\BIRL'
 
-    elos = (1100, 1900)
+    elos = (1100, )#1900)
     initial_weights = (101, 102)
     move_functions = ('sunfish_move', 'player_move', )
-    for move_function in move_functions:
-        run_loop(plot_weights=False, plot_accuracies=True, move_functions=(move_function, ), initial_weights=initial_weights, elos=elos)
+    extensions = ('', '_1')
+
+    #save_path = join(os.getcwd(), 'results', 'plots', 'data_section',
+     #    f'trace_plot_{move_function}_{initial_weights[-1]}_{elos[0]}_{elos[-1]}.svg') if save_path is None else save_path
+
+    #run_loop(plot_weights=True, plot_accuracies=False, move_functions=move_functions, initial_weights=initial_weights,
+    #         elos=elos, extensions=extensions)
+
+    run_loop(plot_weights=True, plot_accuracies=False, move_functions=move_functions, initial_weights=initial_weights, elos=elos, extensions=extensions)
 
 
