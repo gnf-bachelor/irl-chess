@@ -1,7 +1,8 @@
 import chess
 import numpy as np
 from tqdm import tqdm
-from irl_chess.chess_utils.sunfish_utils import board2sunfish, eval_pos, has_no_legal_moves, \
+import logging
+from irl_chess.chess_utils.sunfish_utils import board2sunfish, eval_pos, \
     get_new_pst, str_to_sunfish_move, sunfish_move_to_str, moves_and_Q_from_result, sunfish_move
 from irl_chess.chess_utils.sunfish import piece, pst, pst_only, Position, Move
 from irl_chess.visualizations.visualize import plot_R_weights, char_to_idxs
@@ -98,7 +99,7 @@ def sunfish_search(states, actions, RP, Rpst, RH, config_data, parallel):
         Qpi_policy_R[i], pi[i], pi_moves[i] = eval, board_final_opposite_player, best_move
     return pi, Qpi_policy_R, pi_moves
 
-import logging
+
 def sunfish_search_par(states, actions, RP, Rpst, RH, config_data, parallel):
     def evaluate_single_state(i, s, pst):
         logging.debug(f"Evaluating state {i}")
@@ -107,6 +108,7 @@ def sunfish_search_par(states, actions, RP, Rpst, RH, config_data, parallel):
         if actions is not None:
             # Follow policy pi after taking move a
             a = actions[i]
+            logging.debug(f"Taking action {a}")
             assert isinstance(a, Move)
             s_a = s.move(a, pst)  # Searches will end at different final depths, but that is not a problem as both are following the policy
             best_move, best_moves, move_dict, best_board_found_tuple = \
@@ -114,7 +116,9 @@ def sunfish_search_par(states, actions, RP, Rpst, RH, config_data, parallel):
             if best_move is not None:
                 eval = -1 * best_board_found_tuple[1]  # Invert because s_a was from the perspective of the opposite player
             else: # If there are no legal moves, next state is temrinal and the evaluation is the reward gained in making that move.
+                logging.info(f"No best move found after action. The position was: {s.board}, which transitioned to {s_a.board}")
                 eval = (-1 * eval_pos(s_a, RP, Rpst) - eval_pos(s, RP, Rpst))
+                return eval, (s_a, True), None 
         else:
             best_move, best_moves, move_dict, best_board_found_tuple = \
                 sunfish_move(s, pst, time_limit=config_data['time_limit'], min_depth=2, return_best_board_found_tuple=True)
