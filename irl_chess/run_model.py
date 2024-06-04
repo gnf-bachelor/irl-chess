@@ -40,7 +40,7 @@ if __name__ == '__main__':
     base_config_data['permute_H'] = [True, True, True]
     base_config_data['RH_start'] = [0, 0, 0]
 
-    base_config_data['move_function'] = "player_move"
+    base_config_data['move_function'] = "sunfish_move"
     base_config_data['RP_true'] = [100, 280, 320, 479, 929, 60000]
     base_config_data['Rpst_true'] = [1, 1, 1, 1, 1, 1]
     base_config_data['RH_true'] = [0, 0, 0]
