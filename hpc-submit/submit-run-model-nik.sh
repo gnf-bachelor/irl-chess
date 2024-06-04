@@ -13,5 +13,5 @@
 # end of BSUB options
 
 module load python3/3.10.13
-source irl-chess-v6/bin/activate
+source irl-chess-env/bin/activate
 python3 -m irl_chess.run_model
