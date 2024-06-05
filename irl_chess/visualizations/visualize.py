@@ -6,7 +6,7 @@ import seaborn as sns
 from os.path import join
 from matplotlib import pyplot as plt
 
-sunfish_palette_name = 'mako'
+sunfish_palette_name = "Spectral"
 maia_palette_name = 'flare'
 
 result_strings = ['Result', 'RpstResult', 'RHResult']
