@@ -84,8 +84,8 @@ def run_loop(plot_weights, plot_accuracies, move_functions, elos, extensions=(''
                                 boards, moves = pickle.load(file)
                             validation_set = list(zip(boards, moves))
 
-
-                            create_default_sunfish(out_path=out_path, base_config=base_config) if out_path_def_sunfish is None else None
+                            create_default_sunfish(out_path=out_path,
+                                                   base_config=base_config) if out_path_def_sunfish is None else None
                             default_acc[i], _ = val_sunfish_GRW(validation_set=validation_set,
                                                                 out_path=out_path if out_path_def_sunfish is None else out_path_def_sunfish,
                                                                 config_data=union_dicts(model_config, base_config),
@@ -95,24 +95,28 @@ def run_loop(plot_weights, plot_accuracies, move_functions, elos, extensions=(''
                         elif default_acc[i] is None:
                             default_acc[i] = 1
 
-                        plt.title(f'Train Accuracy using {move_function.replace("_", " ")}s')
+                        plt.title(
+                            base_config.get('plot_title', f'Train Accuracy using {move_function.replace("_", " ")}s'))
                         if best_acc_list is not None:
                             plt.plot(best_acc_list, label=f'Best {elo}', alpha=base_config['alpha'] + .2,
                                      color=color_palette[2 * i])
                         _, axs = plt.subplots(1, 1) if axes is None else (None, axes[0])
 
-                        axs.hlines(default_acc[i], xmin=0, xmax=len(temp_acc_list), label=f'Default {elo}' if add_legend else None,
+                        axs.hlines(default_acc[i], xmin=0, xmax=len(temp_acc_list),
+                                   label=f'Default {elo}' if add_legend else None,
                                    linestyles='dashed', color=def_colors[i], alpha=0.7)
-                        lns1 = axs.plot(temp_acc_list, label=f'Temp {elo}' if add_legend else None, alpha=base_config['alpha'],
-                                 color=color_palette[2 * i + 1])
+                        lns1 = axs.plot(temp_acc_list, label=f'Temp {elo}' if add_legend else None,
+                                        alpha=base_config['alpha'],
+                                        color=color_palette[2 * i + 1])
 
                         plt.ylabel('Accuracy')
                         plt.xlabel('Epoch')
                         axs.grid(True, axis='both')
                         if energies is not None:
                             ax2 = axs.twinx() if axes is None else axes[1]
-                            lns2 = ax2.plot(energies, label=f'Energies {elo}' if add_legend else None, alpha=base_config['alpha'] + .2,
-                                     color=color_palette[2 * i])
+                            lns2 = ax2.plot(energies, label=f'Energies {elo}' if add_legend else None,
+                                            alpha=base_config['alpha'] + .2,
+                                            color=color_palette[2 * i])
                             ax2.set_ylabel('Energy')
                             axes = axs, ax2
                             axs.legend(loc=(0, .75), ) if add_legend else None
@@ -120,8 +124,9 @@ def run_loop(plot_weights, plot_accuracies, move_functions, elos, extensions=(''
                         else:
                             axes = axs, axs
                             plt.legend(loc='upper left', bbox_to_anchor=(1, 1)) if add_legend else None
-                            axs.plot(best_acc_list, label=f'Best {elo}' if add_legend else None, alpha=base_config['alpha'],
-                                 color=color_palette[2 * i + 1])
+                            axs.plot(best_acc_list, label=f'Best {elo}' if add_legend else None,
+                                     alpha=base_config['alpha'],
+                                     color=color_palette[2 * i + 1])
 
                         plt.tight_layout()
                         print(f'Saved to {save_path}')
@@ -135,16 +140,26 @@ def run_loop(plot_weights, plot_accuracies, move_functions, elos, extensions=(''
         return axes
 
 
-def internal_loop(listdir, path_run, name, base_config, invalid_folder_names=['plots', 'configs']):
-    for do_weights in (True, False):
-        for do_pst in (True, False):
+def internal_loop(listdir, path_run, name_title, base_config,
+                  name_figure=None,
+                  second_savepath=None,
+                  move_functions=('sunfish_move',),
+                  invalid_folder_names=('plots', 'configs', 'default_sunfish'),
+                  do_weights_options=(True, False),
+                  do_pst_options=(True, False),
+                  elos=(1900,)):
+    if name_figure is None: name_figure = name_title
+    for do_weights in do_weights_options:
+        for do_pst in do_pst_options:
             axes = None
+            count = 0
             for i, filename in enumerate(listdir):
                 add_legend = (len(listdir) - 2)
                 print(f'Processing {filename}, is {not any([filename.endswith(el) for el in invalid_folder_names])}')
-                if os.path.isdir(join(path_run, filename)) and not any([filename.endswith(el) for el in invalid_folder_names]):
-                    save_path = join(path_run, 'plots',
-                                     f'trace_plot_{name}_{"pst" if do_pst else "pieces"}_{"weights" if do_weights else "accuracies"}.svg')
+                if os.path.isdir(join(path_run, filename)) and not any(
+                        [filename.endswith(el) for el in invalid_folder_names]):
+                    plot_name = f'trace_plot_{name_figure}_{"pst" if do_pst else "pieces"}_{"weights" if do_weights else "accuracies"}.svg'
+                    save_path = join(path_run, 'plots', plot_name)
                     path_out = join(path_run, filename, )
 
                     base_config['plot_pst_char'] = ["P", "N", "B", "R", "Q", "K"] if do_pst else []
@@ -154,18 +169,22 @@ def internal_loop(listdir, path_run, name, base_config, invalid_folder_names=['p
                         f'Sunfish {("pst" if do_pst else "piece") if do_weights else ""} '
                         f'{("weights" if do_weights else "accuracies")} '
                         f'for multiple runs\n using Sunfish moves '
-                        f'and {name}')
+                        f'and the {name_title} Algorithm')
                     os.makedirs(os.path.dirname(save_path), exist_ok=True)
                     axes = run_loop(plot_weights=do_weights,
                                     plot_accuracies=not do_weights,
-                                    move_functions=('sunfish_move',),
-                                    elos=(1900,),
+                                    move_functions=move_functions,
+                                    elos=elos,
                                     extensions=extensions,
                                     out_path=path_out,
                                     save_path=save_path,
                                     out_path_def_sunfish=path_def_sunfish,
                                     add_legend=i == add_legend,
                                     axes=axes)
+                    count += 1
+            if second_savepath is not None:
+                plt.savefig(join(second_savepath, plot_name))
+            print(f'Showing now after adding {count} runs to plot')
             plt.show()
             plt.close()
 
@@ -173,6 +192,7 @@ def internal_loop(listdir, path_run, name, base_config, invalid_folder_names=['p
 if __name__ == '__main__':
     from irl_chess import load_config, create_result_path, sunfish_native_result_string, plot_R_weights, load_weights, \
         save_array, union_dicts
+
     # Run twice if plot folders are not created yet, very scuffed yes.
 
     options = ['gpw_8', 'SunfVal', 'alpha_beta', 'BIRLall', ]
@@ -184,49 +204,33 @@ if __name__ == '__main__':
     move_functions = ('player_move', 'sunfish_move',)
     extensions = ('',)
 
-    for opt_index in [1, ]:
+    for opt_index in [0, 1, 2, 3]:
         count = 0
         if options[opt_index] == 'gpw_8':
             elos = (1100, 1900)
             for elo in elos:
-                base_config['plot_pst_char'] = []
-                base_config['plot_H'] = [False] * 3
-                base_config['plot_char'] = ["P", "N", "B", "R", "Q"]
-                for do_weights in (False,):
-                    for move_function in move_functions:
-                        base_config['plot_title'] = (
-                                f'Sunfish weights for multiple runs using {move_function.replace("_", " ")}s\n'
-                                f'Using ELO bins {elos[0]}' + (f' and {elos[-1]} ' if len(elos) > 1 else ''))
-                        path_run = join(path_ahh, move_function, f'{elo}', )
-                        listdir = os.listdir(path_run)
-                        for i, filename in enumerate(listdir):
-                            add_legend = i == (len(listdir) - 2)
-                            if os.path.isdir(join(path_run, filename)) and not filename.endswith('plots'):
-                                save_path = join(path_run, 'plots',
-                                                 f'trace_plot_pieces_{move_function}_{elo}_{"weights" if do_weights else "accuracies"}.svg')
-                                path_out = join(path_run, filename)
-                                os.makedirs(os.path.dirname(save_path), exist_ok=True)
-                                run_loop(plot_weights=do_weights,
-                                         plot_accuracies=not do_weights,
-                                         move_functions=(move_function,),
-                                         elos=(elo,),
-                                         extensions=extensions,
-                                         out_path=path_out,
-                                         save_path=save_path,
-                                         out_path_def_sunfish=path_def_sunfish,
-                                         add_legend=add_legend)
-                        count += 1
-                        print(count)
-
-                        plt.show()
-                        plt.close()
+                for move_function in move_functions:
+                    base_config['plot_title'] = (
+                            f'Sunfish weights for multiple runs using {move_function.replace("_", " ")}s\n'
+                            f'Using ELO bins {elos[0]}' + (f' and {elos[-1]} ' if len(elos) > 1 else ''))
+                    path_run = join(path_ahh, move_function, f'{elo}', )
+                    listdir = os.listdir(path_run)
+                    second_savepath = join(path_ahh, 'GPW8_plots')
+                    os.makedirs(second_savepath, exist_ok=True)
+                    internal_loop(listdir=listdir,
+                                  path_run=path_run,
+                                  move_functions=(move_function,),
+                                  name_title='GPW',
+                                  name_figure=f'GPW_{elo}_{move_function}',
+                                  second_savepath=second_savepath,
+                                  base_config=base_config, do_pst_options=(False,), elos=(elo,))
         elif options[opt_index] == 'SunfVal':
             path_run_base = join(path_ahh, 'SunfVal')
             for filename in os.listdir(path_run_base):
                 if not filename.endswith('plots'):
                     path_run = join(path_run_base, filename)
                     listdir = os.listdir(path_run)
-                    internal_loop(listdir=listdir, path_run=path_run, name='Sunfish', base_config=base_config)
+                    internal_loop(listdir=listdir, path_run=path_run, name_title='Sunfish', base_config=base_config)
             print(f'Done internal')
         elif options[opt_index] == 'alpha_beta':
             path_run = join(path_ahh, options[opt_index])
@@ -236,5 +240,3 @@ if __name__ == '__main__':
             for path_run in [join(path_ahh, options[opt_index]), join(path_ahh, options[opt_index], '2')]:
                 listdir = os.listdir(path_run)
                 internal_loop(listdir, path_run, options[opt_index][:-3], base_config)
-
-
