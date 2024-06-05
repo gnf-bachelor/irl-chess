@@ -135,13 +135,14 @@ def run_loop(plot_weights, plot_accuracies, move_functions, elos, extensions=(''
         return axes
 
 
-def internal_loop(listdir, path_run, name, base_config):
+def internal_loop(listdir, path_run, name, base_config, invalid_folder_names=['plots', 'configs']):
     for do_weights in (True, False):
         for do_pst in (True, False):
             axes = None
             for i, filename in enumerate(listdir):
                 add_legend = (len(listdir) - 2)
-                if os.path.isdir(join(path_run, filename)) and not filename.endswith('plots'):
+                print(f'Processing {filename}, is {not any([filename.endswith(el) for el in invalid_folder_names])}')
+                if os.path.isdir(join(path_run, filename)) and not any([filename.endswith(el) for el in invalid_folder_names]):
                     save_path = join(path_run, 'plots',
                                      f'trace_plot_{name}_{"pst" if do_pst else "pieces"}_{"weights" if do_weights else "accuracies"}.svg')
                     path_out = join(path_run, filename, )
@@ -151,7 +152,7 @@ def internal_loop(listdir, path_run, name, base_config):
                     base_config['plot_char'] = ["P", "N", "B", "R", "Q", ] if not do_pst else []
                     base_config['plot_title'] = (
                         f'Sunfish {("pst" if do_pst else "piece") if do_weights else ""} '
-                        f'{("weights" if do_weights else "accuracies and energies")} '
+                        f'{("weights" if do_weights else "accuracies")} '
                         f'for multiple runs\n using Sunfish moves '
                         f'and {name}')
                     os.makedirs(os.path.dirname(save_path), exist_ok=True)
@@ -180,13 +181,13 @@ if __name__ == '__main__':
     path_def_sunfish = join(path_ahh, 'default_sunfish')
     base_config, model_config = load_config('sunfish_GRW')
 
-    elos = (1100, 1900)
     move_functions = ('player_move', 'sunfish_move',)
     extensions = ('',)
 
-    for opt_index in [1]:
+    for opt_index in [1, ]:
         count = 0
         if options[opt_index] == 'gpw_8':
+            elos = (1100, 1900)
             for elo in elos:
                 base_config['plot_pst_char'] = []
                 base_config['plot_H'] = [False] * 3
@@ -220,34 +221,13 @@ if __name__ == '__main__':
                         plt.show()
                         plt.close()
         elif options[opt_index] == 'SunfVal':
-            for do_weights in (True, False):
-                path_run = join(path_ahh, 'SunfVal')
-                for do_pst in (True, False):
-                    for filename in os.listdir(path_run):
-                        if os.path.isdir(join(path_run, filename)) and not filename.endswith('plots'):
-                            for i in range(1, 3):
-                                save_path = join(path_run, filename, 'plots',
-                                                 f'trace_plot_SunfVal_{"pst" if do_pst else "pieces"}_{"weights" if do_weights else "accuracies"}.svg')
-                                path_out = join(path_run, filename, f'run_{i}')
-                                with open(join(path_run, filename, 'configs', 'base_config.json'), 'rb') as file:
-                                    base_config = json.load(file)
-                                base_config['plot_pst_char'] = ["P", "N", "B", "R", "Q", "K"] if do_pst else []
-                                base_config['plot_H'] = [False] * 3
-                                base_config['plot_char'] = ["P", "N", "B", "R", "Q", ] if not do_pst else []
-                                base_config['plot_title'] = (
-                                        f'Sunfish {("pst" if do_pst else "piece") if do_weights else ""} {("weights" if do_weights else "accuracies")} for multiple runs using Sunfish moves\n'
-                                        f'Using ELO bins {elos[0]}' + (f' and {elos[-1]} ' if len(elos) > 1 else ''))
-                                os.makedirs(os.path.dirname(save_path), exist_ok=True)
-                                run_loop(plot_weights=do_weights,
-                                         plot_accuracies=not do_weights,
-                                         move_functions=('sunfish_move',),
-                                         elos=(1900,),
-                                         extensions=extensions,
-                                         out_path=path_out,
-                                         save_path=save_path,
-                                         out_path_def_sunfish=path_def_sunfish)
-                        plt.show()
-                        plt.close()
+            path_run_base = join(path_ahh, 'SunfVal')
+            for filename in os.listdir(path_run_base):
+                if not filename.endswith('plots'):
+                    path_run = join(path_run_base, filename)
+                    listdir = os.listdir(path_run)
+                    internal_loop(listdir=listdir, path_run=path_run, name='Sunfish', base_config=base_config)
+            print(f'Done internal')
         elif options[opt_index] == 'alpha_beta':
             path_run = join(path_ahh, options[opt_index])
             listdir = os.listdir(path_run)
