@@ -14,13 +14,14 @@ from irl_chess.misc_utils.utils import create_default_sunfish
 
 
 def run_loop(plot_weights, plot_accuracies, move_functions, elos, extensions=('',), out_path=None, save_path=None,
-             out_path_def_sunfish=None, add_legend=True, axes=None):
+             out_path_def_sunfish=None,  axes=None):
     default_acc = [None for _ in elos]
     def_colors = sns.color_palette(maia_palette_name, len(elos))
     for move_function in move_functions:
         for extension in extensions:
             color_palette = sns.color_palette(sunfish_palette_name, len(elos) * 2)
             for i, elo in enumerate(elos):
+                add_legend = not plt.fignum_exists(1)
                 base_config['min_elo'] = elo
                 base_config['max_elo'] = elo + 100
                 base_config['move_function'] = move_function
@@ -43,7 +44,6 @@ def run_loop(plot_weights, plot_accuracies, move_functions, elos, extensions=(''
                                        close_when_done=False,
                                        show=False,
                                        save_path=save_path)
-                        print(move_function, extension, elo, f'Was used!!')
                         print(f'Saved to {save_path}')
                     except IndexError:
                         print(f'No weights saved at {out_path}')
@@ -51,7 +51,7 @@ def run_loop(plot_weights, plot_accuracies, move_functions, elos, extensions=(''
 
                 if plot_accuracies:
                     save_path = join(os.getcwd(), 'results', 'plots', 'data_section',
-                                     f'trace_plot_accuracies_{move_function}__{elos[0]}-{elos[-1]}.svg') if save_path is None else save_path
+                                     f'trace_plot_accuracies_{move_function}_{elos[0]}-{elos[-1]}.svg') if save_path is None else save_path
 
                     try:
                         acc_path = join(out_path, 'accuracies')
@@ -129,9 +129,8 @@ def run_loop(plot_weights, plot_accuracies, move_functions, elos, extensions=(''
                                      color=color_palette[2 * i + 1])
 
                         plt.tight_layout()
-                        print(f'Saved to {save_path}')
+                        print(f'Saved to {save_path}\n Not adding legend to next plot')
                         plt.savefig(save_path)
-                        add_legend = False
                     except FileNotFoundError:
                         print(f'No accuracies for {out_path}')
                         pass
@@ -154,18 +153,17 @@ def internal_loop(listdir, path_run, name_title, base_config,
             axes = None
             count = 0
             for i, filename in enumerate(listdir):
-                add_legend = (len(listdir) - 2)
-                print(f'Processing {filename}, is {not any([filename.endswith(el) for el in invalid_folder_names])}')
                 if os.path.isdir(join(path_run, filename)) and not any(
                         [filename.endswith(el) for el in invalid_folder_names]):
-                    plot_name = f'trace_plot_{name_figure}_{"pst" if do_pst else "pieces"}_{"weights" if do_weights else "accuracies"}.svg'
+                    plot_name = (f'trace_plot_{name_figure}_{("pst" if do_pst else "piece") if do_weights else ""}'
+                                 f'{("weights" if do_weights else "accuracies")}.svg')
                     save_path = join(path_run, 'plots', plot_name)
                     path_out = join(path_run, filename, )
 
                     base_config['plot_pst_char'] = ["P", "N", "B", "R", "Q", "K"] if do_pst else []
                     base_config['plot_H'] = [False] * 3
                     base_config['plot_char'] = ["P", "N", "B", "R", "Q", ] if not do_pst else []
-                    base_config['plot_title'] = (
+                    base_config['plot_title'] = base_config.get('plot_title',
                         f'Sunfish {("pst" if do_pst else "piece") if do_weights else ""} '
                         f'{("weights" if do_weights else "accuracies")} '
                         f'for multiple runs\n using Sunfish moves '
@@ -179,8 +177,7 @@ def internal_loop(listdir, path_run, name_title, base_config,
                                     out_path=path_out,
                                     save_path=save_path,
                                     out_path_def_sunfish=path_def_sunfish,
-                                    add_legend=i == add_legend,
-                                    axes=axes)
+                                    axes=axes,)
                     count += 1
             if second_savepath is not None:
                 plt.savefig(join(second_savepath, plot_name))
@@ -195,7 +192,7 @@ if __name__ == '__main__':
 
     # Run twice if plot folders are not created yet, very scuffed yes.
 
-    options = ['gpw_8', 'SunfVal', 'alpha_beta', 'BIRLall', ]
+    options = ['gpw_8', 'gpw_pst', 'SunfVal', 'alpha_beta', 'BIRLall', ]
 
     path_ahh = r'C:\Users\fs\Downloads\ahh'
     path_def_sunfish = join(path_ahh, 'default_sunfish')
@@ -204,15 +201,16 @@ if __name__ == '__main__':
     move_functions = ('player_move', 'sunfish_move',)
     extensions = ('',)
 
-    for opt_index in [0, 1, 2, 3]:
+    for opt_index in [1,]:
         count = 0
         if options[opt_index] == 'gpw_8':
             elos = (1100, 1900)
             for elo in elos:
+                add_legend = True
                 for move_function in move_functions:
                     base_config['plot_title'] = (
                             f'Sunfish weights for multiple runs using {move_function.replace("_", " ")}s\n'
-                            f'Using ELO bins {elos[0]}' + (f' and {elos[-1]} ' if len(elos) > 1 else ''))
+                            f'Using ELO bin {elos[0]}')
                     path_run = join(path_ahh, move_function, f'{elo}', )
                     listdir = os.listdir(path_run)
                     second_savepath = join(path_ahh, 'GPW8_plots')
@@ -222,8 +220,28 @@ if __name__ == '__main__':
                                   move_functions=(move_function,),
                                   name_title='GPW',
                                   name_figure=f'GPW_{elo}_{move_function}',
-                                  second_savepath=second_savepath,
+                                  second_savepath=second_savepath, add_legend=add_legend,
                                   base_config=base_config, do_pst_options=(False,), elos=(elo,))
+                    add_legend = False
+        if options[opt_index] == 'gpw_pst':
+            elos = (1100, 1900)
+            for elo in elos:
+                for move_function in move_functions:
+                    base_config['plot_title'] = (
+                            f'Sunfish weights for multiple runs using {move_function.replace("_", " ")}s\n'
+                            f'Using ELO {elos[0]}')
+                    path_run = join(path_ahh, 'pst', move_function, f'{elo}', )
+                    listdir = os.listdir(path_run)
+                    second_savepath = join(path_ahh, 'GPW_pst_plots')
+                    os.makedirs(second_savepath, exist_ok=True)
+                    internal_loop(listdir=listdir,
+                                  path_run=path_run,
+                                  move_functions=(move_function,),
+                                  name_title='GPW',
+                                  name_figure=f'GPW_{elo}_{move_function}',
+                                  second_savepath=second_savepath,
+                                  base_config=base_config, do_pst_options=(True,), elos=(elo,),)
+
         elif options[opt_index] == 'SunfVal':
             path_run_base = join(path_ahh, 'SunfVal')
             for filename in os.listdir(path_run_base):

@@ -175,6 +175,7 @@ def plot_weights(weights, weights_true, start_weight_idx, plot_char, legend_name
                   len(plot_char)).reshape((-1, len(plot_char)))
     colors = sns.color_palette(sunfish_palette_name, n_colors=len(plot_char))
     alpha = config_data.get('alpha', 1)
+
     for x, y, color, plot_char in zip(X.T, weights[:, plot_char].T, colors, plot_char):
         plt.plot(x, y, c=color, label=legend_names[plot_char] if config_data.get('add_legend', True) else None, alpha=alpha)
         if len(weights_true): plt.hlines(weights_true[plot_char], 0, x[-1], colors=color, linestyles='--')
@@ -182,6 +183,7 @@ def plot_weights(weights, weights_true, start_weight_idx, plot_char, legend_name
               f'{"player" if "player" in config_data["move_function"] else "sunfish"} moves') if not config_data.get('plot_title', False) else plt.title(config_data['plot_title'])
     plt.xlabel('Epochs')
     plt.ylabel('Weight values')
+
     plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
     plt.tight_layout()
     os.makedirs(plot_path, exist_ok=True)
