@@ -2,7 +2,7 @@
   "energy_optimized": "action",
   "alpha": 1e-1,
 
-  "chess_policy": "sunfish",
+  "chess_policy": "alpha_beta",
 
   "depth": 3,
   "quiesce": false,

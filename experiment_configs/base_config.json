@@ -6,7 +6,7 @@
     "max_elo": 1200,
     "n_midgame": 10,
     "n_endgame": 100,
-    "n_boards": 10000,
+    "n_boards": 100,
     "n_boards_val": 10,
     "epochs": 300,
     "max_hours": 100,
