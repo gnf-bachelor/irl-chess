@@ -216,16 +216,14 @@ if __name__ == '__main__':
     move_functions = ('player_move', 'sunfish_move',)
     extensions = ('',)
 
-    for opt_index in range(1, 2):
+    for opt_index in range(1):
         count = 0
         if options[opt_index] == 'gpw_8':
             elos = (1100, 1900)
             for elo in elos:
                 add_legend = True
                 for move_function in move_functions:
-                    base_config['plot_title'] = (
-                        f'Sunfish weights for multiple runs using {move_function.replace("_", " ")}s\n'
-                        f'Using ELO bin {elo}')
+                    base_config['plot_title'] = ' '
                     path_run = join(path_ahh, move_function, f'{elo}', )
                     listdir = os.listdir(path_run)
                     second_savepath = join(path_ahh, 'GPW8_plots')
@@ -242,9 +240,7 @@ if __name__ == '__main__':
             elos = (1100, 1900)
             for elo in elos:
                 for move_function in move_functions:
-                    base_config['plot_title'] = (
-                        f'Sunfish weights for multiple runs using {move_function.replace("_", " ")}s\n'
-                        f'Using ELO {elo}')
+                    base_config['plot_title'] = ' '
                     path_run = join(path_ahh, 'pst', move_function, f'{elo}', )
                     listdir = os.listdir(path_run)
                     second_savepath = join(path_ahh, 'GPW_pst_plots')
