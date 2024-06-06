@@ -13,11 +13,11 @@
     "n_threads": -1,
     "plot_every": 20,
     "val_every": 10,
-    "run_n_times": 5,
+    "run_n_times": 1,
 
     "plot_char": ["P", "N", "B", "R", "Q"],
-    "permute_char": ["N", "B", "R", "Q"],
-    "RP_start": [100, 100, 100, 100, 100, 60000],
+    "permute_char": [],
+    "RP_start": [100, 280, 320, 479, 929, 60000],
 
     "plot_pst_char": ["P", "N", "B", "R", "Q", "K"],
     "permute_pst_char": ["P", "N", "B", "R", "Q", "K"],
@@ -28,13 +28,13 @@
     "permute_H": [true, true, true],
     "RH_start": [0, 0, 0],
 
-    "move_function": "sunfish_move",
+    "move_function": "player_move",
     "RP_true": [100, 280, 320, 479, 929, 60000],
     "Rpst_true": [1, 1, 1, 1, 1, 1],
     "RH_true": [0, 0, 0],
 
     "permute_how_many": 1, 
-    "model": "BIRL",
+    "model": "sunfish_GRW",
 
     "board_translation": "none",
     "move_percentage_data": false

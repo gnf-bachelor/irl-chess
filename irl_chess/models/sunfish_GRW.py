@@ -126,10 +126,10 @@ def val_util(validation_set, out_path, config_data, parallel, pst_val, use_playe
         print(f'No validation data found at {csv_path}')
         os.makedirs(os.path.dirname(csv_path), exist_ok=True)
         actions_val = parallel(
-            delayed(sunfish_move)(board2sunfish(board, eval_pos(board, None)), pst_val, config_data['time_limit'], True)
+            delayed(sunfish_move)(board2sunfish(board, eval_pos(board, None)), pst_val, config_data['time_limit'], True, config_data.get('max_depth', 1000))
             for board, move in tqdm(validation_set, desc='Getting True Sunfish actions'))
         actions_true = parallel(
-            delayed(sunfish_move)(board2sunfish(board, eval_pos(board, None)), pst, config_data['time_limit'], True)
+            delayed(sunfish_move)(board2sunfish(board, eval_pos(board, None)), pst, config_data['time_limit'], True, config_data.get('max_depth', 1000))
             for board, move in tqdm(validation_set, desc='Getting Sunfish validation actions')) if not use_player_moves else actions_val
 
     acc_temp_true, acc_temp_player = [], []
