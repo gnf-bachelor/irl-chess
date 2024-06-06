@@ -14,7 +14,7 @@ from irl_chess.misc_utils.utils import create_default_sunfish
 
 
 def run_loop(plot_weights, plot_accuracies, move_functions, elos, extensions=('',), out_path=None, save_path=None,
-             out_path_def_sunfish=None,  axes=None):
+             out_path_def_sunfish=None, axes=None, plot_def_sunfish=True):
     default_acc = [None for _ in elos]
     def_colors = sns.color_palette(maia_palette_name, len(elos))
     for move_function in move_functions:
@@ -74,8 +74,13 @@ def run_loop(plot_weights, plot_accuracies, move_functions, elos, extensions=(''
                             energies = None
                             print(f'Found best accuracies')
                         except FileNotFoundError:
-                            print(f'No best accuracies found, looking for energy')
-                            df_temp = pd.read_csv(join(out_path, 'weights', 'energies.csv'))
+                            print(f'No best accuracies found, looking for a_energy')
+                            try:
+                                df_temp = pd.read_csv(join(out_path, 'weights', 'a_energies.csv'))
+                                print(f'Found a_energies')
+                            except FileNotFoundError:
+                                print(f'No a_energies trying just energies')
+                                df_temp = pd.read_csv(join(out_path, 'weights', 'energies.csv'))
                             energies = df_temp.values.flatten()
                             best_acc_list = None
                             print(f'Found energies')
@@ -104,7 +109,7 @@ def run_loop(plot_weights, plot_accuracies, move_functions, elos, extensions=(''
 
                         axs.hlines(default_acc[i], xmin=0, xmax=len(temp_acc_list),
                                    label=f'Default {elo}' if add_legend else None,
-                                   linestyles='dashed', color=def_colors[i], alpha=0.7)
+                                   linestyles='dashed', color=def_colors[i], alpha=0.7) if plot_def_sunfish else None
                         lns1 = axs.plot(temp_acc_list, label=f'Temp {elo}' if add_legend else None,
                                         alpha=base_config['alpha'],
                                         color=color_palette[2 * i + 1])
@@ -142,6 +147,7 @@ def run_loop(plot_weights, plot_accuracies, move_functions, elos, extensions=(''
 def internal_loop(listdir, path_run, name_title, base_config,
                   name_figure=None,
                   second_savepath=None,
+                  plot_def_sunfish=True,
                   move_functions=('sunfish_move',),
                   invalid_folder_names=('plots', 'configs', 'default_sunfish'),
                   do_weights_options=(True, False),
@@ -155,7 +161,7 @@ def internal_loop(listdir, path_run, name_title, base_config,
             for i, filename in enumerate(listdir):
                 if os.path.isdir(join(path_run, filename)) and not any(
                         [filename.endswith(el) for el in invalid_folder_names]):
-                    plot_name = (f'trace_plot_{name_figure}_{("pst" if do_pst else "piece") if do_weights else ""}'
+                    plot_name = (f'trace_plot_{name_figure}_{("pst_" if do_pst else "piece_") if do_weights else ""}'
                                  f'{("weights" if do_weights else "accuracies")}.svg')
                     save_path = join(path_run, 'plots', plot_name)
                     path_out = join(path_run, filename, )
@@ -164,10 +170,10 @@ def internal_loop(listdir, path_run, name_title, base_config,
                     base_config['plot_H'] = [False] * 3
                     base_config['plot_char'] = ["P", "N", "B", "R", "Q", ] if not do_pst else []
                     base_config['plot_title'] = base_config.get('plot_title',
-                        f'Sunfish {("pst" if do_pst else "piece") if do_weights else ""} '
-                        f'{("weights" if do_weights else "accuracies")} '
-                        f'for multiple runs\n using Sunfish moves '
-                        f'and the {name_title} Algorithm')
+                                                                f'Sunfish {("pst" if do_pst else "piece") if do_weights else ""} '
+                                                                f'{("weights" if do_weights else "accuracies")} '
+                                                                f'for multiple runs\n using '
+                                                                f'the {name_title} Algorithm')
                     os.makedirs(os.path.dirname(save_path), exist_ok=True)
                     axes = run_loop(plot_weights=do_weights,
                                     plot_accuracies=not do_weights,
@@ -177,7 +183,7 @@ def internal_loop(listdir, path_run, name_title, base_config,
                                     out_path=path_out,
                                     save_path=save_path,
                                     out_path_def_sunfish=path_def_sunfish,
-                                    axes=axes,)
+                                    axes=axes, )
                     count += 1
             if second_savepath is not None:
                 plt.savefig(join(second_savepath, plot_name))
@@ -192,7 +198,16 @@ if __name__ == '__main__':
 
     # Run twice if plot folders are not created yet, very scuffed yes.
 
-    options = ['gpw_8', 'gpw_pst', 'SunfVal', 'alpha_beta', 'BIRLall', ]
+    options = {
+        0: 'gpw_8',
+        1: 'gpw_pst',
+        2: 'SunfVal',
+        3: 'alpha_beta',
+        4: 'BIRLall',
+        5: 'BIRLPlayerAppendix',
+        6: 'BirlPlaceholder',
+        7: 'BirlReal'
+    }
 
     path_ahh = r'C:\Users\fs\Downloads\ahh'
     path_def_sunfish = join(path_ahh, 'default_sunfish')
@@ -201,7 +216,7 @@ if __name__ == '__main__':
     move_functions = ('player_move', 'sunfish_move',)
     extensions = ('',)
 
-    for opt_index in [1,]:
+    for opt_index in range(1, 2):
         count = 0
         if options[opt_index] == 'gpw_8':
             elos = (1100, 1900)
@@ -209,8 +224,8 @@ if __name__ == '__main__':
                 add_legend = True
                 for move_function in move_functions:
                     base_config['plot_title'] = (
-                            f'Sunfish weights for multiple runs using {move_function.replace("_", " ")}s\n'
-                            f'Using ELO bin {elos[0]}')
+                        f'Sunfish weights for multiple runs using {move_function.replace("_", " ")}s\n'
+                        f'Using ELO bin {elo}')
                     path_run = join(path_ahh, move_function, f'{elo}', )
                     listdir = os.listdir(path_run)
                     second_savepath = join(path_ahh, 'GPW8_plots')
@@ -220,7 +235,7 @@ if __name__ == '__main__':
                                   move_functions=(move_function,),
                                   name_title='GPW',
                                   name_figure=f'GPW_{elo}_{move_function}',
-                                  second_savepath=second_savepath, add_legend=add_legend,
+                                  second_savepath=second_savepath,
                                   base_config=base_config, do_pst_options=(False,), elos=(elo,))
                     add_legend = False
         if options[opt_index] == 'gpw_pst':
@@ -228,8 +243,8 @@ if __name__ == '__main__':
             for elo in elos:
                 for move_function in move_functions:
                     base_config['plot_title'] = (
-                            f'Sunfish weights for multiple runs using {move_function.replace("_", " ")}s\n'
-                            f'Using ELO {elos[0]}')
+                        f'Sunfish weights for multiple runs using {move_function.replace("_", " ")}s\n'
+                        f'Using ELO {elo}')
                     path_run = join(path_ahh, 'pst', move_function, f'{elo}', )
                     listdir = os.listdir(path_run)
                     second_savepath = join(path_ahh, 'GPW_pst_plots')
@@ -240,7 +255,7 @@ if __name__ == '__main__':
                                   name_title='GPW',
                                   name_figure=f'GPW_{elo}_{move_function}',
                                   second_savepath=second_savepath,
-                                  base_config=base_config, do_pst_options=(True,), elos=(elo,),)
+                                  base_config=base_config, do_pst_options=(True,), elos=(elo,), )
 
         elif options[opt_index] == 'SunfVal':
             path_run_base = join(path_ahh, 'SunfVal')
@@ -248,13 +263,39 @@ if __name__ == '__main__':
                 if not filename.endswith('plots'):
                     path_run = join(path_run_base, filename)
                     listdir = os.listdir(path_run)
-                    internal_loop(listdir=listdir, path_run=path_run, name_title='Sunfish', base_config=base_config)
+                    second_savepath = join(path_ahh, 'SunfValPlots')
+                    os.makedirs(second_savepath, exist_ok=True)
+
+                    internal_loop(listdir=listdir, path_run=path_run, name_title='Sunfish', base_config=base_config, second_savepath=second_savepath)
             print(f'Done internal')
-        elif options[opt_index] == 'alpha_beta':
-            path_run = join(path_ahh, options[opt_index])
-            listdir = os.listdir(path_run)
             internal_loop(listdir, path_run, options[opt_index], base_config)
         elif options[opt_index] == 'BIRLall':
             for path_run in [join(path_ahh, options[opt_index]), join(path_ahh, options[opt_index], '2')]:
                 listdir = os.listdir(path_run)
-                internal_loop(listdir, path_run, options[opt_index][:-3], base_config)
+                second_savepath = join(path_ahh, 'BIRLall_plots')
+                os.makedirs(second_savepath, exist_ok=True)
+                internal_loop(listdir, path_run, options[opt_index][:-3], base_config, second_savepath=second_savepath)
+        elif options[opt_index] in ['BIRLPlayerAppendix', ]:
+            path_run = join(path_ahh, options[opt_index])
+            listdir = os.listdir(path_run)
+            internal_loop(listdir, path_run, 'BIRL', base_config, move_functions=('player_move',),
+                          name_figure=f'BIRL_player', plot_def_sunfish=False)
+        elif options[opt_index] in ['BirlPlaceholder', ]:
+            path_run = join(path_ahh, options[opt_index])
+            listdir = os.listdir(path_run)
+            internal_loop(listdir, path_run, 'BIRL', base_config, plot_def_sunfish=False,
+                          name_figure=options[opt_index])
+        elif options[opt_index] in ['BirlReal', ]:
+            path_run = join(path_ahh, options[opt_index])
+            listdir = os.listdir(path_run)
+            second_savepath = join(path_ahh, 'BIRLRealPlots')
+            os.makedirs(second_savepath, exist_ok=True)
+
+            internal_loop(listdir, path_run, 'BIRL', base_config, plot_def_sunfish=False,
+                          name_figure=options[opt_index], second_savepath=second_savepath)
+        elif options[opt_index] in ['alpha_beta', ]:
+            path_run = join(path_ahh, options[opt_index])
+            listdir = os.listdir(path_run)
+            second_savepath = join(path_ahh, 'alpha-beta-plots')
+            os.makedirs(second_savepath, exist_ok=True)
+            internal_loop(listdir, path_run, options[opt_index], base_config, second_savepath=second_savepath)
