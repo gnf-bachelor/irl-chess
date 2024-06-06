@@ -2,6 +2,7 @@ import chess
 import numpy as np
 from tqdm import tqdm
 import logging
+from copy import deepcopy
 from irl_chess.chess_utils.sunfish_utils import board2sunfish, eval_pos, \
     get_new_pst, str_to_sunfish_move, sunfish_move_to_str, moves_and_Q_from_result, sunfish_move
 from irl_chess.chess_utils.sunfish import piece, pst, pst_only, Position, Move
@@ -41,6 +42,11 @@ def pi_alpha_beta_search(states, actions, RP, Rpst, RH, config_data, parallel = 
                 s.push_san(a)  # s.push_san(move)
             else:
                 raise TypeError
+            if s.outcome() is not None:
+                eval, board_final, _ = no_moves_eval(s, RP, Rpst, RH)
+                # board_final = deepcopy(s)
+                s.pop()
+                return eval * reward_sign, board_final, None
         eval, board_final, move_trajectory = alpha_beta_search(board=s, RP=RP, depth=config_data['depth'] - (1 if actions is not None else 0), 
                                                  maximize=s.turn, Rpst = Rpst, RH=RH, quiesce=config_data['quiesce'])
         if actions is not None: s.pop()
@@ -60,6 +66,11 @@ def pi_alpha_beta_search_par(states, actions, RP, Rpst, RH, config_data, paralle
                 s.push_san(a)  # s.push_san(move)
             else:
                 raise TypeError
+            if s.outcome() is not None:
+                eval, board_final, _ = no_moves_eval(s, RP, Rpst, RH)
+                # board_final = deepcopy(s)
+                s.pop()
+                return eval * reward_sign, board_final, None
         eval, board_final, move_trajectory = alpha_beta_search(
             board=s, RP=RP, depth=config_data['depth'] - (1 if actions is not None else 0),
             maximize=s.turn, Rpst = Rpst, RH=RH, quiesce=config_data['quiesce']
