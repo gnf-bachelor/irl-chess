@@ -15,7 +15,7 @@ def perturb_reward(RP, config_data, Rpst = None, RH = None, epoch = None):
     delta_pst = delta/200 # Seems reasonable. Prioritize having only one delta parameter.
     delta_H = delta/200 # Seems reasonable too
     noise_distribution = config_data['noise_distribution']
-    permute_how_many = config_data.get('permute_how_many', -1) # Default (-1) is to permute all.
+    permute_how_many = config_data.get('permute_how_many', -1) # Default (-1) is to permute all. Can also be "all".
     if noise_distribution is None:
         noise_distribution = "uniform"
     P_permute_idxs, pst_permute_idxs, H_permute_idxs = permute_indices(P_permute_idxs, pst_permute_idxs, H_permute_idxs, permute_how_many)
@@ -64,7 +64,10 @@ def noise_decay(config_data, epoch):
 
 def permute_indices(P_permute_idxs, pst_permute_idxs, H_permute_idxs, permute_how_many):
     total_permute = len(P_permute_idxs) + len(pst_permute_idxs) + len(H_permute_idxs)
-    if permute_how_many != -1 and permute_how_many and not (permute_how_many >= total_permute):
+    if permute_how_many == -1 or str(permute_how_many).lower() == "all" or permute_how_many >= total_permute:
+        return P_permute_idxs.astype(int), pst_permute_idxs.astype(int), H_permute_idxs.astype(int)
+    else:
+        assert isinstance(permute_how_many, int), f"permute_how_many must be an integer, but it was {permute_how_many}"
         # If we are not permuting all, we need to choose which indices to permute.
         num_P_idxs = np.random.hypergeometric(len(P_permute_idxs), len(pst_permute_idxs) + len(H_permute_idxs), permute_how_many)
         if (permute_how_many - num_P_idxs) > 0:
@@ -77,8 +80,7 @@ def permute_indices(P_permute_idxs, pst_permute_idxs, H_permute_idxs, permute_ho
         new_pst_permute_idxs = np.random.choice(pst_permute_idxs, size=num_pst_idxs, replace=False)
         new_H_permute_idxs = np.random.choice(H_permute_idxs, size=num_H_idxs, replace=False)
         return new_P_permute_idxs, new_pst_permute_idxs, new_H_permute_idxs
-    else:
-        return P_permute_idxs.astype(int), pst_permute_idxs.astype(int), H_permute_idxs.astype(int)
+        
 
 def permute_indices2(P_permute_idxs, pst_permute_idxs, H_permute_idxs, permute_how_many):
         chosen_idx = np.random.choice(np.arange(len(P_permute_idxs) + len(pst_permute_idxs) + len(H_permute_idxs)),
