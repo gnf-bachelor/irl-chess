@@ -206,7 +206,8 @@ if __name__ == '__main__':
         4: 'BIRLall',
         5: 'BIRLPlayerAppendix',
         6: 'BirlPlaceholder',
-        7: 'BirlReal'
+        7: 'BirlReal',
+        8: 'BirlLast'
     }
 
     path_ahh = r'C:\Users\fs\Downloads\ahh'
@@ -216,7 +217,7 @@ if __name__ == '__main__':
     move_functions = ('player_move', 'sunfish_move',)
     extensions = ('',)
 
-    for opt_index in range(1):
+    for opt_index in range(8,9):
         count = 0
         if options[opt_index] == 'gpw_8':
             elos = (1100, 1900)
@@ -295,3 +296,13 @@ if __name__ == '__main__':
             second_savepath = join(path_ahh, 'alpha-beta-plots')
             os.makedirs(second_savepath, exist_ok=True)
             internal_loop(listdir, path_run, options[opt_index], base_config, second_savepath=second_savepath)
+        elif options[opt_index] in ['BirlLast', ]:
+            path_run_base = join(path_ahh, options[opt_index])
+            for i, filename in enumerate(os.listdir(path_run_base)):
+                path_run = join(path_run_base, filename)
+                if not filename.endswith('plots') and os.path.isdir(path_run):
+                    listdir = os.listdir(path_run)
+                    second_savepath = join(path_ahh, f'BIRL_LAST_{i}')
+                    os.makedirs(second_savepath, exist_ok=True)
+                    internal_loop(listdir, path_run, 'BIRL', base_config, plot_def_sunfish=False,
+                                  name_figure=options[opt_index] + f'_{i}', second_savepath=second_savepath)
