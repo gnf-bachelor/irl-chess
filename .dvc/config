@@ -1,7 +1,0 @@
-[core]
-    remote = bachelor-data
-['remote "myremote"']
-    url = gdrive://1v1fMyyqa9zocb1VMhTLwUsW16Jfj1-hc
-    gdrive_acknowledge_abuse = true
-['remote "bachelor-data"']
-    url = gdrive://1v1fMyyqa9zocb1VMhTLwUsW16Jfj1-hc
