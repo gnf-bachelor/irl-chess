@@ -1,0 +1,16 @@
+{
+  "energy_optimized": "action",
+  "alpha": 1e-1,
+
+  "chess_policy": "alpha_beta",
+
+  "depth": 3,
+  "quiesce": false,
+
+  "sunfish_things": 0,
+  "time_limit": 0.2,
+  "noise_distribution": "gaussian",
+  "delta": 40,
+  "decay": 1,
+  "decay_step": 1000
+}

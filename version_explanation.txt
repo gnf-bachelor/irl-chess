@@ -1,2 +1,0 @@
-V0: Greedily change weights if they take more true actions than the old ones
-V1: Stochastically change weights based on proportion of true actions

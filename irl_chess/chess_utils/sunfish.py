@@ -12,7 +12,7 @@ from collections import namedtuple, defaultdict
 #from functools import partial
 #print = partial(print, flush=True)
 
-version = "sunfish 2023"
+version = "sunfish 2024 BIRL"
 
 ###############################################################################
 # Piece-Square tables. Tune these to change sunfish's behaviour
@@ -76,7 +76,7 @@ pst = {
 }
 
 # pst eval added for black
-pst_only = copy.deepcopy(pst)
+pst_only = copy.deepcopy(pst) # Do not change this
 # for piece_str in pst.keys():
 #     piece_array = -np.array(pst[piece_str]).reshape((8, 8))[np.arange(7, -1, -1)]
 #     pst_only[piece_str.lower()] = tuple(piece_array.reshape((-1)))
@@ -88,6 +88,13 @@ for k, table in pst.items():
     padrow = lambda row: (0,) + tuple(x + piece[k] for x in row) + (0,)
     pst[k] = sum((padrow(table[i * 8 : i * 8 + 8]) for i in range(8)), ())
     pst[k] = (0,) * 20 + pst[k] + (0,) * 20
+
+pst_only_padded = copy.deepcopy(pst_only)
+# Process pst_only in the same way
+for k, table in pst_only_padded.items():
+    padrow = lambda row: (0,) + tuple(row) + (0,)
+    pst_only_padded[k] = sum((padrow(table[i * 8 : i * 8 + 8]) for i in range(8)), ())
+    pst_only_padded[k] = (0,) * 20 + pst_only_padded[k] + (0,) * 20
 
 ###############################################################################
 # Global constants
@@ -203,13 +210,25 @@ class Position(namedtuple("Position", "board score wc bc ep kp")):
                         yield Move(j + E, j + W, "")
                     if i == H1 and self.board[j + W] == "K" and self.wc[1]:
                         yield Move(j + W, j + E, "")
-
+    @staticmethod
+    def mirror_square(p):
+        row = p // 10
+        col = p % 10
+        return 110 - row*10 + col
+    
+    @staticmethod
+    def mirror_board(board):
+        reversed_board = board[::-1]
+        return ''.join(reversed_board[i:i+10][::-1] for i in range(0, len(reversed_board), 10))
+    
+    
     def rotate(self, nullmove=False):
         """Rotates the board, preserving enpassant, unless nullmove"""
         return Position(
-            self.board[::-1].swapcase(), -self.score, self.bc, self.wc,
-            119 - self.ep if self.ep and not nullmove else 0,
-            119 - self.kp if self.kp and not nullmove else 0,
+            self.mirror_board(self.board).swapcase(),
+             -self.score, self.bc, self.wc,
+            self.mirror_square(self.ep) if self.ep and not nullmove else 0,
+            self.mirror_square(self.kp) if self.kp and not nullmove else 0,
         )
 
     def push(self, move, pst):
@@ -256,10 +275,10 @@ class Position(namedtuple("Position", "board score wc bc ep kp")):
         score = pst[p][j] - pst[p][i]
         # Capture
         if q.islower():
-            score += pst[q.upper()][119 - j]
+            score += pst[q.upper()][self.mirror_square(j)]
         # Castling check detection
         if abs(j - self.kp) < 2:
-            score += pst["K"][119 - j]
+            score += pst["K"][self.mirror_square(j)]
         # Castling
         if p == "K" and abs(i - j) == 2:
             score += pst["R"][(i + j) // 2]
@@ -269,7 +288,7 @@ class Position(namedtuple("Position", "board score wc bc ep kp")):
             if A8 <= j <= H8:
                 score += pst[prom][j] - pst["P"][j]
             if j == self.ep:
-                score += pst["P"][119 - (j + S)]
+                score += pst["P"][self.mirror_square(j + S)]
         return score
 
 
@@ -282,12 +301,13 @@ Entry = namedtuple("Entry", "lower upper")
 
 
 class Searcher:
-    def __init__(self, search_pst):
+    def __init__(self, search_pst, max_depth=1000):
         self.tp_score = {}
         self.tp_move = {}
         self.history = set()
         self.nodes = 0
         self.search_pst = search_pst
+        self.max_depth = max_depth
 
     def bound(self, pos, gamma, depth, root_position, can_null=True):
         """ Let s* be the "true" score of the sub-tree we are searching.
@@ -365,7 +385,7 @@ class Searcher:
             # Then all the other moves
             for val, move in sorted(((pos.value(m, self.search_pst), m) for m in pos.gen_moves()), reverse=True):
                 # Quiescent search
-                if val < val_lower:
+                if val < val_lower and pos != root_position:
                     break
 
                 # If the new score is less than gamma, the opponent will for sure just
@@ -377,7 +397,8 @@ class Searcher:
                     yield move, pos.score + val if val < MATE_LOWER else MATE_UPPER
                     # We can also break, since we have ordered the moves by value,
                     # so it can't get any better than this.
-                    break
+                    if pos != root_position:
+                        break
 
                 yield move, -self.bound(pos.move(move, self.search_pst), 1 - gamma, depth - 1, root_position)
 
@@ -390,6 +411,7 @@ class Searcher:
                     self.move_dict[move] = [score]
                 else:
                     self.move_dict[move].append(score)
+
 
             if best >= gamma:
                 # Save the move for pv construction and killer heuristic
@@ -444,7 +466,7 @@ class Searcher:
         # In finished games, we could potentially go far enough to cause a recursion
         # limit exception. Hence we bound the ply. We also can't start at 0, since
         # that's quiscent search, and we don't always play legal moves there.
-        for depth in range(1, 1000):  # We never search the full 1000, we simply set a time limit!!!
+        for depth in range(1, self.max_depth + 1):  # We never search the full 1000, we simply set a time limit!!!
             # The inner loop is a binary search on the score of the position.
             # Inv: lower <= score <= upper
             # 'while lower != upper' would work, but it's too much effort to spend
@@ -502,7 +524,7 @@ if __name__ == '__main__':
             for ply, move in enumerate(args[3:]):
                 i, j, prom = parse(move[:2]), parse(move[2:4]), move[4:].upper()
                 if ply % 2 == 1:
-                    i, j = 119 - i, 119 - j
+                    i, j = Position.mirror_square(i), Position.mirror_square(j)
                 hist.append(hist[-1].move(Move(i, j, prom), pst))
 
         elif args[0] == "go":
@@ -519,7 +541,7 @@ if __name__ == '__main__':
                 if score >= gamma:
                     i, j = move.i, move.j
                     if len(hist) % 2 == 0:
-                        i, j = 119 - i, 119 - j
+                        i, j = Position.mirror_square(i), Position.mirror_square(j)
                     move_str = render(i) + render(j) + move.prom.lower()
                     print("info depth", depth, "score cp", score, "pv", move_str)
                 if move_str and time.time() - start > think * 0.8:

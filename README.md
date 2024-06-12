@@ -1,30 +1,11 @@
-# chess_irl
-
-A short description of the project.
-USE PYTHON 3.10!! Otherwise maia-chess will not work
-In order to use Maia chess engines clone this repository, then cd into it.
-Next execute the following command which clones the 'maia-chess' repository into this one:
-
-git clone https://github.com/gnf-bachelor/maia-chess.git
-
-git submodule add https://github.com/gnf-bachelor/maia-chess.git maia-chess
-
-Then go to https://lczero.org/play/download/ and download an appropriate backend. Place the contents in
-a subfolder of maia-chess called 'lc0-exe-folder' (maia-chess/lc0-exe-folder). 
-
-Rename 'maia-chess' to 'maia_chess' so it can be recognised by python as a module...
-
-Run pip install -r maia_chess/requirements.txt
-
-Now you can use maia_chess models using the following:
-
-from maia_chess import load_maia_network
-
-model = load_maia_network(1100, parent='maia_chess/')
-
-This script keeps running in the background until stopped externally.
+# chess-irl
+A project exploring approximate Inverse Reinforcement Learning (IRL) applications in Chess. 
+This includes a modified version of the Bayesian Inverse Reinforcement Learning (BIRL) algortihm "Policy Walk", and our own more naive method, "Greedy Policy Walk" (GPW) designed to work for the large state space of Chess.
 
 ## Project structure
+The repository contains a modular setup for running the various algorithms with a single entry-point (run_model.py). All settings, including which model to use, are set in config files base_config.json and the model specific config.json.
+
+![Pipeline](https://github.com/gnf-bachelor/irl-chess/assets/98162688/58f71093-a4ba-4f54-a9d4-a824788ff5c6)
 
 The directory structure of the project looks like this:
 
@@ -83,3 +64,36 @@ The directory structure of the project looks like this:
 Created using [mlops_template](https://github.com/SkafteNicki/mlops_template),
 a [cookiecutter template](https://github.com/cookiecutter/cookiecutter) for getting
 started with Machine Learning Operations (MLOps).
+
+## How to Run BIRL or GPW
+
+A short description of the project.
+USE PYTHON 3.10!! Otherwise maia-chess will not work
+
+## How to build Maia chess components
+
+After cloning the repository locally, don't forget to run the following commands in order to also clone the git submodules:
+
+```
+git submodule sync --recursive
+git submodule update --recursive --init
+```
+
+Then go to https://lczero.org/play/download/ and download an appropriate backend. Place the contents in
+a subfolder of maia-chess called 'lc0-exe-folder' (maia-chess/lc0-exe-folder). 
+
+Run pip install -r maia_chess/requirements.txt
+
+Now you can use maia_chess models using the following:
+
+from maia_chess import load_maia_network
+
+model = load_maia_network(1100, parent='maia_chess/')
+
+This script keeps running in the background until stopped externally.
+
+## Project structure
+
+
+
+

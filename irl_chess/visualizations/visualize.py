@@ -1,10 +1,15 @@
 import os
 import numpy as np
 import pandas as pd
+import seaborn as sns
 
 from os.path import join
 from matplotlib import pyplot as plt
 
+sunfish_palette_name = "tab10"
+maia_palette_name = 'flare'
+
+result_strings = ['Result', 'RpstResult', 'RHResult']
 
 def char_to_idxs(plot_char: list[str]):
     char_to_idxs = {"P": 0, "N": 1, "B": 2, "R": 3, "Q": 4, "K": 5}
@@ -14,6 +19,31 @@ def char_to_idxs(plot_char: list[str]):
 def idxs_to_char(idx_list: list[int]):
     idx_to_char = {0: "P", 1: "N", 2: "B", 3: "R", 4: "Q", 5: "K"}
     return [idx_to_char[idx] for idx in idx_list]
+
+def Hbool_to_idxs(plot_char: list[bool]):
+    #char_to_idxs = {"PA": 0, "KS": 1, "PS": 2}
+    Hchar = ["PA", "KS", "PS"]
+    return list(np.arange(len(Hchar))[plot_char])
+
+
+def idxs_to_Hchar(idx_list: list[int]):
+    idx_to_char = {0: "PA", 1: "KS", 2: "PS"}
+    return [idx_to_char[idx] for idx in idx_list]
+
+def load_weights(out_path, result: str, start_weight_idx=0, epoch=None): # Load all weights up to epoch
+    weights = []
+    for i in range(start_weight_idx, epoch+1, ):
+        weights_i = load_weights_epoch(out_path, result, epoch = i)
+        if weights_i is not None:
+            weights.append(weights_i)
+    return np.array(weights)
+
+def load_weights_epoch(out_path, result: str, epoch):
+    path = os.path.join(out_path, f'weights/{epoch}.csv')
+    if os.path.exists(path):
+        df = pd.read_csv(path, index_col=None)
+        return df[result].dropna().values.flatten()
+    return None
 
 
 def plot_BO_2d(opt, R_true, target_idxs, plot_idxs=None, plot_path=None, epoch=None):
@@ -104,49 +134,81 @@ def plot_R_weights(config_data, out_path, start_weight_idx=0, legend_names=['P',
                    **kwargs):
     accuracies = kwargs['accuracies'] if 'accuracies' in kwargs else None
     bayesian_args = kwargs['bayesian_args'] if 'bayesian_args' in kwargs else None
-    plot_char = char_to_idxs(config_data['plot_char'])
-    save_every = config_data['save_every']
-    R_true = np.array(config_data.get('R_true', [100, 280, 320, 479, 929, 60000]))
-
+    filename_addition = kwargs['filename_addition'] if 'filename_addition' in kwargs else ''
+    show = kwargs.get('show', False)
+    close_when_done = kwargs.get('close_when_done', True)
+    save_path = kwargs.get('save_path', None)
     plot_path = os.path.join(out_path, 'plots')
     os.makedirs(plot_path, exist_ok=True)
 
-    weights = []
-    for i in range(start_weight_idx, epoch+1, save_every):
-        path = os.path.join(out_path, f'{i}.csv')
-        if os.path.exists(path):
-            df = pd.read_csv(path, index_col=None)
-            weights.append(df.values.flatten())
-        else:
-            if epoch is None:
-                epoch = i
-            break
-    weights = np.array(weights)
-    # assert weights.shape[0] == epoch+1, f"Error: weights.shape[0]: {weights.shape[0]} is not equal to epoch: {epoch}"
-    X = np.repeat(np.arange(0, weights.shape[0], 1)*save_every + start_weight_idx,
-                  len(plot_char)).reshape((-1, len(plot_char)))
+    plot_char = char_to_idxs(config_data['plot_char'])
+    if plot_char:
+        RP_plot_path = os.path.join(plot_path, 'RP')
+        os.makedirs(RP_plot_path, exist_ok=True)
+        weights = load_weights(out_path, 'Result', start_weight_idx=start_weight_idx, epoch=epoch)
+        RP_true = np.array(config_data.get('RP_true', [100, 280, 320, 479, 929, 60000]))
+        plot_weights(weights, RP_true, start_weight_idx, plot_char, legend_names, config_data, RP_plot_path, epoch+1,
+                     filename_addition= 'RP'+filename_addition, show=show, close_when_done=close_when_done, save_path=save_path)
 
-    plt.plot(X, weights[:, plot_char])
-    plt.hlines(R_true[plot_char], 0, X[-1, -1], linestyles='--')
-    plt.title('Sunfish weights over time')
+    plot_pst_char = char_to_idxs(config_data['plot_pst_char'])
+    if plot_pst_char:
+        Rpst_plot_path = os.path.join(plot_path, 'Rpst')
+        os.makedirs(Rpst_plot_path, exist_ok=True)
+        weights = load_weights(out_path, 'RpstResult', start_weight_idx=start_weight_idx, epoch=epoch)
+        Rpst_true = np.array(config_data.get('Rpst_true', [1, 1, 1, 1, 1, 1]))
+        plot_weights(weights, Rpst_true, start_weight_idx, plot_pst_char, legend_names, config_data, Rpst_plot_path, epoch+1,
+                     filename_addition= 'Rpst'+filename_addition, show=show, close_when_done=close_when_done, save_path=save_path)
+
+    plot_H_char = Hbool_to_idxs(config_data['plot_H'])
+    if plot_H_char:
+        RH_plot_path = os.path.join(plot_path, 'RH')
+        os.makedirs(RH_plot_path, exist_ok=True)
+        weights = load_weights(out_path, 'RHResult', start_weight_idx=start_weight_idx, epoch=epoch)
+        RH_true = np.array(config_data.get('RH_true', [0, 0, 0])) # Perhaps delete this, as there is no ground truth. 
+        plot_weights(weights, RH_true, start_weight_idx, plot_H_char, ['PA','KS','PS'], config_data, RH_plot_path, epoch+1,
+                     filename_addition= 'RH'+filename_addition, show=show, save_path=save_path, close_when_done=close_when_done,)
+        
+
+    
+def plot_weights(weights, weights_true, start_weight_idx, plot_char, legend_names, config_data, plot_path, epoch, filename_addition, show=False, close_when_done=True, save_path=None):
+    X = np.repeat(np.arange(0, weights.shape[0], 1) + start_weight_idx,
+                  len(plot_char)).reshape((-1, len(plot_char)))
+    colors = sns.color_palette(sunfish_palette_name, n_colors=len(plot_char))
+    alpha = config_data.get('alpha', 1)
+
+    for x, y, color, plot_char in zip(X.T, weights[:, plot_char].T, colors, plot_char):
+        plt.plot(x, y, c=color, label=legend_names[plot_char] if config_data.get('add_legend', True) else None, alpha=alpha)
+        if len(weights_true): plt.hlines(weights_true[plot_char], 0, x[-1], colors=color, linestyles='--')
+    plt.title(f'Sunfish weights over time for ELO {config_data["min_elo"]}-{config_data["max_elo"]} on '
+              f'{"player" if "player" in config_data["move_function"] else "sunfish"} moves') if not config_data.get('plot_title', False) else plt.title(config_data['plot_title'])
     plt.xlabel('Epochs')
     plt.ylabel('Weight values')
-    plt.legend([legend_names[idx] for idx in plot_char])
-    plt.savefig(join(plot_path, f'weights_{epoch}.png'))
-    plt.show()
-    plt.cla()
 
-    if accuracies is not None:
-        accuracies = np.array(accuracies)
-        plt.plot(np.arange(len(accuracies)), accuracies[:, 0])
-        plt.plot(np.arange(len(accuracies)), accuracies[:, 1])
-        plt.title('Accuracies over time')
-        plt.xlabel('Epochs')
-        plt.ylabel('Accuracy')
-        plt.legend(['Accuracy', 'Accuracy Prev'])
-        plt.savefig(join(plot_path, f'accuracies_{epoch}.png'))
-        plt.show()
-        plt.cla()
+    plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
+    plt.tight_layout()
+    os.makedirs(plot_path, exist_ok=True)
+    plt.savefig(join(plot_path, f'weights_{epoch}{filename_addition}.svg')) if save_path is None else plt.savefig(save_path)
+    if show: plt.show(), print(f'Showing from inner function')
+    if close_when_done: plt.close(), print(f'Closing from inner function')
 
-    if bayesian_args is not None:
-        plot_BO_2d(*bayesian_args, epoch=epoch, plot_path=plot_path)
+
+if __name__ == '__main__':
+    from irl_chess import fix_cwd, load_config, load_model_functions, union_dicts, create_result_path
+    fix_cwd()
+    base_config_data, model_config_data = load_config()
+    model, model_result_string = load_model_functions(base_config_data)
+    config_data = union_dicts(base_config_data, model_config_data)
+    out_path = create_result_path(base_config_data, model_config_data, model_result_string, path_result=None)
+    assert os.path.isdir(out_path), 'The result path does not exist, which means that result data has not been generated for this configuration.\
+          Run run_model with the correct configs to generate results and plots.'
+    
+    for epoch in range(config_data['epochs']): # Check how many epochs the weights have been saved for.
+        path = os.path.join(out_path, f'weights/{epoch}.csv')
+        if os.path.exists(path):
+            epoch += 1
+        else:
+            epoch -= 1
+            print("Weights have been saved for", epoch+1, "epochs.")
+            break
+
+    plot_R_weights(config_data, out_path, start_weight_idx=0, epoch=epoch, show=True)

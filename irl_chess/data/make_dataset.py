@@ -1,3 +1,5 @@
+import json
+import pickle
 import re
 import os
 import time
@@ -31,7 +33,6 @@ def decompress_zstd(zstd_path, extract_path):
         decompressed_file.write(decompressed_data)
     os.remove(zstd_path)
     print(f"Decompressed: {zstd_path} and deleted the zip file!")
-
 
 
 def download_file(url, destination):
@@ -120,7 +121,7 @@ def txt_to_csv(filename, overwrite=True):
         for line in tqdm(f.readlines(), 'Converting to csv'):
             if line[0] == '1' or line == ' 0-1\n':
                 row = parse_game(game, included_keys=columns[:-1] + ['TimeControl']) + parse_moves(line)
-                if len(row) == len(columns):    # Only pass valid rows... sadly necessary
+                if len(row) == len(columns):  # Only pass valid rows... sadly necessary
                     data_raw.append(row)
                 game = ''
             elif line.strip():
@@ -191,9 +192,57 @@ def load_lichess_dfs(websites_filepath, file_path_data, n_files, overwrite=False
     return df
 
 
-if __name__ == "__main__":
-    n_files = np.inf
-    websites_filepath = join(os.getcwd(), 'downloads', 'lichess_websites.txt')
-    file_path_data = join(os.getcwd(), 'data', 'raw')
+def make_maia_test_csv(filepath='data/raw/maia-chess-testing-set.csv.bz2', n_boards=10000, min_elo=1100, max_elo=1900, return_full_df=False):
+    url = r'https://csslab.cs.toronto.edu/data/chess/kdd/maia-chess-testing-set.csv.bz2'
+    if not os.path.exists(filepath):
+        download_file(url=url, destination=filepath)
 
-    download_lichess_pgn(websites_filepath, file_path_data, n_files=n_files, overwrite=True)
+    df = None
+    for elo_player in tqdm(range(min_elo, max_elo + 1, 100), desc='ELO Players data loading'):
+        df_path = f'data/processed/maia_test/{elo_player}_{elo_player + 100}_{n_boards}.csv'
+        os.makedirs(os.path.dirname(df_path), exist_ok=True)
+        if os.path.exists(df_path):
+            print(f'{df_path} exists and was not created')
+        else:
+            print(f'Sub dataset not found at {df_path}, {"loading from scratch." if df is None else "creating it now"}')
+            t = time.time()
+            df = pd.read_csv(filepath) if df is None else df
+            print(f'Loaded big data in {time.time() - t}')
+            val_df = df[(elo_player < df['opponent_elo']) & (df['opponent_elo'] < (elo_player + 100)) &
+                        (elo_player < df['white_elo']) & (df['white_elo'] < (elo_player + 100))]
+            val_df = val_df[(10 <= val_df['move_ply'])][:n_boards]
+            val_df.to_csv(df_path, index=False)
+    if return_full_df:
+        df = pd.read_csv(filepath) if df is None else df
+        return df
+
+def load_maia_test_data(min_elo, n_boards):
+    df_path = f'data/processed/maia_test/{min_elo}_{min_elo + 100}_{n_boards}.csv'
+    dirname = os.path.dirname(df_path)
+    if os.path.exists(dirname):
+        for filename in os.listdir(dirname):
+            if filename.endswith('.csv'):
+                min_, max_, n_boards_ = [int(el) for el in filename[:-4].split('_')]
+                if min_ == min_elo and n_boards <= n_boards_:
+                    val_df = pd.read_csv(join(dirname, filename))
+                    return val_df[:n_boards]
+
+    make_maia_test_csv(min_elo=min_elo, max_elo=min_elo + 100, n_boards=n_boards)
+    val_df = pd.read_csv(df_path)
+    return val_df
+
+
+if __name__ == "__main__":
+    # decompress_zstd('data/raw/lichess_db_standard_rated_2019-01.pgn.zst', 'data/raw')
+    make_maia_test_csv()
+    from irl_chess import get_states
+    #
+    # pgn_paths = ['data/raw/lichess_db_standard_rated_2017-11.pgn']
+    # ply_range = (10, 200)
+    #
+    # with open('experiment_configs/base_config.json', 'r') as file:
+    #     config = json.load(file)
+    #
+    # config['n_midgame'], config['n_endgame'] = ply_range
+    # chess_board_dict, player_move_dict = get_states(None, None, config, pgn_paths=pgn_paths)
+    #

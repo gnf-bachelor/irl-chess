@@ -178,6 +178,7 @@ cython_debug/
 
 kaggle.json
 /data
+!/data/processed/maia_test/*
 wandb
 lightning_logs
 *.ckpt
@@ -187,9 +188,14 @@ models/sunfish_permutation_native
 models/bayesian_optimisation
 *.err
 *.out
+NotesFromOtherBranches
 
 # exclude everything. This folder is where results will be saved after running run_model
 results/* 
 
 # exception to the rule
 !results/.gitkeep 
+/maia_chess
+
+# Gabriel's python environment
+/bachelor
