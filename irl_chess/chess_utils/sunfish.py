@@ -210,13 +210,25 @@ class Position(namedtuple("Position", "board score wc bc ep kp")):
                         yield Move(j + E, j + W, "")
                     if i == H1 and self.board[j + W] == "K" and self.wc[1]:
                         yield Move(j + W, j + E, "")
-
+    @staticmethod
+    def mirror_square(p):
+        row = p // 10
+        col = p % 10
+        return 110 - row*10 + col
+    
+    @staticmethod
+    def mirror_board(board):
+        reversed_board = board[::-1]
+        return ''.join(reversed_board[i:i+10][::-1] for i in range(0, len(reversed_board), 10))
+    
+    
     def rotate(self, nullmove=False):
         """Rotates the board, preserving enpassant, unless nullmove"""
         return Position(
-            self.board[::-1].swapcase(), -self.score, self.bc, self.wc,
-            119 - self.ep if self.ep and not nullmove else 0,
-            119 - self.kp if self.kp and not nullmove else 0,
+            self.mirror_board(self.board).swapcase(),
+             -self.score, self.bc, self.wc,
+            self.mirror_square(self.ep) if self.ep and not nullmove else 0,
+            self.mirror_square(self.kp) if self.kp and not nullmove else 0,
         )
 
     def push(self, move, pst):
@@ -263,10 +275,10 @@ class Position(namedtuple("Position", "board score wc bc ep kp")):
         score = pst[p][j] - pst[p][i]
         # Capture
         if q.islower():
-            score += pst[q.upper()][119 - j]
+            score += pst[q.upper()][self.mirror_square(j)]
         # Castling check detection
         if abs(j - self.kp) < 2:
-            score += pst["K"][119 - j]
+            score += pst["K"][self.mirror_square(j)]
         # Castling
         if p == "K" and abs(i - j) == 2:
             score += pst["R"][(i + j) // 2]
@@ -276,7 +288,7 @@ class Position(namedtuple("Position", "board score wc bc ep kp")):
             if A8 <= j <= H8:
                 score += pst[prom][j] - pst["P"][j]
             if j == self.ep:
-                score += pst["P"][119 - (j + S)]
+                score += pst["P"][self.mirror_square(j + S)]
         return score
 
 
@@ -512,7 +524,7 @@ if __name__ == '__main__':
             for ply, move in enumerate(args[3:]):
                 i, j, prom = parse(move[:2]), parse(move[2:4]), move[4:].upper()
                 if ply % 2 == 1:
-                    i, j = 119 - i, 119 - j
+                    i, j = Position.mirror_square(i), Position.mirror_square(j)
                 hist.append(hist[-1].move(Move(i, j, prom), pst))
 
         elif args[0] == "go":
@@ -529,7 +541,7 @@ if __name__ == '__main__':
                 if score >= gamma:
                     i, j = move.i, move.j
                     if len(hist) % 2 == 0:
-                        i, j = 119 - i, 119 - j
+                        i, j = Position.mirror_square(i), Position.mirror_square(j)
                     move_str = render(i) + render(j) + move.prom.lower()
                     print("info depth", depth, "score cp", score, "pv", move_str)
                 if move_str and time.time() - start > think * 0.8:

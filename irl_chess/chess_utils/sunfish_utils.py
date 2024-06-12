@@ -60,7 +60,7 @@ def sunfish_best_board(state, pst, tp_move: dict):
 def sunfish_move_to_str(move: Move, is_black:bool):
     i, j = move.i, move.j
     if is_black:
-        i, j = 119 - i, 119 - j
+        i, j = Position.mirror_square(i), Position.mirror_square(j)
     move_str = render(i) + render(j) + move.prom.lower()
     return move_str
 
@@ -84,8 +84,8 @@ def str_to_sunfish_move(move, flip):
     i = square2sunfish(move[:2])
     j = square2sunfish(move[2:4])
     if flip:
-        i = 119 - i
-        j = 119 - j
+        i = Position.mirror_square(i)
+        j = Position.mirror_square(j)
     prom = (move[4] if len(move) > 4 else '').upper()
     return Move(i, j, prom)
 
@@ -110,17 +110,14 @@ def board2sunfish(board, score):
     if ep == '-':
         ep = 0
     else:
-        ep = square2sunfish(ep) # Check later. 
+        ep = square2sunfish(ep)
 
     kp = 0
-
+    pos = Position(board_string, score, wc, bc, ep, kp)
     # Reverse if black to move
     if to_move == 'b':
-        return Position(board_string[::-1].swapcase(), -score, bc, wc,
-                        119 - ep if ep else 0,
-                        119 - kp if kp else 0)
-
-    return Position(board_string, score, wc, bc, ep, kp)
+        pos = pos.rotate()
+    return pos
 
 def get_new_pst(RP, Rpst = None):
     # Get a new set of piece square tables (pst), but with the pieces weighed by the RP values 
@@ -139,7 +136,7 @@ def get_new_pst(RP, Rpst = None):
     return pst_new
 
 def sunfish2board(pos: Position):
-    pos_string = pos.board[21:-20].replace(' \n', '/')
+    pos_string = (pos.board[21:-21].replace('\n', '/')).replace(" ", "") + " "
     for i in range(8, 0, -1):
         pos_string = pos_string.replace('.' * i, str(i))
     to_move = 'w'
