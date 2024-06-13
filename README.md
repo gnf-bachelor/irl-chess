@@ -58,11 +58,15 @@ started with Machine Learning Operations (MLOps).
 
 ## How to Run BIRL or GPW
 For the Maia chess repository to work use python 3.10
+
 The repository centers around the irl_chess source folder which contains the script run_model.py.
 To select the desired model change the "model" parameter in the base_config.json in the experiment_config folder.
+
 Each model has a folder containing its own config where parameters specific to the model are set.
+
 When parameters in the base and model-configs are set to the desired values, simply run run_model.py
 The results will be saved the results folder under a name that indicates what parameters where used for the run.
+
 ## How to build Maia chess components
 
 After cloning the repository locally, don't forget to run the following commands in order to also clone the git submodules:
