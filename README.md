@@ -11,54 +11,45 @@ The directory structure of the project looks like this:
 
 ```txt
 
-├── Makefile             <- Makefile with convenience commands like `make data` or `make train`
 ├── README.md            <- The top-level README for developers using this project.
 ├── data
 │   ├── processed        <- The final, canonical data sets for modeling.
 │   └── raw              <- The original, immutable data dump.
-│
-├── docs                 <- Documentation folder
-│   │
-│   ├── index.md         <- Homepage for your documentation
-│   │
-│   ├── mkdocs.yml       <- Configuration file for mkdocs
-│   │
-│   └── source/          <- Source directory for documentation files
-│
-├── models               <- Trained and serialized models, model predictions, or model summaries
-│
 ├── notebooks            <- Jupyter notebooks.
 │
 ├── pyproject.toml       <- Project configuration file
 │
-├── reports              <- Generated analysis as HTML, PDF, LaTeX, etc.
-│   └── figures          <- Generated graphics and figures to be used in reporting
-│
 ├── requirements.txt     <- The requirements file for reproducing the analysis environment
-|
-├── requirements_dev.txt <- The requirements file for reproducing the analysis environment
 │
-├── tests                <- Test files
+├── hpc-logs        <- Folder for output when running on the DTU cluster
 │
-├── chess_irl  <- Source code for use in this project.
+├── hpc-submit      <- Shell scripts for running GPW on the DTU cluster
+│
+├── experiment_configs      <- json config files for each of the models
+│
+├── results      <- folder where results from running the models end up
+│
+├── irl_chess  <- Source code for use in this project.
 │   │
 │   ├── __init__.py      <- Makes folder a Python module
 │   │
-│   ├── data             <- Scripts to download or generate data
-│   │   ├── __init__.py
-│   │   └── make_dataset.py
+│   ├── data             <- Scripts to download and filter data
 │   │
-│   ├── models           <- model implementations, training script and prediction script
-│   │   ├── __init__.py
-│   │   ├── model.py
+│   ├── maia_chess           <- maia chess repository with some modifications
 │   │
 │   ├── visualization    <- Scripts to create exploratory and results oriented visualizations
-│   │   ├── __init__.py
-│   │   └── visualize.py
-│   ├── train_model.py   <- script for training the model
-│   └── predict_model.py <- script for predicting from a model
-│
-└── LICENSE              <- Open-source license if one is chosen
+│   │
+│   ├── chess_utils    <- Scripts to work with chess and the search algorithms
+│   │
+│   ├── misc_utils    <- Scripts that don't neatly fit into any other category
+│   │
+│   ├── models    <- Scripts for each of the implemented models
+│   │
+│   ├── stat_tools    <- Scripts for confidence intervals
+│   │
+│   ├── thesis_figures    <- Scripts generating figures found in the thesis
+│   │
+│   ├── run_model.py   <- script for training the model
 ```
 
 Created using [mlops_template](https://github.com/SkafteNicki/mlops_template),
@@ -66,10 +57,12 @@ a [cookiecutter template](https://github.com/cookiecutter/cookiecutter) for gett
 started with Machine Learning Operations (MLOps).
 
 ## How to Run BIRL or GPW
-
-A short description of the project.
-USE PYTHON 3.10!! Otherwise maia-chess will not work
-
+For the Maia chess repository to work use python 3.10
+The repository centers around the irl_chess source folder which contains the script run_model.py.
+To select the desired model change the "model" parameter in the base_config.json in the experiment_config folder.
+Each model has a folder containing its own config where parameters specific to the model are set.
+When parameters in the base and model-configs are set to the desired values, simply run run_model.py
+The results will be saved the results folder under a name that indicates what parameters where used for the run.
 ## How to build Maia chess components
 
 After cloning the repository locally, don't forget to run the following commands in order to also clone the git submodules:
