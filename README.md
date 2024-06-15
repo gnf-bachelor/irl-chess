@@ -2,21 +2,13 @@
 A project exploring approximate Inverse Reinforcement Learning (IRL) applications in Chess. 
 This includes a modified version of the Bayesian Inverse Reinforcement Learning (BIRL) algortihm "Policy Walk", and our own more naive method, "Greedy Policy Walk" (GPW) designed to work for the large state space of Chess.
 
-| ![Trace Plot of GPW Piece Weights on 1900-2000 ELO Player Moves](![trace_plot_GPW_1900_player_move_piece_weights](https://github.com/gnf-bachelor/irl-chess/assets/98162688/8d6246a2-ff46-41b4-a4c3-30564cccfc5a)) | ![Trace Plot of GPW PST Weights on 1900-2000 ELO Player Moves](![trace_plot_GPW_1900_player_move_pst_weights](https://github.com/gnf-bachelor/irl-chess/assets/98162688/e032689a-a006-4d5d-82df-83f4faed56a8)) |
+| Trace Plot of GPW Piece Weights on 1900-2000 ELO Player Moves | Trace Plot of GPW PST Weights on 1900-2000 ELO Player Moves |
 |:------------------------------:|:------------------------------:|
-| Title 1                        | Title 2                        |
+| ![trace_plot_GPW_1900_player_move_piece_weights](https://github.com/gnf-bachelor/irl-chess/assets/98162688/8d6246a2-ff46-41b4-a4c3-30564cccfc5a) | ![trace_plot_GPW_1900_player_move_pst_weights](https://github.com/gnf-bachelor/irl-chess/assets/98162688/e032689a-a006-4d5d-82df-83f4faed56a8) |
 
-| ![Trace Plot of GPW Piece Weights on Synthetic Engine Moves](![trace_plot_GPW_1900_sunfish_move_piece_weights](https://github.com/gnf-bachelor/irl-chess/assets/98162688/0312216b-3df7-43dc-9fcc-5dd0f371a865)) | ![Trace Plot of GPW PST Weights on Synthetic Engine Moves](![trace_plot_GPW_1900_sunfish_move_pst_weights](https://github.com/gnf-bachelor/irl-chess/assets/98162688/470db9fe-f82d-4dec-9b61-e28392935e20)) |
+| Trace Plot of GPW Piece Weights on Synthetic Engine Moves | Trace Plot of GPW PST Weights on Synthetic Engine Moves|
 |:------------------------------:|:------------------------------:|
-| Title 3                        | Title 4                        |
-
-
-
-
-
-
-
-
+| ![trace_plot_GPW_1900_sunfish_move_piece_weights](https://github.com/gnf-bachelor/irl-chess/assets/98162688/0312216b-3df7-43dc-9fcc-5dd0f371a865)  | ![trace_plot_GPW_1900_sunfish_move_pst_weights](https://github.com/gnf-bachelor/irl-chess/assets/98162688/470db9fe-f82d-4dec-9b61-e28392935e20)|
 
 ## Project structure
 The repository contains a modular setup for running the various algorithms with a single entry-point (run_model.py). All settings, including which model to use, are set in config files base_config.json and the model specific config.json.
