@@ -2,6 +2,26 @@
 A project exploring approximate Inverse Reinforcement Learning (IRL) applications in Chess. 
 This includes a modified version of the Bayesian Inverse Reinforcement Learning (BIRL) algortihm "Policy Walk", and our own more naive method, "Greedy Policy Walk" (GPW) designed to work for the large state space of Chess.
 
+## Table of Images
+
+| ![Trace Plot of GPW Piece Weights on 1900-2000 ELO Player Moves](path/to/image1.png) | ![Trace Plot of GPW PST Weights on 1900-2000 ELO Player Moves](path/to/image2.png) |
+|:------------------------------:|:------------------------------:|
+| Title 1                        | Title 2                        |
+
+| ![Trace Plot of GPW Piece Weights on Synthetic Engine Moves](path/to/image3.png) | ![Trace Plot of GPW PST Weights on Synthetic Engine Moves](path/to/image4.png) |
+|:------------------------------:|:------------------------------:|
+| Title 3                        | Title 4                        |
+
+![Uploading trace_plot_GPW_1900_player_move_piece_weights.svg…]()
+
+![Uploading trace_plot_GPW_1900_player_move_pst_weights.svg…]()
+
+![Uploading trace_plot_GPW_1900_sunfish_move_piece_weights.svg…]()
+
+![Uploading trace_plot_GPW_1900_sunfish_move_pst_weights.svg…]()
+
+
+
 ## Project structure
 The repository contains a modular setup for running the various algorithms with a single entry-point (run_model.py). All settings, including which model to use, are set in config files base_config.json and the model specific config.json.
 
