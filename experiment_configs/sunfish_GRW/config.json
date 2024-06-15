@@ -3,6 +3,5 @@
   "delta": 40,
   "decay": 1,
   "decay_step": 1000,
-  "time_limit": 0.2,
-  "version": "v0_multi"
+  "time_limit": 0.2
 }
