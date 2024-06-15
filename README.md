@@ -71,6 +71,8 @@ Each model has a folder containing its own config where parameters specific to t
 When parameters in the base and model-configs are set to the desired values, simply run run_model.py
 The results will be saved the results folder under a name that indicates what parameters where used for the run.
 
+The repository also contains some jupyter notebook demonstrations of various features with explanations and examples. These are a recommended entry point for anyone seeking to explore or develop on the code base. 
+
 ## How to build Maia chess components
 I you wish to use the maia-chess comparison functionalities, after cloning the repository locally, don't forget to run the following commands in order to also clone the git submodules:
 

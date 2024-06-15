@@ -1,4 +1,4 @@
-from irl_chess.chess_utils.utils import (set_board, get_board_arrays, perturb_reward,
+from irl_chess.chess_utils.utils import (set_board, get_board_arrays, perturb_reward, log_prob_dist,
                 board_to_array, material_dict, depth_first_search, get_midgame_boards,)
 from irl_chess.chess_utils.alpha_beta_utils import alpha_beta_search_k, alpha_beta_search, list_first_moves, quiescence_search, evaluate_board
 from irl_chess.chess_utils.sunfish import Searcher, Position, initial, Move, render, pst, piece, pst_only, directions, EVAL_ROUGHNESS, QS, QS_A, parse, sunfish_weights

@@ -276,18 +276,30 @@ def set_chess_policy(chess_boards, player_moves, config_data):
         raise Exception(f"The policy {config_data['chess_policy']} is not implemented yet")
     return states, actions, PolicyIteration, Qeval
 
-def probability_of_switching(states, actions, pi, a_pi, RP_new, RP, Rpst_new, Rpst, RH_new, RH, Qpi_policy_R, alpha, config_data, Qeval, PolicyIteration, parallel):
+def probability_of_switching(states, actions, pi, a_pi, RP_new, RP, Rpst_new, Rpst, RH_new, RH, Qpi_policy_R, Qpi_action_R, alpha, config_data, Qeval, PolicyIteration, parallel):
     Qpi_action_Rnew = Qeval(a_pi, states, RP_new, Rpst_new, RH_new, parallel)
     Qpi_policy_Rnew = Qeval(pi, states, RP_new, Rpst_new, RH_new, parallel)
     if np.any(Qpi_policy_Rnew < Qpi_action_Rnew): # if the new reward function explains the data action better than the policy action for any state
         print("There exists a state-action pair (s, a) such that Qpi(s, pi, R~) < Qpi(s, a, R~)")
         pi_new, QpiNew_policy_Rnew, pi_new_moves = PolicyIteration(states, None, RP_new, Rpst_new, RH_new, config_data, parallel)
-        log_prob = min(0, log_prob_dist(RP_new, np.sum(QpiNew_policy_Rnew), alpha=config_data['alpha']) - log_prob_dist(RP, np.sum(Qpi_policy_R), alpha=config_data['alpha']))
-        print(f"Probability of switching R and policy is: {np.exp(log_prob)}")
-        print(f"Relative energies are {np.sum(QpiNew_policy_Rnew)} to {np.sum(Qpi_policy_R)}")
+        a_pi_new, QpiNew_action_Rnew, _ = PolicyIteration(states, actions, RP_new, Rpst_new, RH_new, config_data, parallel)
+        if config_data['energy_optimized'] == "policy":
+            log_prob = eval_log_prob(RP_new, QpiNew_policy_Rnew, RP, Qpi_policy_R, config_data['alpha'])
+            print(f"Probability of switching R and policy is: {np.exp(log_prob)}")
+            print(f"Relative energies are {np.sum(QpiNew_policy_Rnew)} to {np.sum(Qpi_policy_R)}")
+        elif config_data['energy_optimized'] == "action":
+            log_prob = eval_log_prob(RP_new, QpiNew_action_Rnew, RP, Qpi_action_R, config_data['alpha'])
+            print(f"Probability of switching R and policy is: {np.exp(log_prob)}")
+            print(f"Relative energies are {np.sum(QpiNew_action_Rnew)} to {np.sum(Qpi_action_R)}")
+
     else:
         print("Action is worse or equal to policy in all states under R~")
-        log_prob = min(0, log_prob_dist(RP_new, np.sum(Qpi_policy_Rnew), alpha=alpha) - log_prob_dist(RP, np.sum(Qpi_policy_R), alpha=alpha))
-        print(f"Probability of switching R is: {np.exp(log_prob)}")
-        print(f"Relative energies are {np.sum(Qpi_policy_Rnew)} to {np.sum(Qpi_policy_R)}")
+        if config_data['energy_optimized'] == "policy":
+            log_prob = eval_log_prob(RP_new, Qpi_policy_Rnew, RP, Qpi_policy_R, config_data['alpha'])
+            print(f"Probability of switching R is: {np.exp(log_prob)}")
+            print(f"Relative energies are {np.sum(Qpi_policy_Rnew)} to {np.sum(Qpi_policy_R)}")
+        elif config_data['energy_optimized'] == "action":
+            log_prob = eval_log_prob(RP_new, Qpi_action_Rnew, RP, Qpi_action_R, config_data['alpha'])
+            print(f"Probability of switching R is: {np.exp(log_prob)}")
+            print(f"Relative energies are {np.sum(Qpi_action_Rnew)} to {np.sum(Qpi_action_R)}")
     return np.exp(log_prob)
