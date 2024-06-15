@@ -62,7 +62,7 @@ The directory structure of the project looks like this:
 
 ## How to Run BIRL or GPW
 
-First, setup your python environment. Make sure to use python 3.10 for all dependencies and submodules to work properly. You can either install the `conda` environment, [`irl_chess_env.yml`](irl_chess_env.yml), or you can make sure all the required packages are installed from `requirements.txt`. 
+First, setup your python environment. Make sure to use python 3.10 for all dependencies and submodules to work properly. You can either install the `conda` environment, [`irl_chess_env.yml`](irl_chess_env.yml), or you can make sure all the required packages are installed from `requirements.txt`. Then run `pip install .` to install `irl_chess` as a python package. 
 
 Then adjust the config files.
 To select the desired model change the "model" parameter in the base_config.json in the experiment_config folder.
@@ -70,10 +70,6 @@ Each model has a folder containing its own config where parameters specific to t
 
 When parameters in the base and model-configs are set to the desired values, simply run run_model.py
 The results will be saved the results folder under a name that indicates what parameters where used for the run.
-
-## Config Description
-
-
 
 ## How to build Maia chess components
 I you wish to use the maia-chess comparison functionalities, after cloning the repository locally, don't forget to run the following commands in order to also clone the git submodules:
@@ -96,8 +92,162 @@ model = load_maia_network(1100, parent='maia_chess/')
 
 This script keeps running in the background until stopped externally.
 
-## Project structure
+# Config Description
+
+## base_config.json
+
+### General Settings
+- **overwrite**: `false`  
+  Whether to redownload and overwrite existing data or not.
+
+- **n_files**: `1`  
+  Number of files to process.
+
+- **time_control**: `false`  
+  Whether to use time control in the game.
+
+### ELO Rating
+- **min_elo**: `1900`  
+  Minimum ELO rating of the players to consider (inclusive).
+
+- **max_elo**: `2000`  
+  Maximum ELO rating of the players to consider (noninclusive).
+
+### Game Parameters
+- **n_midgame**: `10`  
+  The move ply at which to begin sampling positions (inclusive).
+
+- **n_endgame**: `100`  
+  The move ply at which to stop sampling positions (inclusive).
+
+- **n_boards**: `10000`  
+  Number of boards to use for training.
+
+- **n_boards_val**: `200`  
+  Number of boards to use for validation.
+
+### Training Parameters
+- **epochs**: `300`  
+  Number of epochs for training.
+
+- **max_hours**: `100`  
+  Maximum number of hours to run the training.
+
+- **n_threads**: `-1`  
+  Number of threads to use for processing (-1 to use all available).
+
+### Evaluation Parameters
+- **plot_every**: `10`  
+  Frequency (in epochs) to plot the results.
+
+- **val_every**: `10`  
+  Frequency (in epochs) to perform validation.
+
+- **run_n_times**: `1`  
+  Number of times to run the entire process (for trace plots).
+
+### Weight Permutation and Initialization.
+Here piece names are abbreviated using their typical chess letter. 
+P: Pawn, N: Knight, B: Bishop, R: Rook, Q: Queen, K: King. 
+
+### Piece Value Plotting and Permutation
+- **plot_char**: `["P", "N", "B", "R", "Q"]`  
+  Chess piece value weights to plot during the evaluation.
+
+- **permute_char**: `["N", "B", "R", "Q"]`  
+  Chess piece value weights to permute during the evaluation.
+
+- **RP_start**: `[100, 100, 100, 100, 100, 60000]`  
+  Starting values for piece weights. RP: Reward function Piece weights.  
+
+### Piece-Square Table (PST) Plotting and Permutation
+- **plot_pst_char**: `["P", "N", "B", "R", "Q", "K"]`  
+  Piece square table weights to plot during the evaluation.
+
+- **permute_pst_char**: `["P", "N", "B", "R", "Q", "K"]`  
+  Piece square table weights to permute during the evaluation.
+
+- **Rpst_start**: `[0, 0, 0, 0, 0, 0]`  
+  Starting values for piece square table weights. Rpst: Reward function Piece-Square Table weights.
+
+### Additional Settings
+- **include_PA_KS_PS**: `[false, false, false]`  
+  Include Piece Activity (PA), King Safety (KS), and Pawn Structure (PS) heuristics in the evaluation. Currently only implemented with the alpha-beta searcher. 
+
+- **plot_H**: `[true, true, true]`  
+  Whether to plot heuristic parameters during the evaluation.
+
+- **permute_H**: `[true, true, true]`  
+  Whether to permute heuristic parameters during the evaluation.
+
+- **RH_start**: `[0, 0, 0]`  
+  Starting values for heuristic weights.
+
+### Move Function and Model
+- **move_function**: `"player_move"`  
+  The function used to sample moves from. Options are "player_move" or "sunfish_move" for synthetic engine moves. 
+
+#### True weights in the case of synthetic "Sunfish" engine moves
+- **RP_true**: `[100, 280, 320, 479, 929, 60000]`  
+  True values for RP for each piece. 
+
+- **Rpst_true**: `[1, 1, 1, 1, 1, 1]`  
+  True values for Rpst for each piece square table.
+
+- **RH_true**: `[0, 0, 0]`  
+  True values for RH for each heuristic.
 
 
+- **permute_how_many**: `1`  
+  Number of weights to permute in each iteration ("all" or "-1" permutes all weights).
 
+- **model**: `"sunfish_GRW"`  
+  The model to use for evaluation. Options include "sunfish_GRW" (GPW), "BIRL" and "maia_pretrained".
+
+## config.json
+The config.json files contain model specific settings. Here the BIRL model config file is showcased as an example. 
+
+### BIRL Configuration Parameters
+
+- **energy_optimized**: `"action"`  
+  Whether the model seeks to optimize the energy of all actions in the state action pairs in the data set ("action"), or the energy of the policy moves in all states in the data set ("policy"). 
+
+- **alpha**: `1e-1`  
+  The alpha "inverse temperature" parameter value for the boltzman energy distribution. The lower alpha, the less likely the agent is to make the optimal decision.
+
+- **chess_policy**: `"sunfish"`  
+  The policy used for making decisions in chess ("sunfish" or "alpha_beta").
+
+#### Alpha-Beta Parameters
+- **depth**: `3`  
+  The depth of the search tree.
+
+- **quiesce**: `false`  
+  Whether to use quiescence search to avoid horizon effects.
+
+#### Sunfish Parameters
+- **time_limit**: `0.2`  
+  The time allotted to search for a move in seconds.
+
+#### Weight Pertubation Parameters
+- **noise_distribution**: `"gaussian"`  
+  The distribution of noise added to the weights in each iteration ("gaussian", "step" or "uniform").
+
+- **delta**: `40`  
+  A parameter describing the variance of the noise. The standard deviation in the case of Gaussian noise, the step size for "step" and the domain [-delta, delta] for "uniform". 
+
+- **decay**: `1`  
+  The multiplicative decay rate for delta.
+
+- **decay_step**: `1000`  
+  Frequency at which decay is applied in epochs.
+
+## Additional Configuration Parameters
+The configs of "sunfish_GRW" are a subset of "BIRL", and the two "maia_pretrained" specific configs are shown below. 
+
+- **maia_elo**: `1900`  
+  The ELO rating of the Maia model used.
+
+- **topk**: `1`  
+  The top K moves to consider when evaluating accuracy.
 
