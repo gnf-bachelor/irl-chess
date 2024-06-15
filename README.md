@@ -2,8 +2,6 @@
 A project exploring approximate Inverse Reinforcement Learning (IRL) applications in Chess. 
 This includes a modified version of the Bayesian Inverse Reinforcement Learning (BIRL) algortihm "Policy Walk", and our own more naive method, "Greedy Policy Walk" (GPW) designed to work for the large state space of Chess.
 
-## Table of Images
-
 | ![Trace Plot of GPW Piece Weights on 1900-2000 ELO Player Moves](path/to/image1.png) | ![Trace Plot of GPW PST Weights on 1900-2000 ELO Player Moves](path/to/image2.png) |
 |:------------------------------:|:------------------------------:|
 | Title 1                        | Title 2                        |
@@ -72,24 +70,23 @@ The directory structure of the project looks like this:
 │   ├── run_model.py   <- script for training the model
 ```
 
-Created using [mlops_template](https://github.com/SkafteNicki/mlops_template),
-a [cookiecutter template](https://github.com/cookiecutter/cookiecutter) for getting
-started with Machine Learning Operations (MLOps).
-
 ## How to Run BIRL or GPW
-For the Maia chess repository to work use python 3.10
 
-The repository centers around the irl_chess source folder which contains the script run_model.py.
+First, setup your python environment. Make sure to use python 3.10 for all dependencies and submodules to work properly. You can either install the `conda` environment, [`irl_chess_env.yml`](irl_chess_env.yml), or you can make sure all the required packages are installed from `requirements.txt`. 
+
+Then adjust the config files.
 To select the desired model change the "model" parameter in the base_config.json in the experiment_config folder.
-
-Each model has a folder containing its own config where parameters specific to the model are set.
+Each model has a folder containing its own config where parameters specific to the model are set. See the Config Description section.
 
 When parameters in the base and model-configs are set to the desired values, simply run run_model.py
 The results will be saved the results folder under a name that indicates what parameters where used for the run.
 
-## How to build Maia chess components
+## Config Description
 
-After cloning the repository locally, don't forget to run the following commands in order to also clone the git submodules:
+
+
+## How to build Maia chess components
+I you wish to use the maia-chess comparison functionalities, after cloning the repository locally, don't forget to run the following commands in order to also clone the git submodules:
 
 ```
 git submodule sync --recursive
