@@ -75,6 +75,8 @@ Computation wise, running Greedy Policy Walk for 300 epochs evaluated on 10,000 
 
 The repository also contains some jupyter notebook demonstrations of various features with explanations and examples. These are a recommended entry point for anyone seeking to explore or develop on the code base. 
 
+The file sizes of more recent chess game data files are very large, which can cause issues for Python when downloading them. For this reason, we divided some data files into smaller chunks. These chunks can be downloaded separately and placed into irl-chess/data/raw, where they will be loaded just as if they were downloaded through the Python data scripts. A preprocessed sample can be found here: [small dataset](https://drive.google.com/file/d/1jL2O3fPucAwII6b7LIjkcaSFCwXzkot1/view?usp=sharing). This should be more than sufficient to run the models.  
+
 ## How to build Maia chess components
 I you wish to use the maia-chess comparison functionalities, after cloning the repository locally, don't forget to run the following commands in order to also clone the git submodules:
 
